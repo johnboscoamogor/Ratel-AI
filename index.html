@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ratel AI</title>
+    <meta name="description" id="meta-description" content="Ratel AI is a tenacious and highly intelligent AI, enhanced with the expertise of a seasoned screenwriter to help with all your creative and analytical needs." />
+    <meta name="keywords" id="meta-keywords" content="AI, Chatbot, Gemini, Ratel AI, Screenwriting, Creative AI, Image Generation, Video Generation, AI assistant" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#16a34a">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.21.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-markdown": "https://aistudiocdn.com/react-markdown@^10.1.0",
+    "remark-gfm": "https://aistudiocdn.com/remark-gfm@^4.0.1",
+    "i18next": "https://aistudiocdn.com/i18next@^23.13.0",
+    "react-i18next": "https://aistudiocdn.com/react-i18next@^15.0.0",
+    "node-fetch": "https://aistudiocdn.com/node-fetch@^3.3.2",
+    "@vercel/node": "https://aistudiocdn.com/@vercel/node@^5.3.26"
+  }
+}
+</script>
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+</head>
+  <body class="bg-gray-50">
+    <div id="root"></div>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script type="module" src="/index.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js').then(registration => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          }, err => {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+        });
+      }
+    </script>
+  </body>
+</html>
