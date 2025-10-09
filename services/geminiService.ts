@@ -1,9 +1,7 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI } from '@google/genai';
 
-const API_KEY = process.env.API_KEY;
+// Initialize the Google AI client as per the project guidelines.
+// The API key is expected to be available in the process.env.API_KEY environment variable.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
-if (!API_KEY) {
-  throw new Error("API_KEY environment variable is not set");
-}
-
-export const ai = new GoogleGenAI({ apiKey: API_KEY });
+export { ai };

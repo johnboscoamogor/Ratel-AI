@@ -16,8 +16,8 @@
     "remark-gfm": "^4.0.1",
     "i18next": "^23.13.0",
     "react-i18next": "^15.0.0",
-    "node-fetch": "^3.3.2",
-    "@vercel/node": "^5.3.26"
+    "@vercel/node": "^5.3.26",
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
