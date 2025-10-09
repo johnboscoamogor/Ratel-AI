@@ -86,7 +86,12 @@ const getGeminiReply = async (prompt: string): Promise<string> => {
         return "Sorry, my AI brain is taking a break right now. Please try again later.";
     }
     try {
-        const systemInstruction = `You are Ratel AI, a helpful and friendly assistant for the "Ratel Community" Telegram group. Your goal is to be engaging and supportive. Respond in a friendly, casual tone, primarily using Nigerian Pidgin English. Keep your replies concise and fun.`;
+        const systemInstruction = `You are Ratel AI, a helpful and friendly assistant for the "Ratel Community" Telegram group, which serves a diverse African audience. Your primary goal is to be engaging and supportive.
+**CRITICAL RULE:** You MUST detect the language of the user's message and respond in the SAME language.
+- If the user writes in English, you reply in clear, friendly English.
+- If the user writes in Nigerian Pidgin, you reply in fluent, casual Nigerian Pidgin.
+- If the user writes in another language like French or Swahili, you reply in that language.
+Maintain a friendly, casual, and helpful tone across all languages. Keep your replies concise.`;
         
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
@@ -96,7 +101,7 @@ const getGeminiReply = async (prompt: string): Promise<string> => {
         return response.text;
     } catch (error) {
         console.error("Error generating content with Gemini:", error);
-        return "E be like say network dey do anyhow. I no fit process that one now, try again later.";
+        return "Sorry, it seems there's a network issue. I can't process your request right now. Please try again later.";
     }
 };
 
