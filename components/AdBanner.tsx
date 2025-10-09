@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const AdBanner: React.FC = () => {
     const { t } = useTranslation();
+    const adRef = useRef<HTMLModElement>(null);
     
     // TODO: Replace these with your actual AdSense client and slot IDs
     const AD_CLIENT = 'ca-pub-XXXXXXXXXXXXXXXX';
@@ -11,7 +12,6 @@ const AdBanner: React.FC = () => {
     useEffect(() => {
         const pushAd = () => {
             try {
-                // Ensure adsbygoogle is available on the window before pushing
                 if (typeof (window as any).adsbygoogle !== 'undefined') {
                     ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
                 }
@@ -20,11 +20,25 @@ const AdBanner: React.FC = () => {
             }
         };
 
-        // Delaying the push slightly to ensure the container has a calculated width.
-        // This is a common and effective fix for this error in single-page apps.
-        const timeoutId = setTimeout(pushAd, 100);
+        // This is a more robust check that waits for the ad container to be physically rendered
+        // with a width before trying to push the ad.
+        const observer = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                if (entry.target.clientWidth > 0) {
+                    pushAd();
+                    // Once the ad is pushed, we don't need to observe anymore.
+                    observer.disconnect();
+                }
+            }
+        });
 
-        return () => clearTimeout(timeoutId);
+        if (adRef.current) {
+            observer.observe(adRef.current);
+        }
+
+        return () => {
+            observer.disconnect();
+        };
     }, []);
 
     // A fallback for when ads don't load or are blocked.
@@ -42,6 +56,7 @@ const AdBanner: React.FC = () => {
     return (
         <div className="bg-gray-100 rounded-lg p-1 text-center">
             <ins
+                ref={adRef}
                 className="adsbygoogle"
                 style={adStyle}
                 data-ad-client={AD_CLIENT}

@@ -370,7 +370,9 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
                 const newTask: Task = {
                     id: crypto.randomUUID(),
                     description: fc.args.description as string,
-                    completed: false
+                    completed: false,
+                    reminder: fc.args.reminder as string | undefined,
+                    reminderFired: false,
                 };
                 setTasks(prev => [...prev, newTask]);
                 functionResponsePart = [{ functionResponse: { name: 'addTask', response: { success: true, description: newTask.description } } }];

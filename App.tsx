@@ -6,7 +6,7 @@ import SettingsPage from './components/SettingsPage';
 import ContactPage from './components/ContactPage';
 import CommunityView from './components/CommunityView';
 import AdminDashboard from './components/AdminDashboard';
-import { UserProfile, AppSettings, RatelMode } from './types';
+import { UserProfile, AppSettings, RatelMode, Task } from './types';
 import { playSound } from './services/audioService';
 
 const App: React.FC = () => {
@@ -74,6 +74,44 @@ const App: React.FC = () => {
     localStorage.setItem('ratel_settings', JSON.stringify(settings));
     localStorage.setItem('ratel_language', settings.language);
   }, [settings]);
+  
+  // Task Reminder Checker
+  useEffect(() => {
+    const checkReminders = () => {
+        try {
+            const savedTasks = localStorage.getItem('ratel_tasks');
+            if (!savedTasks) return;
+
+            const tasks: Task[] = JSON.parse(savedTasks);
+            const now = new Date();
+            let tasksUpdated = false;
+
+            const updatedTasks = tasks.map(task => {
+                if (task.reminder && !task.completed && !task.reminderFired) {
+                    const reminderTime = new Date(task.reminder);
+                    if (now >= reminderTime) {
+                        // Trigger notification
+                        alert(`Reminder: ${task.description}`);
+                        tasksUpdated = true;
+                        return { ...task, reminderFired: true };
+                    }
+                }
+                return task;
+            });
+
+            if (tasksUpdated) {
+                localStorage.setItem('ratel_tasks', JSON.stringify(updatedTasks));
+                // Here you might want to trigger a state update if the tasks are managed in App state
+            }
+        } catch (e) {
+            console.error("Failed to check task reminders:", e);
+        }
+    };
+
+    const intervalId = setInterval(checkReminders, 30000); // Check every 30 seconds
+
+    return () => clearInterval(intervalId); // Cleanup on component unmount
+  }, []);
 
   const handleLoginSuccess = (profile: { name: string; email: string }) => {
     playSound('receive');

@@ -98,6 +98,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <StudioButton Icon={ImageIcon} label={t('sidebar.imageStudio')} onClick={onOpenImageStudio} />
             <StudioButton Icon={AudioIcon} label={t('sidebar.audioStudio')} onClick={onOpenAudioStudio} />
             <StudioButton Icon={VideoIcon} label={t('sidebar.videoStudio')} onClick={onOpenVideoStudio} />
+            <StudioButton Icon={UsersIcon} label={t('sidebar.communityStudio')} onClick={() => handlePageChange('community')} />
         </div>
       </div>
 
@@ -228,7 +229,6 @@ const MenuButton: React.FC<{ userProfile: UserProfile, onPageChange: (page: 'set
                 {userProfile.isAdmin && (
                   <MenuItem Icon={AdminIcon} label="Admin Dashboard" onClick={() => onPageChange('admin')} />
                 )}
-                <MenuItem Icon={UsersIcon} label={t('sidebar.communityStudio')} onClick={() => onPageChange('community')} />
                 <MenuItem Icon={SettingsIcon} label={t('sidebar.settings')} onClick={() => onPageChange('settings')} />
                 <MenuItem Icon={InfoIcon} label={t('sidebar.contactUs')} onClick={() => onPageChange('contact')} />
                 <div className="border-t border-gray-100 my-1"></div>

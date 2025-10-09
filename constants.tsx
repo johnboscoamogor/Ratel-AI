@@ -385,11 +385,18 @@ export const AdminIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   </svg>
 );
 
+export const ClockIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"></circle>
+    <polyline points="12 6 12 12 16 14"></polyline>
+  </svg>
+);
+
 export const SYSTEM_INSTRUCTION = `You are Ratel AI, a helpful and tenacious AI assistant for African youth, particularly in Nigeria. Your goal is to help users learn, earn, and grow. Pay close attention to the conversation history to understand the full context. Assume follow-up questions relate to the previous topic unless the user clearly changes the subject.`;
 
 const addTaskDeclaration: FunctionDeclaration = {
     name: 'addTask',
-    description: 'Adds a task to the user\'s to-do list.',
+    description: 'Adds a task to the user\'s to-do list. Can optionally include a reminder time based on natural language (e.g., "tomorrow at 10am", "in 1 hour").',
     parameters: {
         type: Type.OBJECT,
         properties: {
@@ -397,6 +404,10 @@ const addTaskDeclaration: FunctionDeclaration = {
                 type: Type.STRING,
                 description: 'The description of the task to be added.',
             },
+            reminder: {
+                type: Type.STRING,
+                description: 'An optional reminder time for the task in ISO 8601 format (e.g., "2024-10-26T10:00:00Z"). The AI must calculate this based on the current date and user request like "tomorrow at 10am".'
+            }
         },
         required: ['description'],
     },

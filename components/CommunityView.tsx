@@ -66,7 +66,9 @@ const CommunityView: React.FC<CommunityViewProps> = ({ userProfile, setUserProfi
           <nav className="flex items-center justify-around">
               <TabButton tab="feed" label={t('community.feedTitle')} />
               <TabButton tab="leaderboard" label={t('community.leaderboardTitle')} />
-              <TabButton tab="rewards" label={t('community.rewardsTitle')} />
+              {(userProfile.communityPoints > 0 || userProfile.isAdmin) && (
+                <TabButton tab="rewards" label={t('community.rewardsTitle')} />
+              )}
               <TabButton tab="telegram" label={t('community.telegramTitle')} />
           </nav>
       </div>
