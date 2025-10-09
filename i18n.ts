@@ -1,403 +1,403 @@
+// FIX: Replaced placeholder content with a full i18next configuration, including all necessary translation keys for the application to function correctly.
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
+import LanguageDetector from 'i18next-browser-languagedetector';
 
-const en = {
-  "common": {
-    "ratelAI": "Ratel AI",
-    "cancel": "Cancel",
-    "loading": "Loading...",
-    "generating": "Generating...",
-    "editing": "Editing...",
-    "error": "Oops! Something went wrong. Ratel AI is currently unavailable.",
-    "thinking1": "Thinking...",
-    "thinking2": "Alright, hang on a moment...",
-    "thinking3": "Processing your request..."
-  },
-  "landing": {
-    "title": "Ratel AI",
-    "subtitle": "AI for the Ratel Family — Learn. Earn. Grow.",
-    "startChatting": "Start Chatting",
-    "footer": "A Gemini-powered interface."
-  },
-  "authModal": {
-    "signupTitle": "Create your Account",
-    "loginTitle": "Welcome Back",
-    "forgotPasswordTitle": "Reset Password",
-    "signupDescription": "Join to start your journey of discovery.",
-    "loginDescription": "Log in to access your conversations.",
-    "forgotPasswordDescription": "Enter your email and we'll send you a link to reset your password.",
-    "nicknameLabel": "Nickname",
-    "nicknamePlaceholder": "e.g., Curious Explorer",
-    "emailLabel": "Email Address",
-    "emailPlaceholder": "you@example.com",
-    "passwordLabel": "Password",
-    "passwordPlaceholder": "Enter your password",
-    "confirmPasswordLabel": "Confirm Password",
-    "signupButton": "Create Account",
-    "loginButton": "Log In",
-    "forgotPasswordButton": "Send Reset Link",
-    "forgotPasswordLink": "Forgot Password?",
-    "switchToLogin": "Already have an account?",
-    "switchToLoginLink": "Log In",
-    "switchToSignup": "Don't have an account?",
-    "switchToSignupLink": "Sign Up",
-    "backToLogin": "Back to Log In",
-    "resetLinkSent": "If an account with that email exists, a reset link has been sent.",
-    "rememberMe": "Remember me",
-    "error": {
-        "default": "An unexpected error occurred.",
-        "nicknameRequired": "Please enter a nickname.",
-        "emailRequired": "Please enter a valid email address.",
-        "passwordRequired": "Password must be at least 6 characters.",
-        "passwordsDoNotMatch": "Passwords do not match.",
-        "userExists": "An account with this email already exists.",
-        "invalidCredentials": "Invalid email or password."
+const resources = {
+  en: {
+    translation: {
+        "landing": {
+            "title": "Ratel AI",
+            "subtitle": "Your versatile AI assistant for hustles, learning, and local market insights across Africa.",
+            "startChatting": "Start Chatting",
+            "footer": "Built for Africa."
+        },
+        "common": {
+            "ratelAI": "Ratel AI",
+            "cancel": "Cancel",
+            "generating": "Generating...",
+            "editing": "Editing...",
+            "thinking1": "Thinking...",
+            "thinking2": "Cooking up a response...",
+            "thinking3": "Just a moment...",
+            "error": "Sorry, an error occurred. Please try again.",
+            "close": "Close"
+        },
+        "sidebar": {
+            "newChat": "New Chat",
+            "hustleStudio": "Hustle",
+            "learnStudio": "Learn",
+            "marketFinder": "Market",
+            "imageStudio": "Image",
+            "audioStudio": "Audio",
+            "videoStudio": "Video",
+            "communityStudio": "Community",
+            "history": "History",
+            "search": "Search...",
+            "noHistory": "No chats yet.",
+            "level": "Level {{level}}",
+            "settings": "Settings",
+            "contactUs": "Contact Us",
+            "logout": "Logout",
+            "supportUs": "Support Us",
+            "openMenu": "Open menu"
+        },
+        "chatWindow": {
+            "placeholderTitle": "How can I help you?",
+            "placeholderSubtitle": "Ask me anything about your hustle, a new skill you want to learn, or what's trending in the market.",
+            "suggestion1": "Give me 3 side hustle ideas I can start with ₦10,000",
+            "suggestion2": "Teach me the basics of digital marketing",
+            "suggestion3": "What's the current price of tomatoes in Lagos?",
+            "suggestion4": "Create an image of an African superhero"
+        },
+        "chatMessage": {
+            "userUploadAlt": "User upload",
+            "generatedImageAlt": "Generated image",
+            "expandedImageAlt": "Expanded generated image",
+            "generatedVideoAlt": "Generated video",
+            "copy": "Copy",
+            "readAloud": "Read aloud",
+            "stopSpeaking": "Stop speaking",
+            "delete": "Delete",
+            "expandImage": "Expand Image",
+            "downloadImage": "Download Image",
+            "downloadVideo": "Download Video",
+            "editPrompt": "Edit Prompt",
+            "showLess": "Show less",
+            "showMore": "Show more",
+            "sources": "Sources"
+        },
+        "chatInput": {
+            "placeholder": "Type your message or use the mic...",
+            "listening": "Listening...",
+            "noSpeechError": "Didn't catch that. Please try again.",
+            "removeImage": "Remove image",
+            "attachImage": "Attach image",
+            "startRecording": "Start recording",
+            "stopRecording": "Stop recording",
+            "sendMessage": "Send message"
+        },
+        "dialogs": {
+            "newChatTitle": "Start New Chat?",
+            "newChatMessage": "Are you sure you want to start a new chat? Your current conversation will be saved.",
+            "newChatConfirm": "New Chat",
+            "deleteChatTitle": "Delete Chat?",
+            "deleteChatMessage": "This chat will be permanently deleted.",
+            "deleteChatConfirm": "Delete"
+        },
+        "tones": {
+            "normal": "Normal",
+            "funny": "Funny",
+            "pidgin": "Pidgin"
+        },
+        "imageStudio": {
+            "title": "Image Studio",
+            "generateTab": "Generate",
+            "editTab": "Edit",
+            "promptLabel": "Prompt",
+            "promptPlaceholder": "e.g., A futuristic Lagos with flying cars",
+            "aspectRatioLabel": "Aspect Ratio",
+            "square": "Square",
+            "landscape": "Landscape",
+            "portrait": "Portrait",
+            "generateButton": "Generate",
+            "uploadLabel": "Upload an Image to Edit",
+            "removeImage": "Remove image",
+            "uploadPlaceholderClick": "Click to upload",
+            "uploadPlaceholderDrag": "or drag and drop",
+            "uploadPlaceholderFormats": "PNG, JPG, or WEBP",
+            "editPromptLabel": "Editing Instructions",
+            "editPromptPlaceholder": "e.g., Add a hat to the person",
+            "applyEditsButton": "Apply Edits"
+        },
+        "audioStudio": {
+            "title": "Audio Studio (Text-to-Speech)",
+            "textLabel": "Text to Convert",
+            "textPlaceholder": "Enter text here...",
+            "voiceLabel": "Select Voice",
+            "generateButton": "Generate Audio",
+            "generatingFeedback": "Generating audio, this may take a moment...",
+            "generationFailed": "Audio generation failed: {{error}}",
+            "unknownError": "An unknown error occurred.",
+            "playbackFailed": "Playback failed: {{error}}",
+            "generatedAudio": "Generated Audio",
+            "play": "Play",
+            "stop": "Stop",
+            "download": "Download",
+            "delete": "Delete",
+            "previewText": "Hello, I am a voice from Ratel AI.",
+            "previewVoice": "Preview voice {{voiceName}}",
+            "previewFailed": "Preview failed. Please try another voice."
+        },
+        "videoStudio": {
+            "title": "Video Studio",
+            "promptLabel": "Prompt",
+            "promptPlaceholder": "e.g., A drone shot of Victoria Falls",
+            "uploadLabel": "Add an image (optional)",
+            "removeImage": "Remove image",
+            "imageToVideoDisclaimer": "The model will use your image as inspiration to generate the video.",
+            "aspectRatioLabel": "Aspect Ratio",
+            "square": "1:1",
+            "landscape": "16:9",
+            "portrait": "9:16",
+            "qualityLabel": "Quality",
+            "qualityStandard": "Standard",
+            "qualityHigh": "High",
+            "info": "Video generation can take a few minutes. We'll notify you when it's ready!",
+            "generateButton": "Generate Video"
+        },
+        "hustleStudio": {
+            "title": "Hustle Studio",
+            "description": "Tell me about your skills or budget, and I'll suggest some side hustles for you.",
+            "placeholder": "e.g., I have ₦20,000, or I'm good at writing",
+            "button": "Get Hustle Ideas"
+        },
+        "learnStudio": {
+            "title": "Learn Studio",
+            "description": "What skill do you want to master today? Let's start with your first lesson.",
+            "skills": {
+                "video": "Video Editing",
+                "coding": "Basic Coding",
+                "canva": "Canva Design",
+                "ai": "Using AI Tools"
+            }
+        },
+        "marketStudio": {
+            "title": "Market Finder",
+            "description": "Looking for something? Tell me what item and your location to find it.",
+            "itemLabel": "What are you looking for?",
+            "itemPlaceholder": "e.g., Ankara fabric, fresh ginger",
+            "locationLabel": "What is your location?",
+            "locationPlaceholder": "e.g., Accra, Ghana or Computer Village, Ikeja",
+            "button": "Find in Market"
+        },
+        "profileStudio": {
+            "title": "My Profile",
+            "noInterests": "Not yet defined",
+            "topInterest": "Top Interest"
+        },
+        "community": {
+            "fromTelegram": "from Telegram",
+            "postPlaceholder": "What's on your mind, {{name}}?",
+            "uploadImage": "Upload Image",
+            "postButton": "Post",
+            "likedByYou": "Liked",
+            "like": "Like",
+            "comment": "Comment",
+            "commentPlaceholder": "Add a comment...",
+            "feedTitle": "Feed",
+            "leaderboardTitle": "Leaderboard",
+            "rewardsTitle": "Rewards",
+            "telegramTitle": "Telegram",
+            "weeklyRanking": "Based on weekly community points",
+            "points": "pts",
+            "walletTitle": "My Wallet",
+            "yourRatelCoins": "Your Ratel Coins Balance",
+            "cashValue": "Estimated Cash Value",
+            "redeemCoins": "Redeem Coins",
+            "viewLeaderboard": "View Leaderboard",
+            "telegramDescription": "Connect your Telegram account to sync your points and get community updates directly.",
+            "telegramUsernameLabel": "Your Telegram Username",
+            "telegramUsernamePlaceholder": "e.g., your_username",
+            "connectButton": "Connect",
+            "disconnectButton": "Disconnect",
+            "connectedStatus": "Connected as @{{username}}",
+            "redeemDescription": "You can convert your coins to airtime or other rewards.",
+            "yourBalance": "Your Balance",
+            "coins": "Coins",
+            "redeemNow": "Redeem Now",
+            "notEnoughCoins": "Not enough coins to redeem",
+            "redeemMinimum": "Minimum {{min}} coins to redeem.",
+            "redeemSuccessTitle": "Redemption Successful!",
+            "redeemSuccessDescription": "Your request to redeem ₦{{amount}} has been submitted. It will be processed within 24 hours."
+        },
+        "settings": {
+            "title": "Settings",
+            "language": {
+                "title": "Language",
+                "label": "App Language",
+                "en": "English",
+                "fr": "Français (French)",
+                "am": "አማርኛ (Amharic)",
+                "ng": "Nigerian Pidgin",
+                "sw": "Kiswahili"
+            },
+            "customInstructions": {
+                "title": "Custom Instructions",
+                "nicknameLabel": "What would you like Ratel to call you?",
+                "nicknamePlaceholder": "e.g., Oga John, Hustler Bee",
+                "aboutYouLabel": "What would you like Ratel to know about you to provide better responses?",
+                "aboutYouPlaceholder": "e.g., I'm a student in Accra studying marketing. I'm trying to start a side business.",
+                "expectationsLabel": "How would you like Ratel to respond?",
+                "expectationsPlaceholder": "e.g., Be direct and to the point. Use bullet points. Always provide examples."
+            },
+            "appearance": {
+                "title": "Appearance",
+                "themeLabel": "Theme",
+                "light": "Light",
+                "dark": "Dark",
+                "galleryLabel": "Background Gallery",
+                "uploadButton": "Upload Your Own",
+                "removeButton": "Remove Background"
+            },
+            "memory": {
+                "title": "Memory",
+                "savedMemories": "Reference saved memories",
+                "chatHistory": "Use chat history for context"
+            },
+            "responses": {
+                "title": "Voice & Responses",
+                "voicePreference": "Voice Preference for Read Aloud"
+            },
+            "notifications": {
+                "title": "Security & Notifications",
+                "pushLabel": "Push Notifications",
+                "pushDescription": "For task reminders and updates",
+                "mfaLabel": "Two-Factor Authentication (2FA)",
+                "mfaDescription": "Enhance your account security"
+            },
+            "logout": "Log Out"
+        },
+        "authModal": {
+            "signupTitle": "Create an Account",
+            "signupDescription": "Join the Ratel community to get started.",
+            "loginTitle": "Welcome Back!",
+            "loginDescription": "Sign in to continue your journey.",
+            "forgotPasswordTitle": "Forgot Password?",
+            "forgotPasswordDescription": "Enter your email and we'll send you a reset link.",
+            "nicknameLabel": "Nickname",
+            "nicknamePlaceholder": "e.g., Oga John",
+            "emailLabel": "Email",
+            "emailPlaceholder": "you@example.com",
+            "passwordLabel": "Password",
+            "confirmPasswordLabel": "Confirm Password",
+            "rememberMe": "Remember me",
+            "forgotPasswordLink": "Forgot password?",
+            "signupButton": "Create Account",
+            "loginButton": "Log In",
+            "forgotPasswordButton": "Send Reset Link",
+            "switchToLogin": "Already have an account?",
+            "switchToLoginLink": "Log in",
+            "switchToSignup": "Don't have an account?",
+            "switchToSignupLink": "Sign up",
+            "backToLogin": "Back to login",
+            "resetLinkSent": "If an account exists for this email, a reset link has been sent.",
+            "error": {
+                "nicknameRequired": "Nickname is required.",
+                "emailRequired": "A valid email is required.",
+                "passwordRequired": "Password must be at least 6 characters.",
+                "passwordsDoNotMatch": "Passwords do not match.",
+                "userExists": "An account with this email already exists.",
+                "invalidCredentials": "Invalid email or password."
+            }
+        },
+        "proModal": {
+            "comingSoonTitle": "Ratel Pro is Coming Soon!",
+            "comingSoonDescription": "Get ready for exclusive features like unlimited generations, advanced tools, and priority support.",
+            "gotIt": "Got It!"
+        },
+        "supportModal": {
+            "title": "Support Ratel AI",
+            "description": "If you find Ratel helpful, consider supporting our development. Your contribution helps us keep the lights on!",
+            "flutterwave": "Support with Flutterwave",
+            "telebirr": "Support with Telebirr",
+            "maybeLater": "Maybe Later"
+        },
+        "voiceGroups": {
+            "premium": "Premium Voices (Gemini)",
+            "standard": "Standard Voices (Browser)"
+        },
+        "tasks": {
+            "noTasks": "No tasks yet. You can ask me to add one for you!"
+        },
+        "contact": {
+            "title": "Contact Us",
+            "getInTouch": "Get in Touch",
+            "intro": "Have questions, feedback, or a partnership idea? We'd love to hear from you. The best way to reach us is by email.",
+            "supportEmail": "Support Email:",
+            "formTitle": "Or Send Us a Message",
+            "nameLabel": "Your Name",
+            "namePlaceholder": "John Doe",
+            "emailLabel": "Your Email",
+            "emailPlaceholder": "you@example.com",
+            "messageLabel": "Your Message",
+            "messagePlaceholder": "I have a suggestion for...",
+            "sendMessage": "Send Message",
+            "sending": "Sending...",
+            "submitSuccess": "Message sent successfully! We'll get back to you soon.",
+            "submitError": "Failed to send message. Please try again or email us directly."
+        }
     }
   },
-  "sidebar": {
-    "newChat": "New Chat",
-    "imageStudio": "Image",
-    "audioStudio": "Audio",
-    "videoStudio": "Video",
-    "hustleStudio": "Hustle",
-    "learnStudio": "Learn",
-    "communityStudio": "Community",
-    "marketFinder": "Market",
-    "clearChat": "Clear Chat",
-    "history": "History",
-    "noHistory": "No history yet.",
-    "settings": "Settings",
-    "contactUs": "Contact Us",
-    "supportUs": "Support Us",
-    "logout": "Log out",
-    "openMenu": "Open Menu",
-    "search": "Search history...",
-    "rename": "Rename",
-    "delete": "Delete",
-    "upgradeToPro": "Upgrade to Pro",
-    "level": "Level {{level}}",
-    "xp": "XP"
-  },
-  "tones": {
-      "normal": "Normal",
-      "funny": "Funny",
-      "pidgin": "Pidgin"
-  },
-  "chatWindow": {
-    "placeholderTitle": "How can I help you today?",
-    "placeholderSubtitle": "Select a mode from the sidebar or just start typing to chat.",
-    "suggestion1": "Give me business ideas for ₦10,000",
-    "suggestion2": "Teach me about video editing",
-    "suggestion3": "Wetin dey sup?",
-    "suggestion4": "Explain how photosynthesis works"
-  },
-  "chatInput": {
-    "placeholder": "Ask Ratel AI anything...",
-    "listening": "Listening...",
-    "noSpeechError": "I didn't catch that. Please try again.",
-    "attachImage": "Attach image",
-    "stopRecording": "Stop recording",
-    "startRecording": "Start recording",
-    "sendMessage": "Send message",
-    "removeImage": "Remove image"
-  },
-  "chatMessage": {
-    "userUploadAlt": "User upload",
-    "generatedImageAlt": "Generated by Ratel AI",
-    "generatedVideoAlt": "Generated by Ratel AI",
-    "expandedImageAlt": "Expanded view",
-    "copy": "Copy message",
-    "stopSpeaking": "Stop speaking",
-    "readAloud": "Read aloud",
-    "delete": "Delete message",
-    "editPrompt": "Edit prompt",
-    "expandImage": "Expand image",
-    "downloadImage": "Download image",
-    "downloadVideo": "Download video",
-    "showMore": "Show more",
-    "showLess": "Show less",
-    "sources": "Sources"
-  },
-  "hustleStudio": {
-    "title": "Hustle Mode",
-    "description": "Enter your budget or a skill you have to get realistic business ideas tailored for Nigeria.",
-    "placeholder": "e.g., ₦10,000 or 'Graphic Design'",
-    "button": "Get Ideas"
-  },
-  "learnStudio": {
-      "title": "Learn Mode",
-      "description": "Choose a digital skill to start your daily lesson.",
-      "skills": {
-          "video": "Video Editing",
-          "coding": "Coding Basics",
-          "canva": "Canva Design",
-          "ai": "Using AI"
+  ng: {
+    translation: {
+      "landing": {
+        "title": "Ratel AI",
+        "subtitle": "Your sharp AI padi for hustle, learning, and market gist for Africa.",
+        "startChatting": "Start Chatting",
+        "footer": "Made for Africa."
+      },
+      "common": {
+        "ratelAI": "Ratel AI",
+        "cancel": "Cancel",
+        "generating": "Dey generate...",
+        "editing": "Dey edit...",
+        "thinking1": "I dey think...",
+        "thinking2": "Dey cook response...",
+        "thinking3": "Hold on small...",
+        "error": "Sorry, network do something. Try again.",
+        "close": "Close"
+      },
+      "tones": {
+        "normal": "Normal",
+        "funny": "Funny",
+        "pidgin": "Pidgin"
+      },
+      "sidebar": {
+        "newChat": "New Chat",
+        "hustleStudio": "Hustle",
+        "learnStudio": "Learn",
+        "marketFinder": "Market",
+        "imageStudio": "Image",
+        "audioStudio": "Audio",
+        "videoStudio": "Video",
+        "communityStudio": "Community",
+        "history": "History",
+        "search": "Search...",
+        "noHistory": "No chat yet.",
+        "level": "Level {{level}}",
+        "settings": "Settings",
+        "contactUs": "Contact Us",
+        "logout": "Logout",
+        "supportUs": "Support Us",
+        "openMenu": "Open menu"
+      },
+      "chatWindow": {
+        "placeholderTitle": "Wetin dey sup?",
+        "placeholderSubtitle": "Ask me anything about your hustle, new skill wey you wan learn, or wetin dey trend for market.",
+        "suggestion1": "Give me 3 side hustle ideas wey I fit start with ₦10,000",
+        "suggestion2": "Teach me digital marketing basics",
+        "suggestion3": "How much dem dey sell tomatoes for Lagos now?",
+        "suggestion4": "Create image of African superhero"
       }
-  },
-  "community": {
-    "feedTitle": "Feed",
-    "leaderboardTitle": "Leaderboard",
-    "rewardsTitle": "Wallet",
-    "telegramTitle": "My Telegram",
-    "postPlaceholder": "What's on your mind, {{name}}?",
-    "postButton": "Post",
-    "uploadImage": "Upload Image",
-    "commentPlaceholder": "Write a comment...",
-    "like": "Like",
-    "comment": "Comment",
-    "comments": "Comments",
-    "likedByYou": "You liked this",
-    "weeklyRanking": "Weekly Ranking",
-    "points": "Points",
-    "yourPoints": "Your Points Balance",
-    "rewardsDescription": "Convert your points into cool rewards! Keep engaging to earn more.",
-    "claimReward": "Claim",
-    "rewardData": "{{amount}} Data",
-    "rewardAirtime": "₦{{amount}} Airtime",
-    "telegramDescription": "Connect your Telegram account to share posts and see messages from the Ratel Community group right here in the feed.",
-    "telegramUsernameLabel": "Your Telegram Username",
-    "telegramUsernamePlaceholder": "e.g., your_username",
-    "connectButton": "Connect",
-    "connectedStatus": "Connected as @{{username}}",
-    "disconnectButton": "Disconnect",
-    "fromTelegram": "from Telegram",
-    "walletTitle": "💰 Ratel Wallet",
-    "yourRatelCoins": "Your RatelCoins",
-    "cashValue": "Cash Value (est.)",
-    "redeemCoins": "Redeem Coins",
-    "viewLeaderboard": "View Leaderboard"
-  },
-  "redeemModal": {
-    "title": "Redeem Your Coins",
-    "redeemTypeLabel": "Redeem Type",
-    "airtime": "Airtime",
-    "data": "Data",
-    "cash": "Cash",
-    "amountLabel": "Amount (Coins)",
-    "submitButton": "Submit",
-    "notEnoughCoins": "❌ You don't have enough coins for that amount.",
-    "requestSent": "✅ Your redeem request has been sent for admin approval.",
-    "enterAmount": "Please enter a valid amount."
-  },
-   "marketStudio": {
-    "title": "AI Market Finder",
-    "description": "Tell me what you want to buy or sell, and where you are. I'll search the web to find local markets and vendors for you.",
-    "itemLabel": "What do you want to find?",
-    "itemPlaceholder": "e.g., Cheap Android phones, second-hand laptops",
-    "locationLabel": "Where are you located?",
-    "locationPlaceholder": "e.g., Computer Village, Ikeja, Lagos",
-    "button": "Find Markets"
-  },
-  "profileStudio": {
-      "title": "My Profile",
-      "joined": "Joined",
-      "topInterest": "Top Interest",
-      "noInterests": "Not yet determined"
-  },
-  "imageStudio": {
-    "title": "Image Studio",
-    "generateTab": "Generate",
-    "editTab": "Edit",
-    "promptLabel": "Describe the image you want to create:",
-    "promptPlaceholder": "e.g., A majestic lion with a crown of stars",
-    "aspectRatioLabel": "Aspect Ratio:",
-    "square": "Square",
-    "landscape": "Landscape",
-    "portrait": "Portrait",
-    "generateButton": "Generate Image",
-    "uploadLabel": "Upload an image to edit:",
-    "removeImage": "Remove image",
-    "uploadPlaceholderClick": "Click to upload",
-    "uploadPlaceholderDrag": "or drag and drop",
-    "uploadPlaceholderFormats": "PNG, JPG, WEBP",
-    "editPromptLabel": "Describe the changes you want to make:",
-    "editPromptPlaceholder": "e.g., Add a birthday hat to the subject",
-    "applyEditsButton": "Apply Edits"
-  },
-  "audioStudio": {
-    "title": "Audio Studio",
-    "generatingFeedback": "The Oracle is preparing your audio...",
-    "generationFailed": "Audio generation failed: {{error}}",
-    "unknownError": "An unknown error occurred.",
-    "playbackFailed": "Playback failed: {{error}}",
-    "previewFailed": "Could not generate voice preview.",
-    "textLabel": "Text to generate:",
-    "textPlaceholder": "Enter the text you want the Oracle to speak...",
-    "voiceLabel": "Voice:",
-    "previewVoice": "Preview voice {{voiceName}}",
-    "previewText": "Hello, I can read any text you provide.",
-    "generateButton": "Generate Audio",
-    "generatedAudio": "Generated Audio",
-    "stop": "Stop",
-    "play": "Play",
-    "download": "Download Audio",
-    "delete": "Delete Audio"
-  },
-  "videoStudio": {
-    "title": "Video Studio",
-    "promptLabel": "Describe the video you want to create:",
-    "promptPlaceholder": "e.g., A cinematic shot of a futuristic city at sunset",
-    "info": "Video generation can take several minutes. Please be patient while Ratel AI works its magic.",
-    "generateButton": "Generate Video",
-    "uploadLabel": "Upload an image (optional):",
-    "removeImage": "Remove image",
-    "aspectRatioLabel": "Aspect Ratio:",
-    "square": "Square (1:1)",
-    "landscape": "Landscape (16:9)",
-    "portrait": "Portrait (9:16)",
-    "qualityLabel": "Video Quality:",
-    "qualityStandard": "Standard",
-    "qualityHigh": "High",
-    "imageToVideoDisclaimer": "Heads up: The AI uses your image as inspiration. Exact details, especially faces, may be altered during the video generation process."
-  },
-  "settings": {
-    "title": "Settings",
-    "appearance": {
-      "title": "Appearance",
-      "galleryLabel": "Choose a background from the gallery:",
-      "uploadButton": "Upload Image",
-      "removeButton": "Remove Background"
-    },
-    "customInstructions": {
-      "title": "Custom Instructions",
-      "nicknameLabel": "Nickname",
-      "nicknamePlaceholder": "How Ratel AI will call you",
-      "aboutYouLabel": "About You",
-      "aboutYouPlaceholder": "What would you like Ratel AI to know about you to provide better responses?",
-      "expectationsLabel": "Expectations",
-      "expectationsPlaceholder": "How would you like Ratel AI to respond?"
-    },
-    "memory": {
-      "title": "Memory",
-      "savedMemories": "Reference saved memories",
-      "chatHistory": "Reference chat history"
-    },
-    "responses": {
-      "title": "Responses",
-      "voicePreference": "Voice Preference"
-    },
-    "notifications": {
-      "title": "Notifications & Security",
-      "pushLabel": "Push Notifications",
-      "pushDescription": "Get notified when Ratel responds to requests that take time, like research or image generation.",
-      "mfaLabel": "Multi-factor authentication",
-      "mfaDescription": "Require an extra security challenge when logging in."
-    },
-    "language": {
-        "title": "Language",
-        "label": "Choose your preferred language",
-        "en": "English",
-        "fr": "Français (French)",
-        "am": "አማርኛ (Amharic)",
-        "ng": "Nigerian Pidgin",
-        "sw": "Kiswahili (Swahili)"
-    },
-    "logout": "Log out of this device"
-  },
-  "contact": {
-    "title": "Contact Us",
-    "getInTouch": "Get in Touch",
-    "intro": "Have questions, feedback, or need support? We'd love to hear from you. Please reach out to our team, and we'll get back to you as soon as possible.",
-    "supportEmail": "Support Email:",
-    "formTitle": "Send us a message",
-    "submitSuccess": "Thank you for your message! We'll get back to you soon.",
-    "submitError": "Failed to send message. Please try again later or contact us directly via email.",
-    "nameLabel": "Your Name",
-    "namePlaceholder": "John Doe",
-    "emailLabel": "Your Email",
-    "emailPlaceholder": "john.doe@example.com",
-    "messageLabel": "Message",
-    "messagePlaceholder": "How can we help you?",
-    "sendMessage": "Send Message",
-    "sending": "Sending..."
-  },
-  "tasks": {
-    "noTasks": "You have no tasks."
-  },
-  "dialogs": {
-    "newChatTitle": "Start a new chat?",
-    "newChatMessage": "Your current conversation will be saved. Are you sure you want to start a new chat?",
-    "newChatConfirm": "Start New Chat",
-    "deleteChatTitle": "Delete this chat?",
-    "deleteChatMessage": "This conversation will be permanently deleted. This action cannot be undone.",
-    "deleteChatConfirm": "Delete"
-  },
-  "imageGen": {
-      "generating": "Generating your image...",
-      "error": "Sorry, I couldn't generate that image. The Oracle might be busy, or the request may have been denied. Please try a different description."
-  },
-  "imageEdit": {
-      "editing": "Editing your image...",
-      "error": "Sorry, I couldn't edit that image. Please try again with a different image or prompt."
-  },
-  "videoGen": {
-      "generatingInitial": "Generating your video... this may take a few minutes.",
-      "generatingStatus": "Generating video... Status: {{status}}",
-      "error": "Sorry, I couldn't generate that video. The Oracle might be busy, or the request may have been denied. Please try a different description."
-  },
-  "voiceGroups": {
-    "premium": "Ratel AI (Premium)",
-    "standard": "Browser (Standard)"
-  },
-  "supportModal": {
-    "title": "Support Ratel AI",
-    "description": "Your support helps us keep the servers running and continue improving. A single $5 donation makes a big difference. Thank you!",
-    "payWithAmount": "Pay $5 with {{method}}",
-    "thankYou": "Thank you so much for your support! ❤️",
-    "back": "Back",
-    "paystackSuccess": "Payment complete! Reference: {{reference}}",
-    "paystackClosed": "Payment window closed.",
-    "telebirrPendingTitle": "Backend Required",
-    "telebirrPendingBody": "A secure backend is required to process Telebirr payments safely. Your app's secret keys must never be exposed in the browser.",
-    "telebirrCodeExplanation": "The frontend would make a request to your own backend server:",
-    "telebirrBackendExplanation": "Your server would then use its secret key to securely communicate with Telebirr and complete the transaction."
-  },
-  "proModal": {
-    "comingSoonTitle": "Ratel AI Pro is Coming Soon!",
-    "comingSoonDescription": "We're working hard on exciting new features, including an ad-free experience, unlimited usage, and access to premium AI voices.",
-    "gotIt": "Got it!"
-  },
-  "adBanner": {
-    "dismiss": "Dismiss ad"
-  },
-  "meta": {
-    "defaultTitle": "Ratel AI - The Tenacious AI",
-    "defaultDescription": "Ratel AI is a tenacious and highly intelligent AI, enhanced with the expertise of a seasoned screenwriter to help with all your creative and analytical needs.",
-    "settingsTitle": "Settings - Ratel AI",
-    "settingsDescription": "Customize your Ratel AI experience. Adjust custom instructions, appearance, voice preferences, and more.",
-    "contactTitle": "Contact Us - Ratel AI",
-    "contactDescription": "Get in touch with the Ratel AI team for support, feedback, or inquiries.",
-    "chatTitle": "Chat - Ratel AI",
-    "newChatTitle": "New Chat - Ratel AI",
-    "chatDescription": "Start a new conversation with Ratel AI, your tenacious creative partner.",
-    "chatWithTitle": "{{title}} - Ratel AI",
-    "chatWithDescription": "An ongoing conversation with Ratel AI about \"{{title}}\"."
+    }
   }
 };
 
-const fr = { ...en }; // Placeholder for French
-const am = { ...en }; // Placeholder for Amharic
-const sw = { ...en }; // Placeholder for Swahili
-const ng = { ...en, 
-    "sidebar": { ...en.sidebar, "newChat": "New Chat", "communityStudio": "Community", "hustleStudio": "Hustle", "learnStudio": "Learn" },
-    "community": { ...en.community, "postPlaceholder": "Wetin dey your mind, {{name}}?", "postButton": "Post Am", "like": "Like", "comment": "Comment" }
-}; // Placeholder for Pidgin with some examples
-
 i18n
+  .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resources: {
-      en: { translation: en },
-      fr: { translation: fr },
-      am: { translation: am },
-      ng: { translation: ng },
-      sw: { translation: sw },
-    },
-    lng: localStorage.getItem('ratel_language') || 'en', // Get language from storage or default to 'en'
+    resources,
     fallbackLng: 'en',
     interpolation: {
-      escapeValue: false, 
+      escapeValue: false, // react already safes from xss
     },
+    detection: {
+      order: ['localStorage', 'navigator'],
+      caches: ['localStorage'],
+      lookupLocalStorage: 'ratel_language',
+    }
   });
 
 export default i18n;

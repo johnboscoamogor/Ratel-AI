@@ -82,8 +82,8 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [placeholder, setPlaceholder] = useState(t('chatInput.placeholder'));
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setPlaceholder(isRecording ? t('chatInput.listening') : t('chatInput.placeholder'));
