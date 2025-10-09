@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import LandingPage from './components/LandingPage';
 import ChatView from './components/ChatView';
@@ -113,18 +114,12 @@ const App: React.FC = () => {
     return () => clearInterval(intervalId); // Cleanup on component unmount
   }, []);
 
-  const handleLoginSuccess = (profile: { name: string; email: string }) => {
+  // FIX: Updated handleLoginSuccess to accept a full UserProfile object.
+  // This simplifies the logic by making the AuthModal responsible for creating/loading the profile,
+  // resolving the type error at the call sites in AuthModal.tsx.
+  const handleLoginSuccess = (profile: UserProfile) => {
     playSound('receive');
-    const newUserProfile: UserProfile = {
-      name: profile.name,
-      email: profile.email,
-      level: 1,
-      xp: 0,
-      communityPoints: 0,
-      interests: {},
-      joinedDate: new Date().toISOString(),
-    };
-    setUserProfile(newUserProfile);
+    setUserProfile(profile);
     setShowAuthModal(false);
     setPage('chat');
   };

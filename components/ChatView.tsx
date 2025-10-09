@@ -16,7 +16,8 @@ import MarketStudio from './MarketStudio';
 import { Message, Role, ChatSession, AppSettings, Task, UserProfile, RatelMode, RatelTone } from '../types';
 import { ai } from '../services/geminiService';
 import { SYSTEM_INSTRUCTION, taskTools, CoffeeIcon, MenuIcon, ChevronDownIcon } from '../constants';
-import { GenerateContentResponse, Modality, Chat, FunctionCallPart, Part, ContentUnion } from '@google/genai';
+// FIX: Changed FunctionCallPart to FunctionCall, which is the correct exported member from @google/genai.
+import { GenerateContentResponse, Modality, Chat, FunctionCall, Part, ContentUnion } from '@google/genai';
 import { playSound, generateAudioBlob, getAvailableVoices, cancelCurrentAudioGeneration } from '../services/audioService';
 import { useTranslation } from 'react-i18next';
 
@@ -339,7 +340,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
         
         let modelResponse = '';
         let isFirstChunk = true;
-        const functionCalls: FunctionCallPart[] = [];
+        const functionCalls: FunctionCall[] = [];
   
         for await (const chunk of stream) {
             if (isFirstChunk) {

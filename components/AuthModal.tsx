@@ -69,12 +69,22 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
             return;
         }
 
-        // Simulate user creation
-        const newUser = { name: nickname, email, password }; // NEVER store plaintext passwords in a real app
-        localStorage.setItem(`ratel_user_${email}`, JSON.stringify(newUser));
+        // FIX: Create a full UserProfile object to match the expected type of the onLoginSuccess prop.
+        // Create and save new user profile
+        const newUserProfile: UserProfile = {
+            name: nickname,
+            email,
+            level: 1,
+            xp: 0,
+            communityPoints: 0,
+            interests: {},
+            joinedDate: new Date().toISOString(),
+        };
+        // In a real app, NEVER store plaintext passwords. This is for simulation only.
+        localStorage.setItem(`ratel_user_${email}`, JSON.stringify({ ...newUserProfile, password }));
         
         playSound('send');
-        onLoginSuccess({ name: nickname, email });
+        onLoginSuccess(newUserProfile);
     };
 
     const handleLogin = (e: React.FormEvent) => {
@@ -105,8 +115,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
           localStorage.removeItem('ratel_remembered_user');
         }
 
+        // FIX: Load the full user profile and pass it to onLoginSuccess to resolve the type error.
+        // Remove password before passing profile to app state
+        const { password: _, ...userProfile } = storedUser;
+
         playSound('send');
-        onLoginSuccess({ name: storedUser.name, email });
+        onLoginSuccess(userProfile);
     };
     
     const handleForgotPassword = (e: React.FormEvent) => {

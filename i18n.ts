@@ -1,4 +1,3 @@
-// FIX: Replaced placeholder content with a full i18next configuration, including all necessary translation keys for the application to function correctly.
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
@@ -7,8 +6,8 @@ const resources = {
   en: {
     translation: {
         "landing": {
-            "title": "Ratel AI",
-            "subtitle": "Your versatile AI assistant for hustles, learning, and local market insights across Africa.",
+            "title": "I am Ratel AI",
+            "subtitle": "Your friendly, culturally-aware assistant designed for a diverse African audience. Let's learn, grow, and earn together.",
             "startChatting": "Start Chatting",
             "footer": "Built for Africa."
         },
@@ -301,7 +300,13 @@ const resources = {
             "description": "If you find Ratel helpful, consider supporting our development. Your contribution helps us keep the lights on!",
             "flutterwave": "Support with Flutterwave",
             "telebirr": "Support with Telebirr",
-            "maybeLater": "Maybe Later"
+            "maybeLater": "Maybe Later",
+            "enterAmount": "Enter Amount (NGN)",
+            "payButton": "Pay with Flutterwave",
+            "telebirrInstructionsTitle": "Pay with Telebirr",
+            "telebirrInstructions": "Please send your contribution to the following Telebirr number:",
+            "backButton": "Back",
+            "configureKeyError": "Flutterwave public key is not configured. Please follow the setup instructions to continue."
         },
         "voiceGroups": {
             "premium": "Premium Voices (Gemini)",
@@ -332,8 +337,8 @@ const resources = {
   ng: {
     translation: {
       "landing": {
-        "title": "Ratel AI",
-        "subtitle": "Your sharp AI padi for hustle, learning, and market gist for Africa.",
+        "title": "I am Ratel AI",
+        "subtitle": "Your sharp AI padi for hustle, learning, and market gist for Africa. Make we learn, grow, and earn together.",
         "startChatting": "Start Chatting",
         "footer": "Made for Africa."
       },

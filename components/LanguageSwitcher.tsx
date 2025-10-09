@@ -39,7 +39,11 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ currentLang, onChan
         setIsOpen(false);
     };
 
-    const CurrentFlag = languages[currentLang].Flag;
+    // FIX: Add a fallback to 'en' if the current language from settings is invalid or doesn't exist in the languages map.
+    // This prevents a crash if localStorage contains an outdated or corrupted language code.
+    const currentLanguageData = languages[currentLang] || languages['en'];
+    const CurrentFlag = currentLanguageData.Flag;
+
 
     return (
         <div ref={dropdownRef} className="relative">
@@ -52,7 +56,7 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ currentLang, onChan
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 origin-top-right">
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 origin-top-right z-30">
                     <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
                         {(Object.keys(languages) as Array<keyof typeof languages>).map((code) => {
                            const { name, Flag } = languages[code];

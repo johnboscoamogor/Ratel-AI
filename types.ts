@@ -1,6 +1,5 @@
 // FIX: Added all missing type definitions to resolve import errors across the application.
 import { Modality, type LiveServerMessage, type Blob as GenaiBlob } from "@google/genai";
-import { ai } from './services/geminiService';
 
 export enum Role {
   USER = 'user',
