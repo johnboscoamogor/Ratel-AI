@@ -137,7 +137,7 @@ const en = {
   "community": {
     "feedTitle": "Feed",
     "leaderboardTitle": "Leaderboard",
-    "rewardsTitle": "Rewards",
+    "rewardsTitle": "Wallet",
     "telegramTitle": "My Telegram",
     "postPlaceholder": "What's on your mind, {{name}}?",
     "postButton": "Post",
@@ -160,7 +160,24 @@ const en = {
     "connectButton": "Connect",
     "connectedStatus": "Connected as @{{username}}",
     "disconnectButton": "Disconnect",
-    "fromTelegram": "from Telegram"
+    "fromTelegram": "from Telegram",
+    "walletTitle": "💰 Ratel Wallet",
+    "yourRatelCoins": "Your RatelCoins",
+    "cashValue": "Cash Value (est.)",
+    "redeemCoins": "Redeem Coins",
+    "viewLeaderboard": "View Leaderboard"
+  },
+  "redeemModal": {
+    "title": "Redeem Your Coins",
+    "redeemTypeLabel": "Redeem Type",
+    "airtime": "Airtime",
+    "data": "Data",
+    "cash": "Cash",
+    "amountLabel": "Amount (Coins)",
+    "submitButton": "Submit",
+    "notEnoughCoins": "❌ You don't have enough coins for that amount.",
+    "requestSent": "✅ Your redeem request has been sent for admin approval.",
+    "enterAmount": "Please enter a valid amount."
   },
    "marketStudio": {
     "title": "AI Market Finder",
@@ -332,7 +349,7 @@ const en = {
     "paystackClosed": "Payment window closed.",
     "telebirrPendingTitle": "Backend Required",
     "telebirrPendingBody": "A secure backend is required to process Telebirr payments safely. Your app's secret keys must never be exposed in the browser.",
-    "telebirrCodeExplanation": "The frontend would make a request to your backend server:",
+    "telebirrCodeExplanation": "The frontend would make a request to your own backend server:",
     "telebirrBackendExplanation": "Your server would then use its secret key to securely communicate with Telebirr and complete the transaction."
   },
   "proModal": {

@@ -7,6 +7,7 @@ import CommunityFeed from './CommunityFeed';
 import Leaderboard from './Leaderboard';
 import Rewards from './Rewards';
 import TelegramConnect from './TelegramConnect';
+import RedeemModal from './RedeemModal';
 
 interface CommunityViewProps {
   userProfile: UserProfile;
@@ -19,6 +20,7 @@ type CommunityTab = 'feed' | 'leaderboard' | 'rewards' | 'telegram';
 const CommunityView: React.FC<CommunityViewProps> = ({ userProfile, setUserProfile, onBack }) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<CommunityTab>('feed');
+  const [isRedeemModalOpen, setIsRedeemModalOpen] = useState(false);
 
   const handleBackClick = () => {
     playSound('click');
@@ -30,7 +32,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ userProfile, setUserProfi
       case 'leaderboard':
         return <Leaderboard currentUser={userProfile} />;
       case 'rewards':
-        return <Rewards currentUser={userProfile} />;
+        return <Rewards currentUser={userProfile} onRedeem={() => setIsRedeemModalOpen(true)} />;
       case 'telegram':
         return <TelegramConnect userProfile={userProfile} setUserProfile={setUserProfile} />;
       case 'feed':
@@ -72,6 +74,14 @@ const CommunityView: React.FC<CommunityViewProps> = ({ userProfile, setUserProfi
       <main className="flex-grow overflow-y-auto bg-gray-100">
         {renderTabContent()}
       </main>
+      
+      {isRedeemModalOpen && (
+        <RedeemModal 
+            onClose={() => setIsRedeemModalOpen(false)}
+            userProfile={userProfile}
+            setUserProfile={setUserProfile}
+        />
+      )}
     </div>
   );
 };

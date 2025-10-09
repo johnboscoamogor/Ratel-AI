@@ -224,6 +224,24 @@ export const EthiopiaFlagIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props)
     </svg>
 );
 
+export const NigeriaFlagIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600">
+        <path fill="#008751" d="M0 0h300v600H0z"/>
+        <path fill="#fff" d="M300 0h300v600H300z"/>
+        <path fill="#008751" d="M600 0h300v600H600z"/>
+    </svg>
+);
+
+export const TanzaniaFlagIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600">
+        <path fill="#1EB53A" d="M0 0h900v600H0z"/>
+        <path fill="#00A3DD" d="M0 600h900V0z"/>
+        <path d="M0 600L900 0" stroke="#000" strokeWidth="200"/>
+        <path d="M0 600L900 0" stroke="#FCD116" strokeWidth="160"/>
+    </svg>
+);
+
+
 export const CoffeeIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M18 8h1a4 4 0 0 1 0 8h-1"/>
@@ -353,6 +371,18 @@ export const AwardIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
         <circle cx="12" cy="8" r="7"></circle>
         <polyline points="8.21 13.89 7 23 12 17 17 23 15.79 13.88"></polyline>
     </svg>
+);
+
+export const CoinIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+    <svg {...props} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12,2C6.477,2,2,6.477,2,12s4.477,10,10,10s10-4.477,10-10S17.523,2,12,2z M12,17.27l-3.18,1.86l0.87-3.64l-2.83-2.45 l3.73-0.34L12,9.41l1.41,3.29l3.73,0.34l-2.83,2.45l0.87,3.64L12,17.27z"/>
+    </svg>
+);
+
+export const AdminIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg {...props} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+  </svg>
 );
 
 export const SYSTEM_INSTRUCTION = `You are Ratel AI, a helpful and tenacious AI assistant for African youth, particularly in Nigeria. Your goal is to help users learn, earn, and grow. Pay close attention to the conversation history to understand the full context. Assume follow-up questions relate to the previous topic unless the user clearly changes the subject.`;

@@ -26,7 +26,7 @@ const Leaderboard: React.FC<LeaderboardProps> = ({ currentUser }) => {
     return (
         <div className="p-4 md:p-6">
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h2 className="text-xl font-bold text-gray-800 text-center mb-1">{t('community.leaderboardTitle')}</h2>
+                <h2 className="text-xl font-bold text-gray-800 text-center mb-1">🏆 {t('community.leaderboardTitle')} 🏆</h2>
                 <p className="text-sm text-gray-500 text-center mb-6">{t('community.weeklyRanking')}</p>
                 
                 <div className="space-y-3">

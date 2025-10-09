@@ -25,7 +25,7 @@ interface ChatViewProps {
   setUserProfile: React.Dispatch<React.SetStateAction<UserProfile | null>>;
   settings: AppSettings;
   setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
-  setPage: (page: 'chat' | 'settings' | 'contact' | 'community') => void;
+  setPage: (page: 'chat' | 'settings' | 'contact' | 'community' | 'admin') => void;
   onLogout: () => void;
   addXp: (points: number) => void;
   trackInterest: (mode: RatelMode) => void;

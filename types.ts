@@ -1,97 +1,105 @@
-// FIX: Removed circular import of 'Role' from './types'.
+// Enums for specific roles and modes
 export enum Role {
-  USER,
-  MODEL,
+  USER = 'user',
+  MODEL = 'model',
 }
 
-export interface UserProfile {
-  name: string;
-  email: string;
-  xp: number;
-  level: number;
-  interests: Record<string, number>;
-  communityPoints: number;
-  telegramUsername?: string;
+export type RatelMode = 'hustle' | 'learn' | 'market' | 'community' | 'general';
+export type RatelTone = 'normal' | 'funny' | 'pidgin';
+
+// Core message structure
+export interface Message {
+  id: string;
+  role: Role;
+  content: string;
+  imageUrl?: string;
+  originalImageUrl?: string; // For user-uploaded images before processing
+  imagePrompt?: string;
+  videoUrl?: string;
+  videoPrompt?: string;
+  tasks?: Task[];
+  sources?: { uri: string; title: string }[];
 }
 
+// Represents a single chat conversation
+export interface ChatSession {
+  id: string;
+  title: string;
+  messages: Message[];
+}
+
+// Task structure for the to-do list feature
 export interface Task {
   id: string;
   description: string;
   completed: boolean;
 }
 
-export interface Message {
-  id: string;
-  role: Role;
-  content: string;
-  imageUrl?: string;
-  originalImageUrl?: string;
-  tasks?: Task[];
-  imagePrompt?: string;
-  videoUrl?: string;
-  videoPrompt?: string;
-  sources?: { uri: string; title: string }[];
+// User profile and progress
+export interface UserProfile {
+  name: string;
+  email: string;
+  level: number;
+  xp: number;
+  communityPoints: number;
+  interests: Partial<Record<RatelMode, number>>; // Tracks usage of different modes
+  joinedDate: string;
+  telegramUsername?: string;
+  isAdmin?: boolean;
 }
 
-export interface ChatSession {
-  id:string;
-  title: string;
-  messages: Message[];
-}
-
-export interface Comment {
-  id: string;
-  authorName: string;
-  authorId: string;
-  content: string;
-  timestamp: number;
-}
-
-export interface CommunityPost {
-  id: string;
-  authorName: string;
-  authorId: string;
-  content: string;
-  imageUrl?: string;
-  videoUrl?: string;
-  likes: string[]; // Array of user emails/IDs
-  comments: Comment[];
-  timestamp: number;
-  source?: 'ratel' | 'telegram';
-}
-
-export interface LeaderboardEntry {
-    name: string;
-    email: string;
-    points: number;
-}
-
-
-export type RatelTone = 'normal' | 'funny' | 'pidgin';
-export type RatelMode = 'hustle' | 'learn' | 'community' | 'market';
-
+// Application settings structure
 export interface AppSettings {
+  language: 'en' | 'fr' | 'am' | 'ng' | 'sw';
+  chatTone: RatelTone;
   customInstructions: {
-    aboutYou: string;
     nickname: string;
+    aboutYou: string;
     expectations: string;
+  };
+  appearance: {
+    theme: 'light' | 'dark';
+    backgroundImage: string;
   };
   memory: {
     referenceSavedMemories: boolean;
     referenceChatHistory: boolean;
   };
-  notifications: {
-    pushEnabled: boolean;
+  voice: {
+    selectedVoice: string;
   };
   security: {
     mfaEnabled: boolean;
   };
-  voice: {
-    selectedVoice: string;
+  notifications: {
+    pushEnabled: boolean;
   };
-  appearance: {
-    backgroundImage: string;
-  };
-  language: 'en' | 'fr' | 'am' | 'ng' | 'sw';
-  chatTone: RatelTone;
+}
+
+
+// Community Feature Types
+export interface Comment {
+    id: string;
+    authorName: string;
+    authorId: string; // user's email
+    content: string;
+    timestamp: number;
+}
+
+export interface CommunityPost {
+    id: string;
+    authorName: string;
+    authorId: string; // user's email
+    content: string;
+    imageUrl?: string;
+    likes: string[]; // array of user emails
+    comments: Comment[];
+    timestamp: number;
+    source: 'ratel' | 'telegram';
+}
+
+export interface LeaderboardEntry {
+    email: string;
+    name: string;
+    points: number;
 }

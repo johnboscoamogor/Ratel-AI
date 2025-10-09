@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { GlobeIcon, UKFlagIcon, FranceFlagIcon, EthiopiaFlagIcon } from '../constants';
+import { UKFlagIcon, FranceFlagIcon, EthiopiaFlagIcon, NigeriaFlagIcon, TanzaniaFlagIcon } from '../constants';
 import { playSound } from '../services/audioService';
+import { AppSettings } from '../types';
 
 interface LanguageSwitcherProps {
-    currentLang: 'en' | 'fr' | 'am';
-    onChangeLang: (lang: 'en' | 'fr' | 'am') => void;
+    currentLang: AppSettings['language'];
+    onChangeLang: (lang: AppSettings['language']) => void;
 }
 
 const languages = {
     en: { name: 'English', Flag: UKFlagIcon },
+    ng: { name: 'Pidgin', Flag: NigeriaFlagIcon },
+    sw: { name: 'Kiswahili', Flag: TanzaniaFlagIcon },
     fr: { name: 'Français', Flag: FranceFlagIcon },
     am: { name: 'አማርኛ', Flag: EthiopiaFlagIcon },
 };
@@ -29,7 +32,7 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ currentLang, onChan
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleLanguageSelect = (lang: 'en' | 'fr' | 'am') => {
+    const handleLanguageSelect = (lang: AppSettings['language']) => {
         playSound('click');
         onChangeLang(lang);
         i18n.changeLanguage(lang);
@@ -45,25 +48,28 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ currentLang, onChan
                 className="flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-md hover:bg-gray-100 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200"
                 aria-label="Change language"
             >
-                <CurrentFlag className="w-6 h-6 rounded-full" />
+                <CurrentFlag className="w-6 h-6 rounded-full object-cover" />
             </button>
 
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 origin-top-right">
                     <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                        {Object.entries(languages).map(([code, { name, Flag }]) => (
+                        {(Object.keys(languages) as Array<keyof typeof languages>).map((code) => {
+                           const { name, Flag } = languages[code];
+                           return (
                             <button
                                 key={code}
-                                onClick={() => handleLanguageSelect(code as 'en' | 'fr' | 'am')}
+                                onClick={() => handleLanguageSelect(code)}
                                 className={`w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
                                     currentLang === code ? 'font-bold' : ''
                                 }`}
                                 role="menuitem"
                             >
-                                <Flag className="w-5 h-5 mr-3 rounded-sm" />
+                                <Flag className="w-5 h-5 mr-3 rounded-sm object-cover" />
                                 <span>{name}</span>
                             </button>
-                        ))}
+                           )
+                        })}
                     </div>
                 </div>
             )}

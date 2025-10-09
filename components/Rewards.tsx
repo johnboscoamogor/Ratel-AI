@@ -1,66 +1,47 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserProfile } from '../types';
-import { StarIcon } from '../constants';
+import { CoinIcon } from '../constants';
 import { playSound } from '../services/audioService';
 
 interface RewardsProps {
     currentUser: UserProfile;
+    onRedeem: () => void;
 }
 
-const rewardsCatalog = [
-    { id: 'data_100', points: 1000, description: '100MB Data', type: 'data', amount: '100MB' },
-    { id: 'airtime_500', points: 2500, description: '₦500 Airtime', type: 'airtime', amount: 500 },
-    { id: 'data_500', points: 4000, description: '500MB Data', type: 'data', amount: '500MB' },
-    { id: 'airtime_1000', points: 5000, description: '₦1000 Airtime', type: 'airtime', amount: 1000 },
-];
+const CASH_VALUE_RATE = 0.1; // e.g., 1 coin = 0.1 NGN
 
-const Rewards: React.FC<RewardsProps> = ({ currentUser }) => {
+const Rewards: React.FC<RewardsProps> = ({ currentUser, onRedeem }) => {
     const { t } = useTranslation();
-
-    const handleClaim = (points: number) => {
-        playSound('click');
-        if (currentUser.communityPoints >= points) {
-            alert(`Reward claimed! (This is a simulation). Your new point balance would be ${currentUser.communityPoints - points}.`);
-            // In a real app, you would deduct points and fulfill the reward via backend.
-        } else {
-            alert("You don't have enough points to claim this reward yet. Keep engaging!");
-        }
-    };
+    const cashValue = (currentUser.communityPoints * CASH_VALUE_RATE).toFixed(2);
 
     return (
         <div className="p-4 md:p-6">
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h2 className="text-xl font-bold text-gray-800 text-center mb-4">{t('community.rewardsTitle')}</h2>
+                <h2 className="text-xl font-bold text-gray-800 text-center mb-4">{t('community.walletTitle')}</h2>
 
-                <div className="text-center bg-green-50 border-2 border-dashed border-green-200 p-4 rounded-lg mb-6">
-                    <p className="text-sm font-medium text-gray-600 mb-1">{t('community.yourPoints')}</p>
-                    <p className="text-4xl font-bold text-green-600">{currentUser.communityPoints}</p>
+                <div className="text-center bg-gradient-to-br from-yellow-50 to-amber-100 border-2 border-dashed border-yellow-200 p-6 rounded-lg mb-6">
+                    <p className="text-sm font-medium text-yellow-800 mb-2">{t('community.yourRatelCoins')}</p>
+                    <div className="flex items-center justify-center gap-2">
+                        <CoinIcon className="w-10 h-10 text-yellow-400" />
+                        <p className="text-5xl font-bold text-yellow-600">{currentUser.communityPoints.toLocaleString()}</p>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-3">{t('community.cashValue')}: <span className="font-semibold">₦{cashValue}</span></p>
                 </div>
-                
-                <p className="text-sm text-gray-500 text-center mb-6">{t('community.rewardsDescription')}</p>
 
                 <div className="space-y-3">
-                    {rewardsCatalog.map(reward => (
-                        <div key={reward.id} className="flex items-center justify-between p-3 bg-gray-50 border rounded-lg">
-                            <div className="flex items-center">
-                                <div className="p-2 bg-yellow-100 rounded-full mr-3">
-                                    <StarIcon className="w-5 h-5 text-yellow-500" />
-                                </div>
-                                <div>
-                                    <p className="font-semibold text-gray-800">{reward.description}</p>
-                                    <p className="text-sm text-gray-500">{reward.points.toLocaleString()} {t('community.points')}</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={() => handleClaim(reward.points)}
-                                disabled={currentUser.communityPoints < reward.points}
-                                className="bg-green-600 text-white font-semibold py-1.5 px-4 rounded-full text-sm hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                            >
-                                {t('community.claimReward')}
-                            </button>
-                        </div>
-                    ))}
+                   <button
+                        onClick={() => { playSound('click'); onRedeem(); }}
+                        className="w-full bg-green-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                        {t('community.redeemCoins')}
+                    </button>
+                     {/* The leaderboard button can be added back if desired, but navigation is already handled by tabs */}
+                    {/* <button
+                        className="w-full bg-gray-100 text-gray-700 font-semibold py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                        {t('community.viewLeaderboard')}
+                    </button> */}
                 </div>
             </div>
         </div>

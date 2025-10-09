@@ -9,18 +9,25 @@ const AdBanner: React.FC = () => {
     const AD_SLOT = 'YYYYYYYYYY';
 
     useEffect(() => {
-        try {
-            // This is the standard way to push an ad request.
-            // The script is already loaded in index.html for simplicity, 
-            // but this ensures it runs for this component.
-            ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
-        } catch (e) {
-            console.error('AdSense error:', e);
-        }
+        const pushAd = () => {
+            try {
+                // Ensure adsbygoogle is available on the window before pushing
+                if (typeof (window as any).adsbygoogle !== 'undefined') {
+                    ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+                }
+            } catch (e) {
+                console.error('AdSense push error:', e);
+            }
+        };
+
+        // Delaying the push slightly to ensure the container has a calculated width.
+        // This is a common and effective fix for this error in single-page apps.
+        const timeoutId = setTimeout(pushAd, 100);
+
+        return () => clearTimeout(timeoutId);
     }, []);
 
     // A fallback for when ads don't load or are blocked.
-    // In a real scenario, you might hide the container or show a subtle message.
     const adStyle: React.CSSProperties = {
         display: 'block',
         width: '100%',
