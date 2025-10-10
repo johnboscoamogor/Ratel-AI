@@ -162,13 +162,45 @@ const resources = {
             }
         },
         "marketStudio": {
-            "title": "Market Finder",
+            "title": "Market Studio",
             "description": "Looking for something? Tell me what item and your location to find it.",
             "itemLabel": "What are you looking for?",
             "itemPlaceholder": "e.g., Ankara fabric, fresh ginger",
             "locationLabel": "What is your location?",
             "locationPlaceholder": "e.g., Accra, Ghana or Computer Village, Ikeja",
-            "button": "Find in Market"
+            "button": "Find with AI",
+            "tabs": {
+                "find": "Find with AI",
+                "sell": "Sell Item",
+                "browse": "Browse Market"
+            },
+            "browse": {
+                "searchPlaceholder": "Search by item, city, or state...",
+                "noItems": "No items listed yet. Be the first to sell something!",
+                "deleteConfirm": "Are you sure you want to delete this listing?",
+                "deleteError": "Could not delete item. You may not be the owner or an error occurred.",
+                "fetchError": "Could not load market items. Please check your connection and try again."
+            },
+            "sell": {
+                "photoLabel": "Item Photo",
+                "itemNameLabel": "Item Name",
+                "priceLabel": "Price",
+                "currencyLabel": "Currency",
+                "descriptionLabel": "Description (Optional)",
+                "locationHeader": "Location",
+                "stateLabel": "State",
+                "cityLabel": "City",
+                "contactHeader": "Contact Info",
+                "sellerNameLabel": "Your Name / Shop Name",
+                "phoneLabel": "Phone Number",
+                "emailLabel": "Email Address",
+                "submitButton": "List My Item",
+                "success": "Your item has been listed successfully!",
+                "error": {
+                    "allFields": "Please fill out all required fields and upload an image.",
+                    "generic": "Could not list item. Please try again."
+                }
+            }
         },
         "profileStudio": {
             "title": "My Profile",

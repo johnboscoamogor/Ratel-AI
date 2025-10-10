@@ -416,7 +416,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
     handleSendMessage(prompt, undefined, { addXpPoints: 10, mode: 'learn'});
   };
   
-  const handleMarketFindRequest = async (item: string, location: string) => {
+  const handleMarketAiSearch = async (item: string, location: string) => {
     setIsMarketStudioOpen(false);
     if (isLoading) return;
 
@@ -593,7 +593,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
         {isVideoStudioOpen && <VideoStudio onClose={handleCloseVideoStudio} onGenerate={handleGenerateVideo} isLoading={isLoading} initialPrompt={videoStudioInitialPrompt} />}
         {isHustleStudioOpen && <HustleStudio onClose={() => setIsHustleStudioOpen(false)} onAction={handleHustleRequest} isLoading={isLoading} />}
         {isLearnStudioOpen && <LearnStudio onClose={() => setIsLearnStudioOpen(false)} onAction={handleLearnRequest} />}
-        {isMarketStudioOpen && <MarketStudio onClose={() => setIsMarketStudioOpen(false)} onAction={handleMarketFindRequest} isLoading={isLoading} />}
+        {isMarketStudioOpen && <MarketStudio onClose={() => setIsMarketStudioOpen(false)} onAiSearch={handleMarketAiSearch} isLoading={isLoading} userProfile={userProfile} />}
         {isProfileStudioOpen && <ProfileStudio onClose={() => setIsProfileStudioOpen(false)} userProfile={userProfile} setUserProfile={setUserProfile} />}
         
         {isSupportModalOpen && <SupportModal onClose={() => setIsSupportModalOpen(false)} />}

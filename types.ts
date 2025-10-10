@@ -126,3 +126,24 @@ export interface RedemptionRequest {
 export interface CommunityAdminSettings {
     enableTelegramNotifications: boolean;
 }
+
+export interface MarketItemLocation {
+  country: string;
+  state: string;
+  city: string;
+}
+
+export interface MarketItem {
+  id: string;
+  sellerId: string; // user email
+  sellerName: string;
+  itemName: string;
+  description: string;
+  price: number;
+  currency: 'NGN' | 'GHS' | 'KES' | 'USD';
+  imageUrl: string;
+  contactPhone: string;
+  contactEmail: string;
+  location: MarketItemLocation;
+  timestamp: number;
+}
