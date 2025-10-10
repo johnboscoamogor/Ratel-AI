@@ -114,10 +114,15 @@ export interface RedemptionRequest {
   id: string;
   userId: string; // user email
   userName: string;
+  telegramUsername?: string;
   amountPoints: number;
   amountCash: number;
   method: 'airtime' | 'bank';
   details: string; // phone number or bank details
   status: 'pending' | 'approved' | 'rejected';
   timestamp: number;
+}
+
+export interface CommunityAdminSettings {
+    enableTelegramNotifications: boolean;
 }

@@ -1,9 +1,11 @@
-import { CommunityPost, UserProfile, LeaderboardEntry, Comment, RedemptionRequest } from '../types';
+import { CommunityPost, UserProfile, LeaderboardEntry, Comment, RedemptionRequest, CommunityAdminSettings } from '../types';
+import { telegramService } from './telegramService';
 
 const POSTS_KEY = 'ratel_community_posts';
 const POINTS_KEY = 'ratel_all_users_community_points'; // Storing all users' points for leaderboard
 const REDEMPTION_REQUESTS_KEY = 'ratel_redemption_requests';
 const CONVERSION_RATE_KEY = 'ratel_conversion_rate';
+const ADMIN_SETTINGS_KEY = 'ratel_admin_settings';
 
 
 // --- Points Configuration ---
@@ -115,6 +117,7 @@ export const communityService = {
         };
         savePosts([newPost, ...posts]);
         communityService.updatePoints(author, POINTS_FOR_POST);
+        telegramService.sendRewardEarned(author.telegramUsername, POINTS_FOR_POST);
         return newPost;
     },
 
@@ -131,6 +134,7 @@ export const communityService = {
         } else {
             post.likes.push(user.email); // Like
             communityService.updatePoints(user, POINTS_FOR_LIKE);
+            telegramService.sendRewardEarned(user.telegramUsername, POINTS_FOR_LIKE);
         }
 
         posts[postIndex] = post;
@@ -154,6 +158,7 @@ export const communityService = {
         posts[postIndex].comments.push(newComment);
         savePosts(posts);
         communityService.updatePoints(author, POINTS_FOR_COMMENT);
+        telegramService.sendRewardEarned(author.telegramUsername, POINTS_FOR_COMMENT);
         return posts[postIndex];
     },
 
@@ -192,7 +197,7 @@ export const communityService = {
             points: data.points,
         }));
         
-        return leaderboard.sort((a, b) => b.points - a.points).slice(0, 10);
+        return leaderboard.sort((a, b) => b.points - a.points);
     },
 
     getAllUsersWithPoints: () => {
@@ -224,6 +229,7 @@ export const communityService = {
             id: crypto.randomUUID(),
             userId: user.email,
             userName: user.name,
+            telegramUsername: user.telegramUsername,
             amountPoints,
             amountCash: amountPoints * communityService.getConversionRate(),
             method,
@@ -244,7 +250,7 @@ export const communityService = {
             totalRedeemed: (user.totalRedeemed || 0) + amountPoints 
         };
         
-        // In a real app, log this to a secure database (e.g., Google Sheet)
+        telegramService.sendRedeemRequestSubmitted(user.telegramUsername, newRequest.amountCash);
         console.log("LOGGING TO GOOGLE SHEET (SIMULATED):", newRequest);
 
         return { success: true, profile: updatedProfile };
@@ -268,25 +274,45 @@ export const communityService = {
                 pointsData[request.userId].points += request.amountPoints;
                 savePointsData(pointsData);
             }
+            telegramService.sendRequestRejected(request.telegramUsername);
         }
         
         if (newStatus === 'approved') {
             // Here you would trigger the Flutterwave payment and Telegram notification
+            telegramService.sendPayoutApproved(request.telegramUsername, request.amountCash);
             console.log(`SIMULATING PAYMENT: Triggering Flutterwave payout of ₦${request.amountCash} to ${request.userName} (${request.details})`);
             console.log(`SIMULATING TELEGRAM BOT: Sending "✅ Your withdrawal of ₦${request.amountCash} has been approved and sent." to user ${request.userName}`);
         }
         
-        // In a real app, update the status in your database (e.g., Google Sheet)
         console.log(`UPDATING GOOGLE SHEET (SIMULATED): Request ${requestId} status changed to ${newStatus}`);
 
         return true;
     },
+    
+    // --- Admin Settings & Actions ---
+    getAdminSettings: (): CommunityAdminSettings => {
+        try {
+            const settingsJson = localStorage.getItem(ADMIN_SETTINGS_KEY);
+            return settingsJson ? JSON.parse(settingsJson) : { enableTelegramNotifications: true }; // Default
+        } catch (e) {
+            return { enableTelegramNotifications: true };
+        }
+    },
+    
+    saveAdminSettings: (settings: CommunityAdminSettings) => {
+        localStorage.setItem(ADMIN_SETTINGS_KEY, JSON.stringify(settings));
+    },
+
+    triggerWeeklyTopUsersPost: () => {
+        const leaderboard = communityService.getLeaderboard();
+        telegramService.sendWeeklyTopUsers(leaderboard);
+        alert('Weekly top users post has been triggered! (Check console log for simulation)');
+    },
+
 
     // --- Telegram Simulation ---
     linkTelegramAccount: (user: UserProfile, telegramUsername: string): UserProfile => {
         const updatedProfile = { ...user, telegramUsername };
-        // In a real app, this would also save to the backend. Here we just update the object.
-        // The App.tsx will handle saving the userProfile object to localStorage.
         return updatedProfile;
     },
 
@@ -296,7 +322,6 @@ export const communityService = {
     },
 
     shareTopPostToTelegram: (post: CommunityPost): void => {
-        // SIMULATION: In a real app, this would call your backend to trigger a Telegram Bot message.
         console.log("--- SIMULATING TELEGRAM SHARE ---");
         console.log(`Sharing post by ${post.authorName} to 'Ratel Community' Telegram group.`);
         console.log(`Content: ${post.content}`);

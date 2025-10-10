@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RedemptionRequest } from '../types';
+import { RedemptionRequest, CommunityAdminSettings } from '../types';
 import { communityService } from '../services/communityService';
 import { playSound } from '../services/audioService';
+import ToggleSwitch from './ToggleSwitch';
 
 type AdminTab = 'requests' | 'users' | 'settings';
 
@@ -12,12 +13,14 @@ const AdminPanel: React.FC = () => {
     const [requests, setRequests] = useState<RedemptionRequest[]>([]);
     const [users, setUsers] = useState<Record<string, { name: string; points: number }>>({});
     const [conversionRate, setConversionRate] = useState(1);
+    const [adminSettings, setAdminSettings] = useState<CommunityAdminSettings>({ enableTelegramNotifications: true });
     const [refreshTrigger, setRefreshTrigger] = useState(0); // Used to force re-renders
 
     useEffect(() => {
         setRequests(communityService.getRedemptionRequests());
         setUsers(communityService.getAllUsersWithPoints());
         setConversionRate(communityService.getConversionRate());
+        setAdminSettings(communityService.getAdminSettings());
     }, [refreshTrigger]);
     
     const handleProcessRequest = (requestId: string, status: 'approved' | 'rejected') => {
@@ -50,6 +53,16 @@ const AdminPanel: React.FC = () => {
         alert(`Conversion rate set to 1 point = ₦${conversionRate}`);
         setRefreshTrigger(prev => prev + 1);
     };
+    
+    const handleSettingsChange = (newSettings: CommunityAdminSettings) => {
+        setAdminSettings(newSettings);
+        communityService.saveAdminSettings(newSettings);
+    };
+
+    const handleTriggerWeeklyPost = () => {
+        playSound('click');
+        communityService.triggerWeeklyTopUsersPost();
+    }
 
     const renderRequests = () => {
         const pendingRequests = requests.filter(r => r.status === 'pending');
@@ -122,6 +135,22 @@ const AdminPanel: React.FC = () => {
                         />
                         <button onClick={handleSetRate} className="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700">{t('community.adminPanel.update')}</button>
                     </div>
+                </div>
+                 <div className="border-t pt-6">
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">{t('community.adminPanel.telegramNotifications')}</h3>
+                     <ToggleSwitch
+                        id="tele-notifications"
+                        label={t('community.adminPanel.enableTeleNotifications')}
+                        description={t('community.adminPanel.enableTeleNotificationsDesc')}
+                        checked={adminSettings.enableTelegramNotifications}
+                        onChange={(checked) => handleSettingsChange({ ...adminSettings, enableTelegramNotifications: checked })}
+                    />
+                    <button
+                        onClick={handleTriggerWeeklyPost}
+                        className="mt-4 w-full bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+                    >
+                        {t('community.adminPanel.triggerWeeklyPost')}
+                    </button>
                 </div>
             </div>
         );

@@ -236,7 +236,11 @@ const resources = {
                 "update": "Update",
                 "conversionRate": "Conversion Rate (1 Point = ₦)",
                 "totalUsers": "Total Users",
-                "totalPoints": "Total Points in Circulation"
+                "totalPoints": "Total Points in Circulation",
+                "telegramNotifications": "Telegram Notifications",
+                "enableTeleNotifications": "Enable Auto-Messages",
+                "enableTeleNotificationsDesc": "Send automatic Telegram messages for rewards, redemptions, etc.",
+                "triggerWeeklyPost": "Trigger Weekly Top Users Post"
             }
         },
         "settings": {
