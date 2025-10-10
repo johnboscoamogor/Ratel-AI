@@ -92,8 +92,8 @@ const ContactPage: React.FC<ContactPageProps> = ({ onBack }) => {
             </p>
             <div className="inline-block bg-green-50 border border-green-200 rounded-lg px-6 py-3 mb-8">
                 <span className="text-gray-700 font-medium">{t('contact.supportEmail')}</span>
-                <a href="mailto:support@ratel.ai" className="text-green-600 font-semibold ml-2 hover:underline">
-                    support@ratel.ai
+                <a href={`mailto:${t('contact.supportEmailAddress')}`} className="text-green-600 font-semibold ml-2 hover:underline">
+                    {t('contact.supportEmailAddress')}
                 </a>
             </div>
         </div>

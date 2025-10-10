@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from './Sidebar';
 import ChatWindow from './ChatWindow';
@@ -558,10 +559,11 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
             <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
                 <button
                     onClick={() => { playSound('click'); setIsSupportModalOpen(true); }}
-                    className="flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-md hover:bg-gray-100 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200"
+                    className="flex items-center gap-2 bg-white rounded-full shadow-md px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
                     aria-label={t('sidebar.supportUs')}
                 >
-                    <CoffeeIcon className="w-6 h-6 text-yellow-500" />
+                    <CoffeeIcon className="w-5 h-5 text-yellow-600" />
+                    <span>{t('sidebar.supportUs')}</span>
                 </button>
                 <LanguageSwitcher
                     currentLang={settings.language}

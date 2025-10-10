@@ -4,7 +4,8 @@ import { ChatSession, UserProfile } from '../types';
 import { 
     RatelLogo, EditIcon, TrashIcon, MenuIcon, ChevronLeftIcon, 
     ImageIcon, AudioIcon, VideoIcon, BookOpenIcon, BriefcaseIcon, 
-    StorefrontIcon, UsersIcon, SettingsIcon, InfoIcon, UserIcon, LogoutIcon, AdminIcon
+    StorefrontIcon, UsersIcon, SettingsIcon, InfoIcon, UserIcon, LogoutIcon, AdminIcon,
+    CoffeeIcon
 } from '../constants';
 import { playSound } from '../services/audioService';
 import AdBanner from './AdBanner';

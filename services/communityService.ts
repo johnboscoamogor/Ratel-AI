@@ -1,7 +1,10 @@
-import { CommunityPost, UserProfile, LeaderboardEntry, Comment } from '../types';
+import { CommunityPost, UserProfile, LeaderboardEntry, Comment, RedemptionRequest } from '../types';
 
 const POSTS_KEY = 'ratel_community_posts';
 const POINTS_KEY = 'ratel_all_users_community_points'; // Storing all users' points for leaderboard
+const REDEMPTION_REQUESTS_KEY = 'ratel_redemption_requests';
+const CONVERSION_RATE_KEY = 'ratel_conversion_rate';
+
 
 // --- Points Configuration ---
 const POINTS_FOR_POST = 10;
@@ -37,6 +40,20 @@ const savePointsData = (pointsData: Record<string, { name: string; points: numbe
     localStorage.setItem(POINTS_KEY, JSON.stringify(pointsData));
 };
 
+const getRequests = (): RedemptionRequest[] => {
+    try {
+        const requestsJson = localStorage.getItem(REDEMPTION_REQUESTS_KEY);
+        return requestsJson ? JSON.parse(requestsJson) : [];
+    } catch (e) {
+        console.error("Failed to parse redemption requests:", e);
+        return [];
+    }
+};
+
+const saveRequests = (requests: RedemptionRequest[]) => {
+    localStorage.setItem(REDEMPTION_REQUESTS_KEY, JSON.stringify(requests));
+};
+
 
 // --- Simulated Telegram Data ---
 const getSimulatedTelegramPosts = (): CommunityPost[] => {
@@ -70,6 +87,11 @@ const getSimulatedTelegramPosts = (): CommunityPost[] => {
 // --- Service API ---
 
 export const communityService = {
+    // Pass config values
+    POINTS_FOR_POST,
+    POINTS_FOR_COMMENT,
+    POINTS_FOR_LIKE,
+
     // --- Post Management ---
     fetchPosts: (): CommunityPost[] => {
         const localPosts = getPosts();
@@ -146,6 +168,16 @@ export const communityService = {
         savePointsData(pointsData);
         return pointsData[userId].points;
     },
+    
+    adjustUserPoints: (userId: string, newPoints: number): boolean => {
+        const pointsData = getPointsData();
+        if (pointsData[userId]) {
+            pointsData[userId].points = newPoints;
+            savePointsData(pointsData);
+            return true;
+        }
+        return false;
+    },
 
     getUserPoints: (user: UserProfile): number => {
         const pointsData = getPointsData();
@@ -161,6 +193,93 @@ export const communityService = {
         }));
         
         return leaderboard.sort((a, b) => b.points - a.points).slice(0, 10);
+    },
+
+    getAllUsersWithPoints: () => {
+        return getPointsData();
+    },
+
+    // --- Redemption ---
+    getConversionRate: (): number => {
+        const rate = localStorage.getItem(CONVERSION_RATE_KEY);
+        return rate ? parseFloat(rate) : 1; // Default: 1 point = ₦1
+    },
+
+    setConversionRate: (rate: number) => {
+        localStorage.setItem(CONVERSION_RATE_KEY, rate.toString());
+    },
+
+    getRedemptionRequests: (): RedemptionRequest[] => {
+        return getRequests().sort((a, b) => b.timestamp - a.timestamp);
+    },
+
+    submitRedemptionRequest: (user: UserProfile, amountPoints: number, method: 'airtime' | 'bank', details: string): { success: boolean, profile: UserProfile } => {
+        const currentPoints = communityService.getUserPoints(user);
+        if (amountPoints <= 0 || amountPoints > currentPoints) {
+            return { success: false, profile: user };
+        }
+
+        const requests = getRequests();
+        const newRequest: RedemptionRequest = {
+            id: crypto.randomUUID(),
+            userId: user.email,
+            userName: user.name,
+            amountPoints,
+            amountCash: amountPoints * communityService.getConversionRate(),
+            method,
+            details,
+            status: 'pending',
+            timestamp: Date.now(),
+        };
+        requests.push(newRequest);
+        saveRequests(requests);
+
+        // Deduct points from user
+        const newPointTotal = currentPoints - amountPoints;
+        communityService.adjustUserPoints(user.email, newPointTotal);
+        
+        const updatedProfile = { 
+            ...user, 
+            communityPoints: newPointTotal, 
+            totalRedeemed: (user.totalRedeemed || 0) + amountPoints 
+        };
+        
+        // In a real app, log this to a secure database (e.g., Google Sheet)
+        console.log("LOGGING TO GOOGLE SHEET (SIMULATED):", newRequest);
+
+        return { success: true, profile: updatedProfile };
+    },
+
+    processRedemptionRequest: (requestId: string, newStatus: 'approved' | 'rejected'): boolean => {
+        const requests = getRequests();
+        const requestIndex = requests.findIndex(r => r.id === requestId);
+        if (requestIndex === -1) return false;
+
+        const request = requests[requestIndex];
+        if (request.status !== 'pending') return false; // Already processed
+
+        requests[requestIndex].status = newStatus;
+        saveRequests(requests);
+
+        if (newStatus === 'rejected') {
+            // Refund points
+            const pointsData = getPointsData();
+            if (pointsData[request.userId]) {
+                pointsData[request.userId].points += request.amountPoints;
+                savePointsData(pointsData);
+            }
+        }
+        
+        if (newStatus === 'approved') {
+            // Here you would trigger the Flutterwave payment and Telegram notification
+            console.log(`SIMULATING PAYMENT: Triggering Flutterwave payout of ₦${request.amountCash} to ${request.userName} (${request.details})`);
+            console.log(`SIMULATING TELEGRAM BOT: Sending "✅ Your withdrawal of ₦${request.amountCash} has been approved and sent." to user ${request.userName}`);
+        }
+        
+        // In a real app, update the status in your database (e.g., Google Sheet)
+        console.log(`UPDATING GOOGLE SHEET (SIMULATED): Request ${requestId} status changed to ${newStatus}`);
+
+        return true;
     },
 
     // --- Telegram Simulation ---

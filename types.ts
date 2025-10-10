@@ -46,6 +46,7 @@ export interface UserProfile {
   joinedDate: string;
   isAdmin?: boolean;
   telegramUsername?: string;
+  totalRedeemed?: number;
 }
 
 export interface AppSettings {
@@ -107,4 +108,16 @@ export interface VoiceOption {
   name: string;
   type: 'gemini' | 'browser';
   voice?: SpeechSynthesisVoice;
+}
+
+export interface RedemptionRequest {
+  id: string;
+  userId: string; // user email
+  userName: string;
+  amountPoints: number;
+  amountCash: number;
+  method: 'airtime' | 'bank';
+  details: string; // phone number or bank details
+  status: 'pending' | 'approved' | 'rejected';
+  timestamp: number;
 }

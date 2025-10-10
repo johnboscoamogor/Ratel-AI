@@ -8,8 +8,7 @@ interface SupportModalProps {
 }
 
 // IMPORTANT: Replace this with your actual Flutterwave public key from your dashboard
-const FLUTTERWAVE_PUBLIC_KEY = 'YOUR_FLUTTERWAVE_PUBLIC_KEY_HERE';
-
+const FLUTTERWAVE_PUBLIC_KEY = 'FLWPUBK-7a298ea26aa8e1b9d39f5a72b2425b97-X';
 const SupportModal: React.FC<SupportModalProps> = ({ onClose }) => {
     const { t } = useTranslation();
     const [amount, setAmount] = useState('500'); // Default amount in NGN
@@ -25,7 +24,9 @@ const SupportModal: React.FC<SupportModalProps> = ({ onClose }) => {
         playSound('click');
         setError(''); // Clear previous errors
 
-        if (FLUTTERWAVE_PUBLIC_KEY === 'YOUR_FLUTTERWAVE_PUBLIC_KEY_HERE') {
+        // FIX: Replaced the obsolete placeholder check with a more robust validation for the key format.
+        // This resolves the TypeScript error and ensures payments are only attempted with a valid key.
+        if (!FLUTTERWAVE_PUBLIC_KEY || !FLUTTERWAVE_PUBLIC_KEY.startsWith('FLWPUBK-')) {
             setError(t('supportModal.configureKeyError'));
             return;
         }
