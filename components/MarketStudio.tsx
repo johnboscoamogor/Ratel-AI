@@ -5,7 +5,7 @@ import { playSound } from '../services/audioService';
 import { MarketItem, UserProfile } from '../types';
 import { marketService } from '../services/marketService';
 
-interface MarketStudioProps {
+interface MarketSquareProps {
   onClose: () => void;
   onAiSearch: (item: string, location: string) => void;
   isLoading: boolean;
@@ -14,7 +14,7 @@ interface MarketStudioProps {
 
 type MarketTab = 'find' | 'sell' | 'browse';
 
-const MarketStudio: React.FC<MarketStudioProps> = ({ onClose, onAiSearch, isLoading, userProfile }) => {
+const MarketSquare: React.FC<MarketSquareProps> = ({ onClose, onAiSearch, isLoading, userProfile }) => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<MarketTab>('browse');
 
@@ -41,7 +41,7 @@ const MarketStudio: React.FC<MarketStudioProps> = ({ onClose, onAiSearch, isLoad
                 <header className="flex-shrink-0 flex justify-between items-center p-4 border-b border-gray-200">
                     <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                         <StorefrontIcon className="w-5 h-5 text-green-600" />
-                        {t('marketStudio.title')}
+                        {t('marketSquare.title')}
                     </h2>
                     <button onClick={handleClose} className="p-1.5 rounded-full text-gray-500 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                         <CloseIcon className="w-5 h-5" />
@@ -49,9 +49,9 @@ const MarketStudio: React.FC<MarketStudioProps> = ({ onClose, onAiSearch, isLoad
                 </header>
                 
                 <nav className="flex-shrink-0 p-3 border-b border-gray-200 flex gap-2">
-                    <TabButton tab="browse" label={t('marketStudio.tabs.browse')} Icon={StorefrontIcon} />
-                    <TabButton tab="sell" label={t('marketStudio.tabs.sell')} Icon={TagIcon} />
-                    <TabButton tab="find" label={t('marketStudio.tabs.find')} Icon={SearchIcon} />
+                    <TabButton tab="browse" label={t('marketSquare.tabs.browse')} Icon={StorefrontIcon} />
+                    <TabButton tab="sell" label={t('marketSquare.tabs.sell')} Icon={TagIcon} />
+                    <TabButton tab="find" label={t('marketSquare.tabs.find')} Icon={SearchIcon} />
                 </nav>
                 
                 <main className="flex-grow overflow-y-auto">
@@ -72,6 +72,7 @@ const BrowseMarketTab: React.FC<{ currentUser: UserProfile }> = ({ currentUser }
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [updatingSoldStatusId, setUpdatingSoldStatusId] = useState<string | null>(null);
     const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     useEffect(() => {
@@ -83,11 +84,10 @@ const BrowseMarketTab: React.FC<{ currentUser: UserProfile }> = ({ currentUser }
                 setItems(fetchedItems);
             } catch (err: any) {
                 console.error("Failed to fetch market items", err);
-                // Display the specific configuration error message if it occurs
                 if (err.message && err.message.includes('Supabase not configured')) {
                     setError(err.message);
                 } else {
-                    setError(t('marketStudio.browse.fetchError'));
+                    setError(t('marketSquare.browse.fetchError'));
                 }
             } finally {
                 setLoading(false);
@@ -98,14 +98,14 @@ const BrowseMarketTab: React.FC<{ currentUser: UserProfile }> = ({ currentUser }
 
     const handleDelete = async (itemId: string) => {
         if (deletingId) return;
-        if (window.confirm(t('marketStudio.browse.deleteConfirm'))) {
+        if (window.confirm(t('marketSquare.browse.deleteConfirm'))) {
             setDeletingId(itemId);
             try {
                 const success = await marketService.deleteItem(itemId, currentUser.email);
                 if (success) {
                     setItems(prev => prev.filter(item => item.id !== itemId));
                 } else {
-                    alert(t('marketStudio.browse.deleteError'));
+                    alert(t('marketSquare.browse.deleteError'));
                 }
             } catch (error) {
                 console.error("Error deleting item:", error);
@@ -116,18 +116,38 @@ const BrowseMarketTab: React.FC<{ currentUser: UserProfile }> = ({ currentUser }
         }
     };
 
+    const handleToggleSold = async (itemId: string) => {
+        if (updatingSoldStatusId) return;
+        setUpdatingSoldStatusId(itemId);
+        try {
+            const updatedItem = await marketService.toggleSoldStatus(itemId, currentUser.email);
+            if (updatedItem) {
+                setItems(prevItems => prevItems.map(item => item.id === itemId ? updatedItem : item));
+            } else {
+                alert('Could not update status. Please try again.');
+            }
+        } catch (error) {
+            console.error("Error toggling sold status:", error);
+            alert('An error occurred.');
+        } finally {
+            setUpdatingSoldStatusId(null);
+        }
+    };
+
     const filteredItems = items.filter(item => 
         item.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.location.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.location.state.toLowerCase().includes(searchTerm.toLowerCase())
+        item.location.state.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.location.area && item.location.area.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     return (
         <div className="p-4">
+            <h2 className="text-2xl font-bold text-gray-800 text-center mb-4">{t('marketSquare.browse.welcome')}</h2>
             <input
                 type="text"
-                placeholder={t('marketStudio.browse.searchPlaceholder')}
+                placeholder={t('marketSquare.browse.searchPlaceholder')}
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
                 className="w-full p-2 mb-4 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
@@ -141,7 +161,7 @@ const BrowseMarketTab: React.FC<{ currentUser: UserProfile }> = ({ currentUser }
             )}
             {!loading && !error && filteredItems.length === 0 && (
                 <div className="text-center py-10 text-gray-500">
-                    <p>{t('marketStudio.browse.noItems')}</p>
+                    <p>{t('marketSquare.browse.noItems')}</p>
                 </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -149,6 +169,11 @@ const BrowseMarketTab: React.FC<{ currentUser: UserProfile }> = ({ currentUser }
                     <div key={item.id} className={`bg-white border rounded-lg shadow-sm overflow-hidden transition-opacity ${deletingId === item.id ? 'opacity-50 pointer-events-none' : ''}`}>
                         <div className="relative">
                             <img src={item.imageUrl} alt={item.itemName} className="h-48 w-full object-cover"/>
+                             {item.isSold && (
+                                <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
+                                    <span className="text-white text-2xl font-bold tracking-widest transform -rotate-12 border-2 border-white px-4 py-1">SOLD OUT</span>
+                                </div>
+                            )}
                             {item.sellerId === currentUser.email && (
                                 <button
                                   onClick={() => handleDelete(item.id)}
@@ -168,12 +193,29 @@ const BrowseMarketTab: React.FC<{ currentUser: UserProfile }> = ({ currentUser }
                         </div>
                         <div className="p-3">
                             <h3 className="font-bold truncate">{item.itemName}</h3>
-                            <p className="text-sm text-gray-500 truncate">{item.location.city}, {item.location.state}</p>
+                            <p className="text-sm text-gray-500 truncate">{item.location.area}, {item.location.city}</p>
                             <p className="text-lg font-bold text-green-600 mt-1">₦{item.price.toLocaleString()}</p>
                              <div className="mt-2 text-xs text-gray-600">
-                                <p><strong>{t('marketStudio.sell.sellerNameLabel')}:</strong> {item.sellerName}</p>
-                                <p><strong>{t('marketStudio.sell.phoneLabel')}:</strong> {item.contactPhone}</p>
-                                <p><strong>{t('marketStudio.sell.emailLabel')}:</strong> {item.contactEmail}</p>
+                                <p><strong>{t('marketSquare.sell.sellerNameLabel')}:</strong> {item.sellerName}</p>
+                                <p><strong>{t('marketSquare.sell.phoneLabel')}:</strong> {item.contactPhone}</p>
+                                <p><strong>{t('marketSquare.sell.emailLabel')}:</strong> {item.contactEmail}</p>
+                            </div>
+                            <div className="mt-3 pt-3 border-t flex items-center justify-between gap-2">
+                                {item.websiteUrl && (
+                                    <a href={item.websiteUrl.startsWith('http') ? item.websiteUrl : `//${item.websiteUrl}`} target="_blank" rel="noopener noreferrer" className="text-sm bg-gray-100 text-gray-700 font-semibold py-1.5 px-3 rounded-md hover:bg-gray-200 transition-colors truncate">
+                                        Visit Website
+                                    </a>
+                                )}
+                                
+                                {item.sellerId === currentUser.email && (
+                                    <button
+                                        onClick={() => handleToggleSold(item.id)}
+                                        disabled={updatingSoldStatusId === item.id}
+                                        className="text-sm bg-blue-100 text-blue-700 font-semibold py-1.5 px-3 rounded-md hover:bg-blue-200 transition-colors disabled:opacity-50 disabled:cursor-wait"
+                                    >
+                                        {updatingSoldStatusId === item.id ? 'Updating...' : (item.isSold ? 'Mark Available' : 'Mark as Sold')}
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -190,7 +232,7 @@ const SellItemTab: React.FC<{ currentUser: UserProfile, onListingCreated: () => 
     const [formState, setFormState] = useState({
         itemName: '', description: '', price: '', currency: 'NGN' as const,
         sellerName: currentUser.name, contactPhone: '', contactEmail: currentUser.email,
-        country: 'Nigeria', state: '', city: ''
+        country: 'Nigeria', state: '', city: '', area: '', websiteUrl: ''
     });
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -213,8 +255,8 @@ const SellItemTab: React.FC<{ currentUser: UserProfile, onListingCreated: () => 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        if (!imageFile || !formState.itemName || !formState.price || !formState.city || !formState.state || !formState.contactPhone) {
-            setError(t('marketStudio.sell.error.allFields'));
+        if (!imageFile || !formState.itemName || !formState.price || !formState.city || !formState.state || !formState.contactPhone || !formState.area) {
+            setError(t('marketSquare.sell.error.allFields'));
             return;
         }
         
@@ -233,15 +275,17 @@ const SellItemTab: React.FC<{ currentUser: UserProfile, onListingCreated: () => 
                     country: formState.country,
                     state: formState.state,
                     city: formState.city,
+                    area: formState.area,
                 },
+                websiteUrl: formState.websiteUrl
             }, imageFile);
-            alert(t('marketStudio.sell.success'));
+            alert(t('marketSquare.sell.success'));
             onListingCreated();
         } catch (err: any) {
             if (err.message && err.message.includes('Supabase not configured')) {
                 setError(err.message);
             } else {
-                setError(t('marketStudio.sell.error.generic'));
+                setError(t('marketSquare.sell.error.generic'));
             }
             console.error(err);
         } finally {
@@ -252,7 +296,7 @@ const SellItemTab: React.FC<{ currentUser: UserProfile, onListingCreated: () => 
     return (
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
              <div>
-                <label className="block text-sm font-medium text-gray-700">{t('marketStudio.sell.photoLabel')}</label>
+                <label className="block text-sm font-medium text-gray-700">{t('marketSquare.sell.photoLabel')}</label>
                 <div className="mt-1 flex items-center">
                     {imagePreview ? (
                         <img src={imagePreview} alt="Preview" className="w-24 h-24 object-cover rounded-md"/>
@@ -265,27 +309,30 @@ const SellItemTab: React.FC<{ currentUser: UserProfile, onListingCreated: () => 
                 </div>
             </div>
 
-            <InputField label={t('marketStudio.sell.itemNameLabel')} name="itemName" value={formState.itemName} onChange={handleInputChange} required />
+            <InputField label={t('marketSquare.sell.itemNameLabel')} name="itemName" value={formState.itemName} onChange={handleInputChange} required />
             <div className="grid grid-cols-2 gap-4">
-                <InputField label={t('marketStudio.sell.priceLabel')} name="price" type="number" value={formState.price} onChange={handleInputChange} placeholder="e.g., 15000" required />
-                <InputField label={t('marketStudio.sell.currencyLabel')} name="currency" value={formState.currency} as="select" onChange={handleInputChange}>
+                <InputField label={t('marketSquare.sell.priceLabel')} name="price" type="number" value={formState.price} onChange={handleInputChange} placeholder="e.g., 15000" required />
+                <InputField label={t('marketSquare.sell.currencyLabel')} name="currency" value={formState.currency} as="select" onChange={handleInputChange}>
                     <option value="NGN">NGN (₦)</option>
                     <option value="GHS">GHS (₵)</option>
                     <option value="KES">KES (KSh)</option>
                     <option value="USD">USD ($)</option>
                 </InputField>
             </div>
-            <InputField label={t('marketStudio.sell.descriptionLabel')} name="description" as="textarea" value={formState.description} onChange={handleInputChange} rows={3} />
-            <h3 className="text-md font-semibold pt-2 border-t">{t('marketStudio.sell.locationHeader')}</h3>
+            <InputField label={t('marketSquare.sell.descriptionLabel')} name="description" as="textarea" value={formState.description} onChange={handleInputChange} rows={3} />
+            <h3 className="text-md font-semibold pt-2 border-t">{t('marketSquare.sell.locationHeader')}</h3>
             <div className="grid grid-cols-2 gap-4">
-                <InputField label={t('marketStudio.sell.stateLabel')} name="state" value={formState.state} onChange={handleInputChange} placeholder="e.g., Lagos" required/>
-                <InputField label={t('marketStudio.sell.cityLabel')} name="city" value={formState.city} onChange={handleInputChange} placeholder="e.g., Ikeja" required/>
+                <InputField label={t('marketSquare.sell.countryLabel')} name="country" value={formState.country} onChange={handleInputChange} placeholder="e.g., Nigeria" required/>
+                <InputField label={t('marketSquare.sell.stateLabel')} name="state" value={formState.state} onChange={handleInputChange} placeholder="e.g., Lagos" required/>
+                <InputField label={t('marketSquare.sell.cityLabel')} name="city" value={formState.city} onChange={handleInputChange} placeholder="e.g., Ikeja" required/>
+                <InputField label={t('marketSquare.sell.areaLabel')} name="area" value={formState.area} onChange={handleInputChange} placeholder={t('marketSquare.sell.areaPlaceholder')} required/>
             </div>
-             <h3 className="text-md font-semibold pt-2 border-t">{t('marketStudio.sell.contactHeader')}</h3>
+             <h3 className="text-md font-semibold pt-2 border-t">{t('marketSquare.sell.contactHeader')}</h3>
             <div className="grid grid-cols-2 gap-4">
-                <InputField label={t('marketStudio.sell.sellerNameLabel')} name="sellerName" value={formState.sellerName} onChange={handleInputChange} required />
-                <InputField label={t('marketStudio.sell.phoneLabel')} name="contactPhone" value={formState.contactPhone} onChange={handleInputChange} required />
+                <InputField label={t('marketSquare.sell.sellerNameLabel')} name="sellerName" value={formState.sellerName} onChange={handleInputChange} required />
+                <InputField label={t('marketSquare.sell.phoneLabel')} name="contactPhone" value={formState.contactPhone} onChange={handleInputChange} required />
             </div>
+            <InputField label="Website Link (Optional)" name="websiteUrl" value={formState.websiteUrl} onChange={handleInputChange} placeholder="https://yourshop.com" />
             
             {error && (
                 <div className="p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm text-center">
@@ -294,7 +341,7 @@ const SellItemTab: React.FC<{ currentUser: UserProfile, onListingCreated: () => 
             )}
             
             <button type="submit" disabled={isSubmitting} className="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 disabled:bg-green-300">
-                {isSubmitting ? 'Submitting...' : t('marketStudio.sell.submitButton')}
+                {isSubmitting ? 'Submitting...' : t('marketSquare.sell.submitButton')}
             </button>
         </form>
     );
@@ -330,20 +377,20 @@ const FindWithAiTab: React.FC<{onAiSearch: (item: string, location: string) => v
     return (
         <div className="p-4 space-y-4">
             <p className="text-sm text-gray-600">
-                {t('marketStudio.description')}
+                {t('marketSquare.description')}
             </p>
             <InputField 
-                label={t('marketStudio.itemLabel')}
+                label={t('marketSquare.itemLabel')}
                 name="market-item"
-                placeholder={t('marketStudio.itemPlaceholder')}
+                placeholder={t('marketSquare.itemPlaceholder')}
                 value={item}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setItem(e.target.value)}
                 disabled={isLoading}
             />
              <InputField 
-                label={t('marketStudio.locationLabel')}
+                label={t('marketSquare.locationLabel')}
                 name="market-location"
-                placeholder={t('marketStudio.locationPlaceholder')}
+                placeholder={t('marketSquare.locationPlaceholder')}
                 value={location}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocation(e.target.value)}
                 onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter') handleAction(); }}
@@ -354,11 +401,11 @@ const FindWithAiTab: React.FC<{onAiSearch: (item: string, location: string) => v
                 disabled={isLoading || !item.trim() || !location.trim()}
                 className="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 disabled:bg-green-300 transition-colors"
             >
-                {isLoading ? t('common.generating') : t('marketStudio.button')}
+                {isLoading ? t('common.generating') : t('marketSquare.button')}
             </button>
         </div>
     );
 };
 
 
-export default MarketStudio;
+export default MarketSquare;

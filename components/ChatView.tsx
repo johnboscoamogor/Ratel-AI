@@ -13,7 +13,7 @@ import ProModal from './ProModal';
 import HustleStudio from './HustleStudio';
 import LearnStudio from './LearnStudio';
 import ProfileStudio from './ProfileStudio';
-import MarketStudio from './MarketStudio';
+import MarketSquare from './MarketStudio';
 import { Message, Role, ChatSession, AppSettings, Task, UserProfile, RatelMode, RatelTone } from '../types';
 import { ai } from '../services/geminiService';
 import { SYSTEM_INSTRUCTION, taskTools, CoffeeIcon, MenuIcon, ChevronDownIcon } from '../constants';
@@ -72,7 +72,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
   const [isHustleStudioOpen, setIsHustleStudioOpen] = useState(false);
   const [isLearnStudioOpen, setIsLearnStudioOpen] = useState(false);
   const [isProfileStudioOpen, setIsProfileStudioOpen] = useState(false);
-  const [isMarketStudioOpen, setIsMarketStudioOpen] = useState(false);
+  const [isMarketSquareOpen, setIsMarketSquareOpen] = useState(false);
   const [isToneDropdownOpen, setIsToneDropdownOpen] = useState(false);
   
   const chatSessionRef = useRef<Chat | null>(null);
@@ -417,7 +417,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
   };
   
   const handleMarketAiSearch = async (item: string, location: string) => {
-    setIsMarketStudioOpen(false);
+    setIsMarketSquareOpen(false);
     if (isLoading) return;
 
     const prompt = `I am in "${location}". Find local markets, online vendors, or specific shops where I can buy "${item}". Provide a summary with names, locations, and any available tips. Focus on results within Africa, relevant to the specified location.`;
@@ -523,7 +523,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
         onOpenVideoStudio={() => setIsVideoStudioOpen(true)}
         onOpenHustleStudio={() => setIsHustleStudioOpen(true)}
         onOpenLearnStudio={() => setIsLearnStudioOpen(true)}
-        onOpenMarketStudio={() => setIsMarketStudioOpen(true)}
+        onOpenMarketSquare={() => setIsMarketSquareOpen(true)}
         onOpenProfileStudio={() => setIsProfileStudioOpen(true)}
         onOpenProModal={() => setIsProModalOpen(true)}
         setPage={setPage}
@@ -593,7 +593,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
         {isVideoStudioOpen && <VideoStudio onClose={handleCloseVideoStudio} onGenerate={handleGenerateVideo} isLoading={isLoading} initialPrompt={videoStudioInitialPrompt} />}
         {isHustleStudioOpen && <HustleStudio onClose={() => setIsHustleStudioOpen(false)} onAction={handleHustleRequest} isLoading={isLoading} />}
         {isLearnStudioOpen && <LearnStudio onClose={() => setIsLearnStudioOpen(false)} onAction={handleLearnRequest} />}
-        {isMarketStudioOpen && <MarketStudio onClose={() => setIsMarketStudioOpen(false)} onAiSearch={handleMarketAiSearch} isLoading={isLoading} userProfile={userProfile} />}
+        {isMarketSquareOpen && <MarketSquare onClose={() => setIsMarketSquareOpen(false)} onAiSearch={handleMarketAiSearch} isLoading={isLoading} userProfile={userProfile} />}
         {isProfileStudioOpen && <ProfileStudio onClose={() => setIsProfileStudioOpen(false)} userProfile={userProfile} setUserProfile={setUserProfile} />}
         
         {isSupportModalOpen && <SupportModal onClose={() => setIsSupportModalOpen(false)} />}

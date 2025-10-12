@@ -26,7 +26,7 @@ const resources = {
             "newChat": "New Chat",
             "hustleStudio": "Hustle",
             "learnStudio": "Learn",
-            "marketFinder": "Market",
+            "marketSquare": "Market Square",
             "imageStudio": "Image",
             "audioStudio": "Audio",
             "videoStudio": "Video",
@@ -161,8 +161,8 @@ const resources = {
                 "ai": "Using AI Tools"
             }
         },
-        "marketStudio": {
-            "title": "Market Studio",
+        "marketSquare": {
+            "title": "Market Square",
             "description": "Looking for something? Tell me what item and your location to find it.",
             "itemLabel": "What are you looking for?",
             "itemPlaceholder": "e.g., Ankara fabric, fresh ginger",
@@ -175,7 +175,8 @@ const resources = {
                 "browse": "Browse Market"
             },
             "browse": {
-                "searchPlaceholder": "Search by item, city, or state...",
+                "welcome": "Welcome to the Ratel Market Square",
+                "searchPlaceholder": "Search by item, city, or area...",
                 "noItems": "No items listed yet. Be the first to sell something!",
                 "deleteConfirm": "Are you sure you want to delete this listing?",
                 "deleteError": "Could not delete item. You may not be the owner or an error occurred.",
@@ -188,8 +189,11 @@ const resources = {
                 "currencyLabel": "Currency",
                 "descriptionLabel": "Description (Optional)",
                 "locationHeader": "Location",
+                "countryLabel": "Country",
                 "stateLabel": "State",
                 "cityLabel": "City",
+                "areaLabel": "Area / Landmark",
+                "areaPlaceholder": "e.g., Alaba International Market",
                 "contactHeader": "Contact Info",
                 "sellerNameLabel": "Your Name / Shop Name",
                 "phoneLabel": "Phone Number",
@@ -428,7 +432,7 @@ const resources = {
         "newChat": "New Chat",
         "hustleStudio": "Hustle",
         "learnStudio": "Learn",
-        "marketFinder": "Market",
+        "marketSquare": "Market Square",
         "imageStudio": "Image",
         "audioStudio": "Audio",
         "videoStudio": "Video",

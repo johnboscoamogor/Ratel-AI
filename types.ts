@@ -131,6 +131,7 @@ export interface MarketItemLocation {
   country: string;
   state: string;
   city: string;
+  area: string;
 }
 
 export interface MarketItem {
@@ -146,4 +147,6 @@ export interface MarketItem {
   contactEmail: string;
   location: MarketItemLocation;
   timestamp: number;
+  isSold?: boolean;
+  websiteUrl?: string;
 }

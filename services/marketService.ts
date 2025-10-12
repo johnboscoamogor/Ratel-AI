@@ -31,7 +31,7 @@ export const marketService = {
     /**
      * Adds a new item by uploading its image to Storage and saving its data to the database.
      */
-    addItem: async (item: Omit<MarketItem, 'id' | 'timestamp' | 'imageUrl'>, imageFile: File): Promise<MarketItem> => {
+    addItem: async (item: Omit<MarketItem, 'id' | 'timestamp' | 'imageUrl' | 'isSold'>, imageFile: File): Promise<MarketItem> => {
         if (!isSupabaseConfigured || !supabase) {
             throw new Error(CONFIG_ERROR_MESSAGE);
         }
@@ -60,7 +60,7 @@ export const marketService = {
         const newItemData = {
             ...item,
             imageUrl,
-            // id and timestamp are handled by the database
+            isSold: false, // Default new items to not sold
         };
 
         const { data: insertedData, error: insertError } = await supabase
@@ -78,6 +78,50 @@ export const marketService = {
 
         return insertedData;
     },
+
+    /**
+     * Toggles the 'isSold' status of an item.
+     */
+    toggleSoldStatus: async (itemId: string, userId: string): Promise<MarketItem | null> => {
+        if (!isSupabaseConfigured || !supabase) {
+            throw new Error(CONFIG_ERROR_MESSAGE);
+        }
+
+        // 1. Fetch item to verify ownership and get current status
+        const { data: item, error: fetchError } = await supabase
+            .from('market_items')
+            .select('sellerId, isSold')
+            .eq('id', itemId)
+            .single();
+
+        if (fetchError || !item) {
+            console.error(`Error fetching item ${itemId} for status toggle:`, fetchError);
+            return null;
+        }
+
+        // 2. Check ownership
+        if (item.sellerId !== userId) {
+            console.warn(`User ${userId} attempted to toggle sold status for item ${itemId} owned by ${item.sellerId}.`);
+            return null;
+        }
+
+        // 3. Update the item with the new sold status
+        const newSoldStatus = !item.isSold;
+        const { data: updatedItem, error: updateError } = await supabase
+            .from('market_items')
+            .update({ isSold: newSoldStatus })
+            .eq('id', itemId)
+            .select()
+            .single();
+
+        if (updateError) {
+            console.error(`Error updating sold status for item ${itemId}:`, updateError);
+            return null;
+        }
+
+        return updatedItem;
+    },
+
 
     /**
      * Deletes an item from the database and its corresponding image from storage.

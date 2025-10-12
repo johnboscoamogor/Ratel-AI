@@ -27,7 +27,7 @@ interface SidebarProps {
   onOpenVideoStudio: () => void;
   onOpenHustleStudio: () => void;
   onOpenLearnStudio: () => void;
-  onOpenMarketStudio: () => void;
+  onOpenMarketSquare: () => void;
   onOpenProfileStudio: () => void;
   onOpenProModal: () => void;
   setPage: (page: 'chat' | 'settings' | 'contact' | 'community' | 'admin') => void;
@@ -37,7 +37,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({
   history, currentChatId, userProfile, isCurrentChatEmpty, isOpenOnMobile, onCloseMobile,
   onNewChat, onSelectChat, onClearChat, onDeleteChat, onRenameChat,
-  onOpenImageStudio, onOpenAudioStudio, onOpenVideoStudio, onOpenHustleStudio, onOpenLearnStudio, onOpenMarketStudio, onOpenProfileStudio, onOpenProModal,
+  onOpenImageStudio, onOpenAudioStudio, onOpenVideoStudio, onOpenHustleStudio, onOpenLearnStudio, onOpenMarketSquare, onOpenProfileStudio, onOpenProModal,
   setPage, onLogout
 }) => {
   const { t } = useTranslation();
@@ -95,7 +95,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div className="grid grid-cols-3 gap-2">
             <StudioButton Icon={BriefcaseIcon} label={t('sidebar.hustleStudio')} onClick={onOpenHustleStudio} />
             <StudioButton Icon={BookOpenIcon} label={t('sidebar.learnStudio')} onClick={onOpenLearnStudio} />
-            <StudioButton Icon={StorefrontIcon} label={t('sidebar.marketFinder')} onClick={onOpenMarketStudio} />
+            <StudioButton Icon={StorefrontIcon} label={t('sidebar.marketSquare')} onClick={onOpenMarketSquare} />
             <StudioButton Icon={ImageIcon} label={t('sidebar.imageStudio')} onClick={onOpenImageStudio} />
             <StudioButton Icon={AudioIcon} label={t('sidebar.audioStudio')} onClick={onOpenAudioStudio} />
             <StudioButton Icon={VideoIcon} label={t('sidebar.videoStudio')} onClick={onOpenVideoStudio} />
