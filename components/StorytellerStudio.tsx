@@ -6,6 +6,7 @@ import { ai } from '../services/geminiService';
 import { Type } from '@google/genai';
 import { AppSettings, Story } from '../types';
 import { communityService } from '../services/communityService';
+import { generateVideoFromExternalApi } from '../services/videoService';
 
 
 interface StorytellerStudioProps {
@@ -111,22 +112,12 @@ const StorytellerStudio: React.FC<StorytellerStudioProps> = ({ onClose, onStoryG
 
             setStatus('video');
             const videoPrompt = `${script.title}. A beautifully animated story. ${script.scenes.map((s: any) => `Scene ${s.sceneNumber}: ${s.description}`).join('. ')}`;
-            let videoOperation = await ai.models.generateVideos({
-                model: 'veo-2.0-generate-001',
-                prompt: videoPrompt,
-            });
+            // Use the new, more reliable (simulated) external video service
+            const videoPromise = generateVideoFromExternalApi(videoPrompt);
             
             setStatus('final');
-            while (!videoOperation.done) {
-                await new Promise(resolve => setTimeout(resolve, 10000));
-                videoOperation = await ai.operations.getVideosOperation({ operation: videoOperation });
-            }
-            const videoUri = videoOperation.response?.generatedVideos?.[0]?.video?.uri;
-            if (!videoUri) throw new Error("Video generation did not return a valid URL.");
-
-            const [audioBlob] = await Promise.all([audioPromise]);
+            const [audioBlob, finalVideoUrl] = await Promise.all([audioPromise, videoPromise]);
             const audioUrl = URL.createObjectURL(audioBlob);
-            const finalVideoUrl = `${videoUri}&key=${process.env.API_KEY}`;
             
             const newStory: Story = {
                 id: crypto.randomUUID(),

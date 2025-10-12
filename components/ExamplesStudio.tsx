@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CloseIcon, LightbulbIcon, BriefcaseIcon, BookOpenIcon, ImageIcon, ClapperboardIcon } from '../constants';
+// FIX: Replaced non-existent `LightbulbIcon` with `SparklesIcon` to represent ideas and examples.
+import { CloseIcon, SparklesIcon, BriefcaseIcon, BookOpenIcon, ImageIcon, ClapperboardIcon } from '../constants';
 import { playSound } from '../services/audioService';
 
 interface ExamplesStudioProps {
@@ -55,7 +56,7 @@ const ExamplesStudio: React.FC<ExamplesStudioProps> = ({ onClose, onSelectExampl
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl transform transition-all h-[90vh] flex flex-col">
                 <header className="flex-shrink-0 flex justify-between items-center p-4 border-b border-gray-200">
                     <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                        <LightbulbIcon className="w-5 h-5 text-green-600" />
+                        <SparklesIcon className="w-5 h-5 text-green-600" />
                         {t('examplesStudio.title')}
                     </h2>
                     <button onClick={onClose} className="p-1.5 rounded-full text-gray-500 hover:bg-gray-200 focus:outline-none">
