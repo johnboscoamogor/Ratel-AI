@@ -1,4 +1,4 @@
-import { MarketItem } from '../types';
+import { MarketItem, MarketPayment } from '../types';
 import { supabase, isSupabaseConfigured } from './supabase';
 
 const BUCKET_NAME = 'market-images';
@@ -23,7 +23,9 @@ export const marketService = {
 
         if (error) {
             console.error("Error fetching market items:", error);
-            throw error;
+            // FIX: Throw a descriptive string error instead of the raw Supabase error object.
+            // This provides a clearer message in the UI when the call fails.
+            throw new Error(`Failed to fetch items: ${error.message}`);
         }
         return data || [];
     },
@@ -46,7 +48,8 @@ export const marketService = {
 
         if (uploadError) {
             console.error("Error uploading image:", uploadError);
-            throw uploadError;
+            // FIX: Throw a descriptive string error.
+            throw new Error(`Image upload failed: ${uploadError.message}`);
         }
 
         // 2. Get the public URL of the uploaded image
@@ -73,7 +76,8 @@ export const marketService = {
             console.error("Error inserting market item:", insertError);
             // Attempt to clean up the uploaded image if the database insert fails
             await supabase.storage.from(BUCKET_NAME).remove([filePath]);
-            throw insertError;
+            // FIX: Throw a descriptive string error.
+            throw new Error(`Database insert failed: ${insertError.message}`);
         }
 
         return insertedData;
@@ -173,5 +177,51 @@ export const marketService = {
         }
 
         return true;
+    },
+    
+    /**
+     * Counts the number of items a specific seller has listed.
+     */
+    countUserItems: async (sellerId: string): Promise<number> => {
+        if (!isSupabaseConfigured || !supabase) {
+            throw new Error(CONFIG_ERROR_MESSAGE);
+        }
+
+        const { count, error } = await supabase
+            .from('market_items')
+            .select('*', { count: 'exact', head: true })
+            .eq('sellerId', sellerId);
+            
+        if (error) {
+            console.error("Error counting user items:", error);
+            // FIX: Throw a descriptive string error instead of the raw Supabase error object.
+            // This provides a clearer message in the UI when the call fails (e.g., due to RLS).
+            throw new Error(`Failed to count user items: ${error.message}`);
+        }
+
+        return count || 0;
+    },
+
+    /**
+     * Logs a successful payment transaction to the database.
+     */
+    logPayment: async (paymentData: Omit<MarketPayment, 'id' | 'created_at'>): Promise<any> => {
+         if (!isSupabaseConfigured || !supabase) {
+            throw new Error(CONFIG_ERROR_MESSAGE);
+        }
+
+        const { data, error } = await supabase
+            .from('market_payments')
+            .insert(paymentData)
+            .select()
+            .single();
+        
+        if (error) {
+            console.error("Error logging payment:", error);
+            // FIX: Throw a descriptive string error.
+            throw new Error(`Failed to log payment: ${error.message}`);
+        }
+
+        return data;
     },
 };

@@ -150,3 +150,13 @@ export interface MarketItem {
   isSold?: boolean;
   websiteUrl?: string;
 }
+
+export interface MarketPayment {
+  id: string;
+  created_at: string;
+  sellerId: string;
+  transaction_ref: string;
+  amount: number;
+  currency: string;
+  status: 'successful' | 'failed';
+}

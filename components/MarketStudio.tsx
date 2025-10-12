@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CloseIcon, StorefrontIcon, SearchIcon, TagIcon, TrashIcon, ImageIcon } from '../constants';
+import { CloseIcon, StorefrontIcon, SearchIcon, TagIcon, TrashIcon, ImageIcon, InfoIcon } from '../constants';
 import { playSound } from '../services/audioService';
 import { MarketItem, UserProfile } from '../types';
 import { marketService } from '../services/marketService';
@@ -84,11 +84,9 @@ const BrowseMarketTab: React.FC<{ currentUser: UserProfile }> = ({ currentUser }
                 setItems(fetchedItems);
             } catch (err: any) {
                 console.error("Failed to fetch market items", err);
-                if (err.message && err.message.includes('Supabase not configured')) {
-                    setError(err.message);
-                } else {
-                    setError(t('marketSquare.browse.fetchError'));
-                }
+                // FIX: Standardized error handling to display the clearer message from the service layer.
+                const errorMessage = err?.message || t('marketSquare.browse.fetchError');
+                setError(errorMessage);
             } finally {
                 setLoading(false);
             }
@@ -155,7 +153,7 @@ const BrowseMarketTab: React.FC<{ currentUser: UserProfile }> = ({ currentUser }
             {loading && <p className="text-center text-gray-500">Loading items...</p>}
             {error && (
                  <div className="text-center p-4 my-4 bg-red-50 text-red-700 border border-red-200 rounded-lg">
-                    <p className="font-semibold">Configuration Error</p>
+                    <p className="font-semibold">Error</p>
                     <p className="text-sm">{error}</p>
                 </div>
             )}
@@ -230,7 +228,7 @@ const BrowseMarketTab: React.FC<{ currentUser: UserProfile }> = ({ currentUser }
 const SellItemTab: React.FC<{ currentUser: UserProfile, onListingCreated: () => void }> = ({ currentUser, onListingCreated }) => {
     const { t } = useTranslation();
     const [formState, setFormState] = useState({
-        itemName: '', description: '', price: '', currency: 'NGN' as const,
+        itemName: '', description: '', price: '', currency: 'NGN' as 'NGN' | 'GHS' | 'KES' | 'USD',
         sellerName: currentUser.name, contactPhone: '', contactEmail: currentUser.email,
         country: 'Nigeria', state: '', city: '', area: '', websiteUrl: ''
     });
@@ -238,10 +236,36 @@ const SellItemTab: React.FC<{ currentUser: UserProfile, onListingCreated: () => 
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [userItemCount, setUserItemCount] = useState<number | null>(null);
+    const [isCheckingPosts, setIsCheckingPosts] = useState(true);
+
+    const FLUTTERWAVE_PUBLIC_KEY = 'FLWPUBK-7a298ea26aa8e1b9d39f5a72b2425b97-X';
+    const priceMap: Record<string, number> = { NGN: 1500, GHS: 15, KES: 130, USD: 1 };
+
+    useEffect(() => {
+        const checkPosts = async () => {
+            setIsCheckingPosts(true);
+            try {
+                const count = await marketService.countUserItems(currentUser.email);
+                setUserItemCount(count);
+            } catch (e: any) {
+                console.error("Could not check user post count", e);
+                // FIX: Standardized error handling to display the clearer message from the service layer.
+                const errorMessage = e?.message || 'Could not verify your post count.';
+                setError(errorMessage);
+                setUserItemCount(null); 
+            } finally {
+                setIsCheckingPosts(false);
+            }
+        };
+        checkPosts();
+    }, [currentUser.email]);
+
+    const paymentRequired = userItemCount !== null && userItemCount >= 1;
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormState(prev => ({...prev, [name]: value}));
+        setFormState(prev => ({...prev, [name]: value as any}));
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -260,41 +284,120 @@ const SellItemTab: React.FC<{ currentUser: UserProfile, onListingCreated: () => 
             return;
         }
         
-        setIsSubmitting(true);
-        try {
-            await marketService.addItem({
-                sellerId: currentUser.email,
-                sellerName: formState.sellerName,
-                itemName: formState.itemName,
-                description: formState.description,
-                price: parseFloat(formState.price),
+        const itemData: Omit<MarketItem, 'id' | 'timestamp' | 'imageUrl' | 'isSold'> = {
+             sellerId: currentUser.email,
+             sellerName: formState.sellerName,
+             itemName: formState.itemName,
+             description: formState.description,
+             price: parseFloat(formState.price),
+             currency: formState.currency,
+             contactPhone: formState.contactPhone,
+             contactEmail: formState.contactEmail,
+             location: {
+                 country: formState.country,
+                 state: formState.state,
+                 city: formState.city,
+                 area: formState.area,
+             },
+             websiteUrl: formState.websiteUrl
+        };
+
+        if (paymentRequired) {
+            setIsSubmitting(true);
+            const amount = priceMap[formState.currency] || 1;
+            
+            (window as any).FlutterwaveCheckout({
+                public_key: FLUTTERWAVE_PUBLIC_KEY,
+                tx_ref: `ratel-market-${currentUser.email}-${Date.now()}`,
+                amount,
                 currency: formState.currency,
-                contactPhone: formState.contactPhone,
-                contactEmail: formState.contactEmail,
-                location: {
-                    country: formState.country,
-                    state: formState.state,
-                    city: formState.city,
-                    area: formState.area,
+                customer: {
+                    email: currentUser.email,
+                    name: formState.sellerName,
+                    phone_number: formState.contactPhone,
                 },
-                websiteUrl: formState.websiteUrl
-            }, imageFile);
-            alert(t('marketSquare.sell.success'));
-            onListingCreated();
-        } catch (err: any) {
-            if (err.message && err.message.includes('Supabase not configured')) {
-                setError(err.message);
-            } else {
-                setError(t('marketSquare.sell.error.generic'));
+                customizations: {
+                    title: "Ratel AI Market Listing",
+                    description: `Payment for listing "${formState.itemName}"`,
+                },
+                callback: async (data: any) => {
+                    // This is called on successful payment
+                    if (data.status === 'successful') {
+                        try {
+                            await marketService.logPayment({
+                                sellerId: currentUser.email,
+                                transaction_ref: data.tx_ref,
+                                amount: data.amount,
+                                currency: data.currency,
+                                status: 'successful'
+                            });
+                            await marketService.addItem(itemData, imageFile);
+                            alert(t('marketSquare.sell.success'));
+                            onListingCreated();
+                        } catch (err) {
+                            setError('Payment successful, but failed to create listing. Please contact support.');
+                        } finally {
+                            setIsSubmitting(false);
+                        }
+                    } else {
+                        setError('Payment was not successful. Please try again.');
+                        setIsSubmitting(false);
+                    }
+                },
+                onclose: () => setIsSubmitting(false) // User closed the modal
+            });
+        } else {
+            // Free post logic
+            setIsSubmitting(true);
+            try {
+                await marketService.addItem(itemData, imageFile);
+                alert(t('marketSquare.sell.success'));
+                onListingCreated();
+            } catch (err: any) {
+                setError(err.message || t('marketSquare.sell.error.generic'));
+            } finally {
+                setIsSubmitting(false);
             }
-            console.error(err);
-        } finally {
-            setIsSubmitting(false);
         }
     };
+    
+    const renderSubmitButton = () => {
+        let buttonText = t('marketSquare.sell.submitButton');
+        let buttonAction = handleSubmit;
+        let disabled = isSubmitting || isCheckingPosts;
+
+        if (isCheckingPosts) {
+            buttonText = 'Verifying post status...';
+        } else if (paymentRequired) {
+            const amount = priceMap[formState.currency] || 1;
+            const currencySymbol = { NGN: '₦', GHS: '₵', KES: 'KSh', USD: '$' }[formState.currency];
+            buttonText = `Pay ${currencySymbol}${amount} to List Item`;
+        }
+
+        if (isSubmitting) {
+            buttonText = paymentRequired ? 'Processing Payment...' : 'Submitting...';
+        }
+
+        return (
+            <button type="submit" disabled={disabled} className="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 disabled:bg-green-300">
+                {buttonText}
+            </button>
+        );
+    }
 
     return (
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
+            {userItemCount !== null && (
+                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800 flex items-start gap-2">
+                    <InfoIcon className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <span>
+                        {paymentRequired 
+                            ? `Your first free listing has been used. A small one-time fee is required to post this item.` 
+                            : `Your first item listing is free! Fill out the details below to get started.`
+                        }
+                    </span>
+                </div>
+            )}
              <div>
                 <label className="block text-sm font-medium text-gray-700">{t('marketSquare.sell.photoLabel')}</label>
                 <div className="mt-1 flex items-center">
@@ -340,9 +443,7 @@ const SellItemTab: React.FC<{ currentUser: UserProfile, onListingCreated: () => 
                 </div>
             )}
             
-            <button type="submit" disabled={isSubmitting} className="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 disabled:bg-green-300">
-                {isSubmitting ? 'Submitting...' : t('marketSquare.sell.submitButton')}
-            </button>
+            {renderSubmitButton()}
         </form>
     );
 };

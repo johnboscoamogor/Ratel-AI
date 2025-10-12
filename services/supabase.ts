@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { MarketItem } from '../types';
+import { MarketItem, MarketPayment } from '../types';
 
 // --- IMPORTANT SETUP ---
 // You are almost there!
@@ -21,7 +21,8 @@ let supabaseClient = null;
 if (isSupabaseConfigured) {
     // The generic type argument helps TypeScript understand the shape of your database tables.
     supabaseClient = createClient<{
-        market_items: MarketItem
+        market_items: MarketItem;
+        market_payments: MarketPayment;
     }>(supabaseUrl, supabaseAnonKey);
 } else {
     // Log a warning to the developer console if Supabase is not configured.
