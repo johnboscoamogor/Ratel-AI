@@ -26,11 +26,13 @@ const resources = {
             "newChat": "New Chat",
             "hustleStudio": "Hustle",
             "learnStudio": "Learn",
-            "marketSquare": "Market Square",
+            "marketSquare": "Market",
             "imageStudio": "Image",
             "audioStudio": "Audio",
             "videoStudio": "Video",
             "communityStudio": "Community",
+            "storyteller": "Storyteller",
+            "videoAr": "Video AR",
             "history": "History",
             "search": "Search...",
             "noHistory": "No chats yet.",
@@ -144,6 +146,43 @@ const resources = {
             "qualityHigh": "High",
             "info": "Video generation can take a few minutes. We'll notify you when it's ready!",
             "generateButton": "Generate Video"
+        },
+        "videoArStudio": {
+            "title": "Video AR Studio",
+            "promptPlaceholder": "e.g., put a birthday hat on my head...",
+            "generateButton": "Apply Effect",
+            "clearButton": "Clear",
+            "snapshotButton": "Take Snapshot",
+            "errorCamera": "Could not access camera. Please grant permission and refresh.",
+            "pauseFeed": "Pause Feed",
+            "resumeFeed": "Resume Feed",
+            "recenterEffect": "Re-center"
+        },
+        "storytellerStudio": {
+            "title": "Storyteller",
+            "promptPlaceholder": "Tell me an African story or Bible story...",
+            "generateButton": "Create Story & Video",
+            "loading": {
+                "script": "Crafting your story script...",
+                "audio": "Casting voices for narration...",
+                "video": "Directing the video scenes...",
+                "final": "Rendering the final cut..."
+            },
+            "error": "Failed to create story: {{error}}",
+            "downloadVideo": "Download Video (No Audio)",
+            "downloadAudio": "Download Narration",
+            "share": "Share to Community",
+            "shared": "Shared!",
+            "script": "Story Script",
+            "lesson": "The Lesson",
+            "disclaimer": "Video and audio are generated separately. For best results, play them together. Downloads are separate files.",
+            "tryExample": "Or try an example...",
+            "examples": [
+                "Tell me the bible story of David and Goliath, focusing on David's courage.",
+                "Write a short African folklore story about the clever spider Anansi.",
+                "Create a children's story about a young girl who discovers a magical baobab tree.",
+                "Tell me a story from the life of Mansa Musa."
+            ]
         },
         "hustleStudio": {
             "title": "Hustle Studio",
@@ -432,11 +471,13 @@ const resources = {
         "newChat": "New Chat",
         "hustleStudio": "Hustle",
         "learnStudio": "Learn",
-        "marketSquare": "Market Square",
+        "marketSquare": "Market",
         "imageStudio": "Image",
         "audioStudio": "Audio",
         "videoStudio": "Video",
         "communityStudio": "Community",
+        "storyteller": "Storyteller",
+        "videoAr": "Video AR",
         "history": "History",
         "search": "Search...",
         "noHistory": "No chat yet.",
@@ -454,6 +495,17 @@ const resources = {
         "suggestion2": "Teach me digital marketing basics",
         "suggestion3": "How much dem dey sell tomatoes for Lagos now?",
         "suggestion4": "Create image of African superhero"
+      },
+      "videoArStudio": {
+        "title": "Video AR Studio",
+        "promptPlaceholder": "e.g., put birthday hat for my head...",
+        "generateButton": "Apply Effect",
+        "clearButton": "Clear",
+        "snapshotButton": "Snap Picture",
+        "errorCamera": "I no fit see camera. Abeg, allow am make I see.",
+        "pauseFeed": "Pause Video",
+        "resumeFeed": "Play Video",
+        "recenterEffect": "Re-center"
       }
     }
   }

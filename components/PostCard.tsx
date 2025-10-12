@@ -60,6 +60,16 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUser, onToggleLike, on
                 <p className="text-gray-700 whitespace-pre-wrap mb-3">{post.content}</p>
 
                 {post.imageUrl && <img src={post.imageUrl} alt="Post content" className="mt-3 rounded-lg max-h-96 w-full object-cover border" />}
+                {post.videoUrl && (
+                    <video
+                        src={post.videoUrl}
+                        controls
+                        loop
+                        playsInline
+                        className="mt-3 rounded-lg max-h-96 w-full object-cover border bg-black"
+                        aria-label="Post video content"
+                    />
+                )}
             </div>
 
             <div className="px-4 pb-2">

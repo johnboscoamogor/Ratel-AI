@@ -17,6 +17,24 @@ export interface Task {
   reminderFired?: boolean;
 }
 
+export interface Story {
+  id: string;
+  prompt: string;
+  title: string;
+  script: {
+    title: string;
+    scenes: {
+      sceneNumber: number;
+      description: string;
+      narration: string;
+    }[];
+    lesson: string;
+  };
+  videoUrl: string;
+  audioUrl: string; // Blob URL
+  timestamp: number;
+}
+
 export interface Message {
   id: string;
   role: Role;
@@ -47,6 +65,7 @@ export interface UserProfile {
   isAdmin?: boolean;
   telegramUsername?: string;
   totalRedeemed?: number;
+  stories?: Story[];
 }
 
 export interface AppSettings {
@@ -90,6 +109,7 @@ export interface CommunityPost {
     authorId: string; // user email
     content: string;
     imageUrl?: string;
+    videoUrl?: string;
     likes: string[]; // array of user emails
     comments: Comment[];
     timestamp: number;

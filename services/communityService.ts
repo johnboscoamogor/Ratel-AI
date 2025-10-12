@@ -102,7 +102,7 @@ export const communityService = {
         return [...localPosts, ...telegramPosts].sort((a, b) => b.timestamp - a.timestamp);
     },
 
-    addPost: (content: string, imageUrl: string | undefined, author: UserProfile): CommunityPost => {
+    addPost: (content: string, imageUrl: string | undefined, author: UserProfile, videoUrl?: string): CommunityPost => {
         const posts = getPosts();
         const newPost: CommunityPost = {
             id: crypto.randomUUID(),
@@ -110,6 +110,7 @@ export const communityService = {
             authorId: author.email,
             content,
             imageUrl,
+            videoUrl,
             likes: [],
             comments: [],
             timestamp: Date.now(),

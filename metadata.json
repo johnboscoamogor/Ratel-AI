@@ -1,6 +1,7 @@
 {
   "requestFramePermissions": [
-    "microphone"
+    "microphone",
+    "camera"
   ],
   "name": "Ratel AI",
   "description": ""

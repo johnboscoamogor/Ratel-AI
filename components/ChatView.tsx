@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from './Sidebar';
 import ChatWindow from './ChatWindow';
@@ -14,7 +13,9 @@ import HustleStudio from './HustleStudio';
 import LearnStudio from './LearnStudio';
 import ProfileStudio from './ProfileStudio';
 import MarketSquare from './MarketStudio';
-import { Message, Role, ChatSession, AppSettings, Task, UserProfile, RatelMode, RatelTone } from '../types';
+import StorytellerStudio from './StorytellerStudio';
+import VideoArStudio from './VideoArStudio';
+import { Message, Role, ChatSession, AppSettings, Task, UserProfile, RatelMode, RatelTone, Story } from '../types';
 import { ai } from '../services/geminiService';
 import { SYSTEM_INSTRUCTION, taskTools, CoffeeIcon, MenuIcon, ChevronDownIcon } from '../constants';
 // FIX: Changed FunctionCallPart to FunctionCall, which is the correct exported member from @google/genai.
@@ -69,10 +70,13 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
   const [videoStudioInitialPrompt, setVideoStudioInitialPrompt] = useState<string | undefined>();
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
+  const [proModalMessage, setProModalMessage] = useState<string | undefined>();
   const [isHustleStudioOpen, setIsHustleStudioOpen] = useState(false);
   const [isLearnStudioOpen, setIsLearnStudioOpen] = useState(false);
   const [isProfileStudioOpen, setIsProfileStudioOpen] = useState(false);
   const [isMarketSquareOpen, setIsMarketSquareOpen] = useState(false);
+  const [isStorytellerStudioOpen, setIsStorytellerStudioOpen] = useState(false);
+  const [isVideoArStudioOpen, setIsVideoArStudioOpen] = useState(false);
   const [isToneDropdownOpen, setIsToneDropdownOpen] = useState(false);
   
   const chatSessionRef = useRef<Chat | null>(null);
@@ -483,7 +487,15 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
     }
 };
 
-
+  const handleStoryGenerated = (story: Story) => {
+    setUserProfile(prev => {
+        if (!prev) return null;
+        const updatedStories = [...(prev.stories || []), story];
+        return { ...prev, stories: updatedStories };
+    });
+    addXp(50); // Award XP for creating a story
+  };
+  
   const handleNewChat = () => { if (messages.length > 0) setIsNewChatConfirmOpen(true); else setCurrentChatId(null); };
   const confirmNewChat = () => { setCurrentChatId(null); setIsNewChatConfirmOpen(false); };
   const cancelNewChat = () => setIsNewChatConfirmOpen(false);
@@ -500,6 +512,10 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
   const handleEditVideoPrompt = (prompt: string) => { setVideoStudioInitialPrompt(prompt); setIsVideoStudioOpen(true); }
   const handleCloseImageStudio = () => { setIsImageStudioOpen(false); setImageStudioInitialPrompt(undefined); };
   const handleCloseVideoStudio = () => { setIsVideoStudioOpen(false); setVideoStudioInitialPrompt(undefined); }
+  const handleOpenProModal = (message?: string) => {
+    setProModalMessage(message);
+    setIsProModalOpen(true);
+  }
   
   const mainStyle: React.CSSProperties = settings.appearance?.backgroundImage ? { backgroundImage: `linear-gradient(rgba(249, 250, 251, 0.85), rgba(249, 250, 251, 0.85)), url(${settings.appearance.backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' } : {};
   const toneLabels: Record<RatelTone, string> = { normal: t('tones.normal'), funny: t('tones.funny'), pidgin: t('tones.pidgin') };
@@ -524,8 +540,10 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
         onOpenHustleStudio={() => setIsHustleStudioOpen(true)}
         onOpenLearnStudio={() => setIsLearnStudioOpen(true)}
         onOpenMarketSquare={() => setIsMarketSquareOpen(true)}
+        onOpenStorytellerStudio={() => setIsStorytellerStudioOpen(true)}
         onOpenProfileStudio={() => setIsProfileStudioOpen(true)}
-        onOpenProModal={() => setIsProModalOpen(true)}
+        onOpenVideoArStudio={() => setIsVideoArStudioOpen(true)}
+        onOpenProModal={() => handleOpenProModal()}
         setPage={setPage}
         onLogout={onLogout}
       />
@@ -594,10 +612,12 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
         {isHustleStudioOpen && <HustleStudio onClose={() => setIsHustleStudioOpen(false)} onAction={handleHustleRequest} isLoading={isLoading} />}
         {isLearnStudioOpen && <LearnStudio onClose={() => setIsLearnStudioOpen(false)} onAction={handleLearnRequest} />}
         {isMarketSquareOpen && <MarketSquare onClose={() => setIsMarketSquareOpen(false)} onAiSearch={handleMarketAiSearch} isLoading={isLoading} userProfile={userProfile} />}
+        {isStorytellerStudioOpen && <StorytellerStudio onClose={() => setIsStorytellerStudioOpen(false)} onStoryGenerated={handleStoryGenerated} settings={settings} onOpenProModal={handleOpenProModal} />}
         {isProfileStudioOpen && <ProfileStudio onClose={() => setIsProfileStudioOpen(false)} userProfile={userProfile} setUserProfile={setUserProfile} />}
+        {isVideoArStudioOpen && <VideoArStudio onClose={() => setIsVideoArStudioOpen(false)} />}
         
         {isSupportModalOpen && <SupportModal onClose={() => setIsSupportModalOpen(false)} />}
-        {isProModalOpen && <ProModal onClose={() => setIsProModalOpen(false)} />}
+        {isProModalOpen && <ProModal onClose={() => setIsProModalOpen(false)} message={proModalMessage} />}
         
         <ConfirmationDialog isOpen={isNewChatConfirmOpen} onClose={cancelNewChat} onConfirm={confirmNewChat} title={t('dialogs.newChatTitle')} message={t('dialogs.newChatMessage')} confirmText={t('dialogs.newChatConfirm')} />
         <ConfirmationDialog isOpen={!!chatToDelete} onClose={() => setChatToDelete(null)} onConfirm={confirmDeleteChat} title={t('dialogs.deleteChatTitle')} message={t('dialogs.deleteChatMessage')} confirmText={t('dialogs.deleteChatConfirm')} confirmButtonClass="bg-red-600 text-white hover:bg-red-700 focus:ring-red-500" />

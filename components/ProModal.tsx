@@ -5,15 +5,19 @@ import { playSound } from '../services/audioService';
 
 interface ProModalProps {
   onClose: () => void;
+  message?: string;
 }
 
-const ProModal: React.FC<ProModalProps> = ({ onClose }) => {
+const ProModal: React.FC<ProModalProps> = ({ onClose, message }) => {
     const { t } = useTranslation();
 
     const handleClose = () => {
         playSound('click');
         onClose();
     };
+
+    const title = message ? "Limit Reached" : t('proModal.comingSoonTitle');
+    const description = message || t('proModal.comingSoonDescription');
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" role="dialog" aria-modal="true" aria-labelledby="pro-modal-title">
@@ -25,8 +29,8 @@ const ProModal: React.FC<ProModalProps> = ({ onClose }) => {
                     <div className="inline-block bg-green-100 p-3 rounded-full mb-4">
                         <StarIcon className="w-8 h-8 text-green-600" />
                     </div>
-                    <h2 id="pro-modal-title" className="text-2xl font-bold text-gray-800">{t('proModal.comingSoonTitle')}</h2>
-                    <p className="mt-2 text-gray-600 max-w-sm mx-auto">{t('proModal.comingSoonDescription')}</p>
+                    <h2 id="pro-modal-title" className="text-2xl font-bold text-gray-800">{title}</h2>
+                    <p className="mt-2 text-gray-600 max-w-sm mx-auto">{description}</p>
                     
                     <button
                         onClick={handleClose}

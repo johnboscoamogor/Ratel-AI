@@ -44,15 +44,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBack }) => {
 
                 <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                     <h2 className="text-xl font-bold text-gray-800 mb-4">Management Actions</h2>
-                    <div className="flex flex-col md:flex-row gap-4">
-                        <button className="flex-1 bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
-                            Approve Reward Claims
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <button className="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                            View Community Admin
                         </button>
-                        <button className="flex-1 bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
-                            Manage Users
-                        </button>
-                        <button className="flex-1 bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
-                            View Engagement Chart
+                        <button className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
+                            Manage User Stories
                         </button>
                     </div>
                 </div>
