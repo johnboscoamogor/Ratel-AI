@@ -81,9 +81,14 @@ const BrowseMarketTab: React.FC<{ currentUser: UserProfile }> = ({ currentUser }
             try {
                 const fetchedItems = await marketService.getItems();
                 setItems(fetchedItems);
-            } catch (err) {
+            } catch (err: any) {
                 console.error("Failed to fetch market items", err);
-                setError(t('marketStudio.browse.fetchError'));
+                // Display the specific configuration error message if it occurs
+                if (err.message && err.message.includes('Supabase not configured')) {
+                    setError(err.message);
+                } else {
+                    setError(t('marketStudio.browse.fetchError'));
+                }
             } finally {
                 setLoading(false);
             }
@@ -128,7 +133,12 @@ const BrowseMarketTab: React.FC<{ currentUser: UserProfile }> = ({ currentUser }
                 className="w-full p-2 mb-4 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
             />
             {loading && <p className="text-center text-gray-500">Loading items...</p>}
-            {error && <p className="text-center text-red-500">{error}</p>}
+            {error && (
+                 <div className="text-center p-4 my-4 bg-red-50 text-red-700 border border-red-200 rounded-lg">
+                    <p className="font-semibold">Configuration Error</p>
+                    <p className="text-sm">{error}</p>
+                </div>
+            )}
             {!loading && !error && filteredItems.length === 0 && (
                 <div className="text-center py-10 text-gray-500">
                     <p>{t('marketStudio.browse.noItems')}</p>
@@ -227,8 +237,12 @@ const SellItemTab: React.FC<{ currentUser: UserProfile, onListingCreated: () => 
             }, imageFile);
             alert(t('marketStudio.sell.success'));
             onListingCreated();
-        } catch (err) {
-            setError(t('marketStudio.sell.error.generic'));
+        } catch (err: any) {
+            if (err.message && err.message.includes('Supabase not configured')) {
+                setError(err.message);
+            } else {
+                setError(t('marketStudio.sell.error.generic'));
+            }
             console.error(err);
         } finally {
             setIsSubmitting(false);
@@ -273,7 +287,11 @@ const SellItemTab: React.FC<{ currentUser: UserProfile, onListingCreated: () => 
                 <InputField label={t('marketStudio.sell.phoneLabel')} name="contactPhone" value={formState.contactPhone} onChange={handleInputChange} required />
             </div>
             
-            {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+            {error && (
+                <div className="p-3 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm text-center">
+                    {error}
+                </div>
+            )}
             
             <button type="submit" disabled={isSubmitting} className="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 disabled:bg-green-300">
                 {isSubmitting ? 'Submitting...' : t('marketStudio.sell.submitButton')}

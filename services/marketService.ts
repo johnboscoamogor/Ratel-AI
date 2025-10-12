@@ -1,88 +1,133 @@
 import { MarketItem } from '../types';
-import { db, storage } from './firebase';
-import { collection, getDocs, addDoc, deleteDoc, doc, query, orderBy, getDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { supabase, isSupabaseConfigured } from './supabase';
 
-const MARKET_ITEMS_COLLECTION = 'market-items';
+const BUCKET_NAME = 'market-images';
+
+// A reusable error message that guides the user to the solution.
+const CONFIG_ERROR_MESSAGE = "Supabase not configured. Please update your URL and Key in 'services/supabase.ts'.";
+
 
 export const marketService = {
+    /**
+     * Retrieves market items from the Supabase database.
+     */
     getItems: async (): Promise<MarketItem[]> => {
-        try {
-            const itemsCollection = collection(db, MARKET_ITEMS_COLLECTION);
-            const q = query(itemsCollection, orderBy('timestamp', 'desc'));
-            const querySnapshot = await getDocs(q);
-            
-            const items: MarketItem[] = [];
-            querySnapshot.forEach((doc) => {
-                items.push({ id: doc.id, ...doc.data() } as MarketItem);
-            });
-            return items;
-        } catch (e) {
-            console.error("Error fetching market items:", e);
-            return [];
+        if (!isSupabaseConfigured || !supabase) {
+            throw new Error(CONFIG_ERROR_MESSAGE);
         }
-    },
 
-    addItem: async (item: Omit<MarketItem, 'id' | 'timestamp' | 'imageUrl'>, imageFile: File): Promise<MarketItem> => {
-        try {
-            // 1. Upload image to Firebase Storage
-            const imageRef = ref(storage, `${MARKET_ITEMS_COLLECTION}/${Date.now()}-${imageFile.name}`);
-            const snapshot = await uploadBytes(imageRef, imageFile);
-            const imageUrl = await getDownloadURL(snapshot.ref);
+        const { data, error } = await supabase
+            .from('market_items')
+            .select('*')
+            .order('timestamp', { ascending: false });
 
-            // 2. Add item data to Firestore
-            const newItemData = {
-                ...item,
-                imageUrl,
-                timestamp: Date.now(),
-            };
-            const docRef = await addDoc(collection(db, MARKET_ITEMS_COLLECTION), newItemData);
-            
-            return { id: docRef.id, ...newItemData };
-
-        } catch (error) {
-            console.error("Failed to add market item:", error);
+        if (error) {
+            console.error("Error fetching market items:", error);
             throw error;
         }
+        return data || [];
     },
 
+    /**
+     * Adds a new item by uploading its image to Storage and saving its data to the database.
+     */
+    addItem: async (item: Omit<MarketItem, 'id' | 'timestamp' | 'imageUrl'>, imageFile: File): Promise<MarketItem> => {
+        if (!isSupabaseConfigured || !supabase) {
+            throw new Error(CONFIG_ERROR_MESSAGE);
+        }
+
+        // 1. Upload the image file to Supabase Storage
+        const fileExtension = imageFile.name.split('.').pop();
+        const filePath = `${item.sellerId}/${Date.now()}.${fileExtension}`;
+        
+        const { error: uploadError } = await supabase.storage
+            .from(BUCKET_NAME)
+            .upload(filePath, imageFile);
+
+        if (uploadError) {
+            console.error("Error uploading image:", uploadError);
+            throw uploadError;
+        }
+
+        // 2. Get the public URL of the uploaded image
+        const { data: urlData } = supabase.storage
+            .from(BUCKET_NAME)
+            .getPublicUrl(filePath);
+
+        const imageUrl = urlData.publicUrl;
+
+        // 3. Insert the new item data (including the image URL) into the database
+        const newItemData = {
+            ...item,
+            imageUrl,
+            // id and timestamp are handled by the database
+        };
+
+        const { data: insertedData, error: insertError } = await supabase
+            .from('market_items')
+            .insert(newItemData)
+            .select()
+            .single();
+
+        if (insertError) {
+            console.error("Error inserting market item:", insertError);
+            // Attempt to clean up the uploaded image if the database insert fails
+            await supabase.storage.from(BUCKET_NAME).remove([filePath]);
+            throw insertError;
+        }
+
+        return insertedData;
+    },
+
+    /**
+     * Deletes an item from the database and its corresponding image from storage.
+     */
     deleteItem: async (itemId: string, userId: string): Promise<boolean> => {
-        try {
-            const itemDocRef = doc(db, MARKET_ITEMS_COLLECTION, itemId);
-            const itemDoc = await getDoc(itemDocRef);
+        if (!isSupabaseConfigured || !supabase) {
+            throw new Error(CONFIG_ERROR_MESSAGE);
+        }
+        
+        // 1. Fetch the item to verify ownership and get the image URL
+        const { data: item, error: fetchError } = await supabase
+            .from('market_items')
+            .select('sellerId, imageUrl')
+            .eq('id', itemId)
+            .single();
 
-            if (!itemDoc.exists()) {
-                console.warn(`Item ${itemId} not found.`);
-                return false;
-            }
-            
-            const itemData = itemDoc.data() as MarketItem;
-            
-            if (itemData.sellerId !== userId) {
-                console.warn(`User ${userId} is not the owner of item ${itemId}.`);
-                return false;
-            }
-
-            // 1. Delete image from Firebase Storage
-            if (itemData.imageUrl) {
-                try {
-                    const imageRef = ref(storage, itemData.imageUrl);
-                    await deleteObject(imageRef);
-                } catch (storageError: any) {
-                    // It's possible the image doesn't exist, so we log but don't fail the whole operation
-                     if (storageError.code !== 'storage/object-not-found') {
-                        console.error("Error deleting image from storage, but proceeding with Firestore deletion:", storageError);
-                    }
-                }
-            }
-
-            // 2. Delete item from Firestore
-            await deleteDoc(itemDocRef);
-            return true;
-
-        } catch (error) {
-            console.error(`Failed to delete item ${itemId}:`, error);
+        if (fetchError || !item) {
+            console.error(`Error fetching item ${itemId} for deletion:`, fetchError);
             return false;
         }
+
+        // 2. Check if the current user is the owner
+        if (item.sellerId !== userId) {
+            console.warn(`User ${userId} attempted to delete item ${itemId} owned by ${item.sellerId}.`);
+            return false;
+        }
+        
+        // 3. Delete the item from the database
+        const { error: deleteError } = await supabase
+            .from('market_items')
+            .delete()
+            .eq('id', itemId);
+
+        if (deleteError) {
+            console.error(`Error deleting item ${itemId} from database:`, deleteError);
+            return false;
+        }
+
+        // 4. Delete the image from storage
+        // Extract the file path from the full URL
+        const imagePath = item.imageUrl.substring(item.imageUrl.lastIndexOf(BUCKET_NAME) + BUCKET_NAME.length + 1);
+        const { error: storageError } = await supabase.storage
+            .from(BUCKET_NAME)
+            .remove([imagePath]);
+            
+        if (storageError) {
+            // Log the error but consider the operation successful since the DB entry is gone
+            console.error(`Failed to delete image ${imagePath} from storage, but DB entry was removed:`, storageError);
+        }
+
+        return true;
     },
 };

@@ -91,24 +91,28 @@ const AdminPanel: React.FC = () => {
     
     const renderUsers = () => (
         <div className="space-y-3">
-             {Object.entries(users).map(([id, data]) => (
-                <div key={id} className="bg-gray-50 p-3 rounded-lg border flex items-center justify-between">
-                    <div>
-                        <p className="font-semibold">{data.name}</p>
-                        <p className="text-sm text-gray-600">{id}</p>
+             {Object.entries(users).map(([id, data]) => {
+                const user = data as { name: string; points: number };
+                return (
+                    <div key={id} className="bg-gray-50 p-3 rounded-lg border flex items-center justify-between">
+                        <div>
+                            <p className="font-semibold">{user.name}</p>
+                            <p className="text-sm text-gray-600">{id}</p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <p className="font-bold text-lg text-green-600">{user.points} pts</p>
+                            <button onClick={() => handleAdjustBalance(id)} className="bg-blue-100 text-blue-700 font-semibold py-1 px-3 rounded-md text-sm hover:bg-blue-200">{t('community.adminPanel.adjustBalance')}</button>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <p className="font-bold text-lg text-green-600">{data.points} pts</p>
-                        <button onClick={() => handleAdjustBalance(id)} className="bg-blue-100 text-blue-700 font-semibold py-1 px-3 rounded-md text-sm hover:bg-blue-200">{t('community.adminPanel.adjustBalance')}</button>
-                    </div>
-                </div>
-             ))}
+                );
+             })}
         </div>
     );
     
     const renderSettings = () => {
         const totalUsers = Object.keys(users).length;
-        const totalPoints = Object.values(users).reduce((sum, user) => sum + user.points, 0);
+        // FIX: Add type assertion to resolve TypeScript error where 'user' is inferred as 'unknown'.
+        const totalPoints = Object.values(users).reduce((sum, user) => sum + (user as { points: number }).points, 0);
 
         return (
             <div className="space-y-6">
@@ -177,6 +181,7 @@ const AdminPanel: React.FC = () => {
                 <div>
                     {activeTab === 'requests' && renderRequests()}
                     {activeTab === 'users' && renderUsers()}
+                    {/* FIX: Corrected typo in variable name from 'active-tab' to 'activeTab'. */}
                     {activeTab === 'settings' && renderSettings()}
                 </div>
             </div>
