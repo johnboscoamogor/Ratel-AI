@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CloseIcon, SpeakerIcon, StopIcon, TrashIcon, DownloadIcon, ChevronDownIcon, PlayIcon } from '../constants';
 import { playSound } from '../services/audioService';
-import { generateAudioBlob, geminiVoices, cancelAndCloseAllAudioSessions } from '../services/audioService';
+import { generateAudioBlob, gcpVoices, cancelAndCloseAllAudioSessions } from '../services/audioService';
 
 interface AudioStudioProps {
   onClose: () => void;
@@ -15,7 +15,7 @@ const AudioStudio: React.FC<AudioStudioProps> = ({ onClose }) => {
     const [feedback, setFeedback] = useState<{ message: string; type: 'info' | 'error' } | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
-    const [selectedVoice, setSelectedVoice] = useState<string>(geminiVoices[0].id);
+    const [selectedVoice, setSelectedVoice] = useState<string>(gcpVoices[0].id);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [previewState, setPreviewState] = useState<{ voiceId: string | null; status: 'idle' | 'loading' | 'playing' }>({ voiceId: null, status: 'idle' });
     
@@ -135,8 +135,8 @@ const AudioStudio: React.FC<AudioStudioProps> = ({ onClose }) => {
 
         const link = document.createElement('a');
         link.href = generatedAudio.blobUrl;
-        const selectedVoiceName = geminiVoices.find(v => v.id === selectedVoice)?.name.toLowerCase() || 'audio';
-        link.download = `ratel-ai-${selectedVoiceName}-${Date.now()}.wav`;
+        const selectedVoiceName = gcpVoices.find(v => v.id === selectedVoice)?.name.toLowerCase().replace(/ /g, '-') || 'audio';
+        link.download = `ratel-ai-${selectedVoiceName}-${Date.now()}.mp3`;
         
         document.body.appendChild(link);
         link.click();
@@ -189,7 +189,7 @@ const AudioStudio: React.FC<AudioStudioProps> = ({ onClose }) => {
         onClose();
     }
     
-    const currentVoice = geminiVoices.find(v => v.id === selectedVoice);
+    const currentVoice = gcpVoices.find(v => v.id === selectedVoice);
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" aria-modal="true" role="dialog">
@@ -228,7 +228,7 @@ const AudioStudio: React.FC<AudioStudioProps> = ({ onClose }) => {
                                 disabled={isGenerating || previewState.status !== 'idle'}
                             >
                                 <span className="flex items-center">
-                                    <span className="ml-3 block truncate">{currentVoice?.name} ({currentVoice?.gender})</span>
+                                    <span className="ml-3 block truncate">{currentVoice?.name} ({currentVoice?.lang})</span>
                                 </span>
                                 <span className="pointer-events-none absolute inset-y-0 right-0 ml-3 flex items-center pr-2">
                                     <ChevronDownIcon className="h-5 w-5 text-gray-400" />
@@ -236,11 +236,11 @@ const AudioStudio: React.FC<AudioStudioProps> = ({ onClose }) => {
                             </button>
                             {isDropdownOpen && (
                                 <ul className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm" role="listbox">
-                                    {geminiVoices.map((voice) => (
+                                    {gcpVoices.map((voice) => (
                                         <li key={voice.id} className="text-gray-900 relative cursor-default select-none py-2 pl-3 pr-9 hover:bg-gray-100 group" role="option" aria-selected={voice.id === selectedVoice}>
                                             <div className="flex items-center justify-between" onClick={() => handleSelectVoice(voice.id)}>
                                                 <span className={`${voice.id === selectedVoice ? 'font-semibold' : 'font-normal'} ml-3 block truncate`}>
-                                                    {voice.name} <span className="text-gray-500">({voice.gender})</span>
+                                                    {voice.name} <span className="text-gray-500">({voice.gender}, {voice.lang})</span>
                                                 </span>
                                             </div>
                                             <button 
@@ -256,7 +256,7 @@ const AudioStudio: React.FC<AudioStudioProps> = ({ onClose }) => {
                                                     </svg>
                                                 )}
                                                 {previewState.voiceId === voice.id && previewState.status === 'playing' && <StopIcon className="h-5 w-5" />}
-                                                {previewState.voiceId !== voice.id && <PlayIcon className="h-5 w-5" />}
+                                                {previewState.status === 'idle' && <PlayIcon className="h-5 w-5" />}
                                             </button>
                                         </li>
                                     ))}

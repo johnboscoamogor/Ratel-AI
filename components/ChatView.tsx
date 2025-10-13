@@ -20,7 +20,8 @@ import { ai } from '../services/geminiService';
 import { SYSTEM_INSTRUCTION, taskTools, CoffeeIcon, MenuIcon, ChevronDownIcon } from '../constants';
 // FIX: Changed FunctionCallPart to FunctionCall, which is the correct exported member from @google/genai.
 import { GenerateContentResponse, Modality, Chat, FunctionCall, Part, ContentUnion } from '@google/genai';
-import { playSound, generateAudioBlob, getAvailableVoices, cancelCurrentAudioGeneration } from '../services/audioService';
+// FIX: Removed import for 'cancelCurrentAudioGeneration' as it's obsolete.
+import { playSound, generateAudioBlob, getAvailableVoices } from '../services/audioService';
 import { useTranslation } from 'react-i18next';
 
 interface ChatViewProps {
@@ -233,8 +234,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
         window.speechSynthesis.cancel();
         document.removeEventListener('mousedown', handleClickOutside);
         
-        const [voiceType, voiceName] = settings.voice.selectedVoice.split('_');
-        if (voiceType === 'gemini') cancelCurrentAudioGeneration(voiceName);
+        // FIX: Removed call to 'cancelCurrentAudioGeneration' as it is obsolete.
     };
   }, [settings.voice.selectedVoice]);
 

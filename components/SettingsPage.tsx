@@ -35,7 +35,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ settings, setSettings, onBa
   const availableVoices = React.useMemo(() => {
     const voices = getAvailableVoices();
     return voices.reduce((acc, voice) => {
-      const group = voice.type === 'gemini' ? t('voiceGroups.premium') : t('voiceGroups.standard');
+      // FIX: Changed comparison from 'gemini' to 'gcp' to match the VoiceOption type.
+      const group = voice.type === 'gcp' ? t('voiceGroups.premium') : t('voiceGroups.standard');
       if (!acc[group]) {
         acc[group] = [];
       }

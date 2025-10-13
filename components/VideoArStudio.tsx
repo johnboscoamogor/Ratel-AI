@@ -67,8 +67,6 @@ const VideoArStudio: React.FC<VideoArStudioProps> = ({ onClose }) => {
         playSound('send');
         setIsLoading(true);
         setError(null);
-        // Do not clear overlay when re-centering
-        // setOverlayImage(null);
 
         const frame = captureFrameAsBase64();
         if (!frame) {
@@ -76,6 +74,8 @@ const VideoArStudio: React.FC<VideoArStudioProps> = ({ onClose }) => {
             setIsLoading(false);
             return;
         }
+        
+        const fullPrompt = `You are an expert image editor. Your task is to apply the user's request directly to the image provided. Do not ask questions or start a conversation. Simply perform the edit and return the modified image. The user's request is: "${prompt}"`;
 
         try {
             const response = await ai.models.generateContent({
@@ -83,7 +83,7 @@ const VideoArStudio: React.FC<VideoArStudioProps> = ({ onClose }) => {
                 contents: {
                     parts: [
                         { inlineData: { data: frame.data, mimeType: frame.mimeType } },
-                        { text: prompt },
+                        { text: fullPrompt },
                     ],
                 },
                 config: {
@@ -91,13 +91,31 @@ const VideoArStudio: React.FC<VideoArStudioProps> = ({ onClose }) => {
                 },
             });
 
-            // Find the image part in the response
-            const imagePart = response.candidates?.[0]?.content?.parts.find(part => part.inlineData);
+            const parts = response.candidates?.[0]?.content?.parts;
+            const blockReason = response.promptFeedback?.blockReason;
+            if (blockReason) {
+                throw new Error(`Request blocked due to ${blockReason}. Please modify your prompt.`);
+            }
+            if (!parts || parts.length === 0) {
+                throw new Error("AI returned an empty response. Please try again.");
+            }
+
+            const imagePart = parts.find(part => part.inlineData);
             if (imagePart && imagePart.inlineData) {
                 const mimeType = imagePart.inlineData.mimeType || 'image/png';
                 setOverlayImage(`data:${mimeType};base64,${imagePart.inlineData.data}`);
+                // Pause the video to show a static preview of the effect
+                if (videoRef.current && !videoRef.current.paused) {
+                    videoRef.current.pause();
+                    setIsPaused(true);
+                }
             } else {
-                throw new Error("AI did not return an image. Try rephrasing your prompt.");
+                const textPart = parts.find(part => part.text);
+                if (textPart && textPart.text) {
+                    throw new Error(`AI response: ${textPart.text}`);
+                } else {
+                    throw new Error("AI did not return an image. Try rephrasing your prompt.");
+                }
             }
         } catch (err: any) {
             console.error("AR effect generation failed:", err);
@@ -118,10 +136,8 @@ const VideoArStudio: React.FC<VideoArStudioProps> = ({ onClose }) => {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
         
-        // Draw the video frame first
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        // If there's an overlay, draw it on top
         if (overlayImage) {
             const img = new Image();
             img.onload = () => {
@@ -151,9 +167,20 @@ const VideoArStudio: React.FC<VideoArStudioProps> = ({ onClose }) => {
         if (video.paused) {
             video.play();
             setIsPaused(false);
+            setOverlayImage(null); // Clear effect when resuming
         } else {
             video.pause();
             setIsPaused(true);
+        }
+    };
+
+    const handleClearEffect = () => {
+        playSound('click');
+        setOverlayImage(null);
+        setPrompt('');
+        if (videoRef.current && videoRef.current.paused) {
+            videoRef.current.play();
+            setIsPaused(false);
         }
     };
 
@@ -227,7 +254,7 @@ const VideoArStudio: React.FC<VideoArStudioProps> = ({ onClose }) => {
                             </button>
                         </div>
                         <div className="grid grid-cols-4 gap-2">
-                            <button onClick={() => { setOverlayImage(null); setPrompt(''); playSound('click'); }} className="btn-secondary">
+                            <button onClick={handleClearEffect} className="btn-secondary">
                                 <TrashIcon className="w-5 h-5 sm:mr-1" /> <span className="hidden sm:inline">{t('videoArStudio.clearButton')}</span>
                             </button>
                             <button onClick={handleTogglePause} className="btn-secondary">
