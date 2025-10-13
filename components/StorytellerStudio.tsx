@@ -1,13 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CloseIcon, ClapperboardIcon, DownloadIcon, InfoIcon, PlayIcon, StopIcon } from '../constants';
-import { playSound, generateAudioBlob } from '../services/audioService';
-import { ai } from '../services/geminiService';
-import { Type } from '@google/genai';
+import { playSound } from '../services/audioService';
 import { AppSettings, Story } from '../types';
 import { communityService } from '../services/communityService';
-import { generateVideoFromExternalApi } from '../services/videoService';
-
 
 interface StorytellerStudioProps {
   onClose: () => void;
@@ -16,17 +12,27 @@ interface StorytellerStudioProps {
   onOpenProModal: (message: string) => void;
 }
 
-type GenerationStatus = 'idle' | 'script' | 'audio' | 'video' | 'final' | 'done' | 'error';
+interface StoryApiResponse {
+    id: string;
+    title: string;
+    script: string;
+    scenes: any[];
+    sceneVideoUrls: (string | null)[];
+    audioBase64: string;
+}
+
+type GenerationStatus = 'idle' | 'script' | 'video' | 'audio' | 'final' | 'done' | 'error';
 const DAILY_STORY_LIMIT = 3;
 
 const StorytellerStudio: React.FC<StorytellerStudioProps> = ({ onClose, onStoryGenerated, settings, onOpenProModal }) => {
     const { t } = useTranslation();
     const [prompt, setPrompt] = useState('');
     const [status, setStatus] = useState<GenerationStatus>('idle');
-    const [story, setStory] = useState<Story | null>(null);
+    const [storyResponse, setStoryResponse] = useState<StoryApiResponse | null>(null);
     const [errorMessage, setErrorMessage] = useState('');
     const [isPlaying, setIsPlaying] = useState(false);
     const [isShared, setIsShared] = useState(false);
+    const [currentSceneIndex, setCurrentSceneIndex] = useState(0);
     
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -36,11 +42,44 @@ const StorytellerStudio: React.FC<StorytellerStudioProps> = ({ onClose, onStoryG
         const audio = audioRef.current;
         const handlePlaybackEnd = () => {
             setIsPlaying(false);
-            if(videoRef.current) videoRef.current.currentTime = 0;
+            if(videoRef.current) {
+                videoRef.current.pause();
+                videoRef.current.currentTime = 0;
+            }
+            setCurrentSceneIndex(0); // Reset to first scene
         };
         audio.addEventListener('ended', handlePlaybackEnd);
         return () => audio.removeEventListener('ended', handlePlaybackEnd);
     }, []);
+    
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video || !storyResponse) return;
+
+        const handleSceneEnd = () => {
+            if (currentSceneIndex < storyResponse.sceneVideoUrls.length - 1) {
+                setCurrentSceneIndex(prev => prev + 1);
+            } else {
+                 // Loop back to the start if the audio is still playing
+                 video.currentTime = 0;
+                 video.play().catch(e => console.error(e));
+            }
+        };
+
+        video.addEventListener('ended', handleSceneEnd);
+        return () => video.removeEventListener('ended', handleSceneEnd);
+    }, [currentSceneIndex, storyResponse]);
+    
+    useEffect(() => {
+        const video = videoRef.current;
+        if (video && storyResponse && storyResponse.sceneVideoUrls[currentSceneIndex]) {
+            video.src = storyResponse.sceneVideoUrls[currentSceneIndex]!;
+            if (isPlaying) {
+                video.play().catch(e => console.error("Scene transition play failed:", e));
+            }
+        }
+    }, [currentSceneIndex, storyResponse, isPlaying]);
+
 
     const checkDailyLimit = (): boolean => {
         const key = `ratel_story_count_${new Date().toISOString().split('T')[0]}`;
@@ -58,106 +97,46 @@ const StorytellerStudio: React.FC<StorytellerStudioProps> = ({ onClose, onStoryG
         if (!prompt.trim()) return;
         if (!checkDailyLimit()) return;
 
-        setStatus('script');
+        setStatus('script'); // Generic "generating" status
         setErrorMessage('');
-        setStory(null);
+        setStoryResponse(null);
         setIsShared(false);
 
         try {
-            // --- Step 1: Generate Story Script ---
-            const scriptResponse = await ai.models.generateContent({
-                model: "gemini-2.5-flash",
-                contents: `Create a short story based on this prompt: "${prompt}". The story should be suitable for a short video. Structure the output as a JSON object with the following schema: title (string), scenes (array of objects, each with sceneNumber, description for video visuals, and narration text), and lesson (string). Focus on African or biblical themes if relevant.`,
-                config: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: Type.OBJECT,
-                        properties: {
-                            title: { type: Type.STRING },
-                            scenes: {
-                                type: Type.ARRAY,
-                                items: {
-                                    type: Type.OBJECT,
-                                    properties: {
-                                        sceneNumber: { type: Type.INTEGER },
-                                        description: { type: Type.STRING },
-                                        narration: { type: Type.STRING },
-                                    }
-                                }
-                            },
-                            lesson: { type: Type.STRING }
-                        }
-                    }
-                }
+            const response = await fetch('/api/story/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    prompt, 
+                    language: settings.language, 
+                })
             });
-            
-            let script;
-            try {
-                 script = JSON.parse(scriptResponse.text);
-            } catch (e) {
-                console.error("Failed to parse AI response as JSON:", scriptResponse.text);
-                throw new Error("The AI returned an invalid response. Please try again.");
-            }
-            
-            // FIX: Add validation for the script structure to prevent crashes.
-            if (!script || !Array.isArray(script.scenes) || script.scenes.length === 0) {
-                console.error("Invalid script structure received from AI:", script);
-                throw new Error("The AI failed to generate a valid story script. Please try a different prompt.");
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'The server failed to generate the story.');
             }
 
-            // --- Step 2 & 3: Generate Audio and Video Concurrently ---
-            setStatus('audio');
-            const fullNarration = script.scenes.map((s: any) => s.narration).join(' ');
-            const audioPromise = generateAudioBlob(fullNarration, settings.voice.selectedVoice.split('_')[1]);
-
-            setStatus('video');
-            const videoPrompt = `${script.title}. A beautifully animated story. ${script.scenes.map((s: any) => `Scene ${s.sceneNumber}: ${s.description}`).join('. ')}`;
-            // Use the new, more reliable (simulated) external video service
-            const videoPromise = generateVideoFromExternalApi(videoPrompt);
+            const data: StoryApiResponse = await response.json();
+            setStoryResponse(data);
             
-            setStatus('final');
-            const [audioBlob, finalVideoUrl] = await Promise.all([audioPromise, videoPromise]);
-            const audioUrl = URL.createObjectURL(audioBlob);
-            
-            const newStory: Story = {
-                id: crypto.randomUUID(),
+            // This part is for saving to user profile, might need adjustments
+            const newStoryForProfile: Story = {
+                id: data.id,
                 prompt,
-                title: script.title,
-                script,
-                videoUrl: finalVideoUrl,
-                audioUrl,
+                title: data.title,
+                script: { title: data.title, scenes: data.scenes, lesson: '' }, // Reconstruct from available data
+                videoUrl: data.sceneVideoUrls[0] || '', // Use first scene as representative
+                audioUrl: `data:audio/mp3;base64,${data.audioBase64}`,
                 timestamp: Date.now(),
             };
+            onStoryGenerated(newStoryForProfile);
             
-            setStory(newStory);
-            onStoryGenerated(newStory);
             setStatus('done');
 
         } catch (error: any) {
             console.error("Story generation failed:", error);
-            
-            let userFriendlyMessage = "An unexpected error occurred. Please try again.";
-
-            // Check for the specific Gemini API error structure which is a JSON object
-            if (error && error.error && typeof error.error.message === 'string') {
-                 if (String(error.error.message).includes("xhr error")) {
-                     userFriendlyMessage = "A network error occurred while communicating with the AI. Please check your connection and try again.";
-                 } else if (error.error.code === 500) {
-                     userFriendlyMessage = "The AI service is currently experiencing issues. Please try again in a few moments.";
-                 } else {
-                     userFriendlyMessage = error.error.message;
-                 }
-            } 
-            // Check for a standard Error object
-            else if (error instanceof Error) {
-                userFriendlyMessage = error.message;
-            } 
-            // Handle plain string errors
-            else if (typeof error === 'string') {
-                userFriendlyMessage = error;
-            }
-            
-            setErrorMessage(userFriendlyMessage);
+            setErrorMessage(error.message || "An unexpected error occurred.");
             setStatus('error');
         }
     };
@@ -165,15 +144,20 @@ const StorytellerStudio: React.FC<StorytellerStudioProps> = ({ onClose, onStoryG
     const handlePlayPause = () => {
         const audio = audioRef.current;
         const video = videoRef.current;
-        if (!audio || !video) return;
+        if (!audio || !video || !storyResponse) return;
 
         if (isPlaying) {
             audio.pause();
             video.pause();
             setIsPlaying(false);
         } else {
-            video.muted = true; // Ensure video is muted to only hear our narration
-            audio.src = story?.audioUrl || '';
+            video.muted = true;
+            if (!audio.src) {
+                audio.src = `data:audio/mp3;base64,${storyResponse.audioBase64}`;
+            }
+            if(video.src !== storyResponse.sceneVideoUrls[currentSceneIndex]) {
+                 video.src = storyResponse.sceneVideoUrls[currentSceneIndex]!;
+            }
             Promise.all([video.play(), audio.play()]).then(() => {
                 setIsPlaying(true);
             }).catch(e => console.error("Playback failed", e));
@@ -181,12 +165,12 @@ const StorytellerStudio: React.FC<StorytellerStudioProps> = ({ onClose, onStoryG
     };
 
     const handleShare = () => {
-        if (!story) return;
+        if (!storyResponse) return;
         communityService.addPost(
-            `Check out this story I created with Ratel AI: "${story.title}"`,
+            `Check out this story I created with Ratel AI: "${storyResponse.title}"`,
             undefined,
-            { name: "You" } as any, // This part needs a proper user object in a real app
-            story.videoUrl
+            { name: "You" } as any,
+            storyResponse.sceneVideoUrls[0] // Share first scene video
         );
         setIsShared(true);
         setTimeout(() => setIsShared(false), 3000);
@@ -198,16 +182,6 @@ const StorytellerStudio: React.FC<StorytellerStudioProps> = ({ onClose, onStoryG
     };
     
     const storyExamples = t('storytellerStudio.examples', { returnObjects: true }) as string[];
-
-    const statusMessages: Record<GenerationStatus, string> = {
-        idle: '',
-        script: t('storytellerStudio.loading.script'),
-        audio: t('storytellerStudio.loading.audio'),
-        video: t('storytellerStudio.loading.video'),
-        final: t('storytellerStudio.loading.final'),
-        done: '',
-        error: '',
-    };
     
     const isLoading = status !== 'idle' && status !== 'done' && status !== 'error';
 
@@ -266,9 +240,10 @@ const StorytellerStudio: React.FC<StorytellerStudioProps> = ({ onClose, onStoryG
                         <div className="text-center h-full flex flex-col items-center justify-center">
                             <svg className="animate-spin h-10 w-10 text-green-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8
+ 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
-                            <p className="text-lg font-semibold text-gray-700">{statusMessages[status]}</p>
+                            <p className="text-lg font-semibold text-gray-700">Generating your story... This can take a few minutes.</p>
                         </div>
                     )}
                     
@@ -279,11 +254,11 @@ const StorytellerStudio: React.FC<StorytellerStudioProps> = ({ onClose, onStoryG
                         </div>
                     )}
                     
-                    {status === 'done' && story && (
+                    {status === 'done' && storyResponse && (
                         <div className="space-y-4">
-                            <h3 className="text-2xl font-bold text-center">{story.title}</h3>
+                            <h3 className="text-2xl font-bold text-center">{storyResponse.title}</h3>
                             <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-                                <video ref={videoRef} src={story.videoUrl} className="w-full h-full object-contain" loop playsInline />
+                                <video ref={videoRef} className="w-full h-full object-contain" playsInline />
                                 <button onClick={handlePlayPause} className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity">
                                     {isPlaying ? <StopIcon className="w-16 h-16 text-white/80" /> : <PlayIcon className="w-16 h-16 text-white/80" />}
                                 </button>
@@ -293,22 +268,26 @@ const StorytellerStudio: React.FC<StorytellerStudioProps> = ({ onClose, onStoryG
                                 <span>{t('storytellerStudio.disclaimer')}</span>
                             </div>
                             <div className="flex flex-col sm:flex-row gap-2">
-                                <a href={story.videoUrl} download={`${story.title.replace(/\s/g, '_')}_video.mp4`} className="flex-1 btn-secondary"><DownloadIcon className="w-4 h-4 mr-2"/>{t('storytellerStudio.downloadVideo')}</a>
-                                <a href={story.audioUrl} download={`${story.title.replace(/\s/g, '_')}_narration.wav`} className="flex-1 btn-secondary"><DownloadIcon className="w-4 h-4 mr-2"/>{t('storytellerStudio.downloadAudio')}</a>
+                                <a href={`data:audio/mp3;base64,${storyResponse.audioBase64}`} download={`${storyResponse.title.replace(/\s/g, '_')}_narration.mp3`} className="flex-1 btn-secondary"><DownloadIcon className="w-4 h-4 mr-2"/>{t('storytellerStudio.downloadAudio')}</a>
                                 <button onClick={handleShare} className="flex-1 btn-primary" disabled={isShared}>{isShared ? t('storytellerStudio.shared') : t('storytellerStudio.share')}</button>
                             </div>
                             
                             <details className="pt-4 border-t">
                                 <summary className="font-semibold cursor-pointer">{t('storytellerStudio.script')}</summary>
-                                <div className="mt-2 space-y-2 text-sm bg-gray-50 p-3 rounded-md">
-                                    {story.script.scenes.map(scene => (
-                                        <div key={scene.sceneNumber}>
-                                            <p><strong>Scene {scene.sceneNumber}:</strong> {scene.description}</p>
-                                            <p className="italic pl-4">"{scene.narration}"</p>
+                                <div className="mt-2 space-y-2 text-sm bg-gray-50 p-3 rounded-md max-h-48 overflow-y-auto">
+                                    {storyResponse.scenes.map(scene => (
+                                        <div key={scene.scene_index}>
+                                            <p><strong>Scene {scene.scene_index}:</strong></p>
+                                            <p className="italic pl-4">"{scene.narration_text}"</p>
                                         </div>
                                     ))}
-                                    <div className="pt-2 border-t mt-2">
-                                        <p><strong>{t('storytellerStudio.lesson')}:</strong> {story.script.lesson}</p>
+                                    <div className="mt-2">
+                                        <p><strong>Downloads:</strong></p>
+                                        <ul className="list-disc pl-6">
+                                            {storyResponse.sceneVideoUrls.map((url, i) => url && (
+                                                <li key={i}><a href={url} download={`scene_${i+1}.mp4`} className="text-green-600 hover:underline">Download Scene {i+1}</a></li>
+                                            ))}
+                                        </ul>
                                     </div>
                                 </div>
                             </details>

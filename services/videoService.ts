@@ -1,22 +1,38 @@
-// A placeholder video URL for simulation.
-// This is a free-to-use video from Pexels.
-const PLACEHOLDER_VIDEO_URL = 'https://videos.pexels.com/video-files/3209828/3209828-hd_1280_720_25fps.mp4';
-
 /**
- * Simulates a call to an external video generation API to ensure reliability.
- * In a real application, you would replace this with a fetch call to your chosen API endpoint.
+ * Calls our secure backend endpoint to generate a video.
+ * This function acts as the bridge between our frontend and the serverless function.
  * @param prompt The text prompt to generate the video from.
  * @returns A promise that resolves to the URL of the generated video.
  */
-export const generateVideoFromExternalApi = (prompt: string): Promise<string> => {
-    console.log(`Simulating external video generation for prompt: "${prompt}"`);
+export const generateVideoFromExternalApi = async (prompt: string): Promise<string> => {
+    console.log(`Sending prompt to our backend video generation service...`);
 
-    return new Promise((resolve) => {
-        // Simulate network delay and generation time (e.g., 5 seconds).
-        // This makes the loading experience feel more realistic.
-        setTimeout(() => {
-            console.log('Video generation simulation complete.');
-            resolve(PLACEHOLDER_VIDEO_URL);
-        }, 5000);
-    });
+    try {
+        const response = await fetch('/api/generate-video', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ prompt }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to generate video from backend.');
+        }
+
+        const data = await response.json();
+        
+        if (!data.videoUrl) {
+            throw new Error('Backend did not return a valid video URL.');
+        }
+
+        console.log('Video generation successful. Received URL:', data.videoUrl);
+        return data.videoUrl;
+
+    } catch (error) {
+        console.error('Error calling video generation service:', error);
+        // Re-throw the error so the component can catch it and display a message.
+        throw error;
+    }
 };
