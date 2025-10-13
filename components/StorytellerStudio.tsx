@@ -21,13 +21,14 @@ interface StoryApiResponse {
     audioBase64: string;
 }
 
-type GenerationStatus = 'idle' | 'script' | 'video' | 'audio' | 'final' | 'done' | 'error';
+type GenerationStatus = 'idle' | 'generating' | 'done' | 'error';
 const DAILY_STORY_LIMIT = 3;
 
 const StorytellerStudio: React.FC<StorytellerStudioProps> = ({ onClose, onStoryGenerated, settings, onOpenProModal }) => {
     const { t } = useTranslation();
     const [prompt, setPrompt] = useState('');
     const [status, setStatus] = useState<GenerationStatus>('idle');
+    const [loadingMessage, setLoadingMessage] = useState('');
     const [storyResponse, setStoryResponse] = useState<StoryApiResponse | null>(null);
     const [errorMessage, setErrorMessage] = useState('');
     const [isPlaying, setIsPlaying] = useState(false);
@@ -36,6 +37,29 @@ const StorytellerStudio: React.FC<StorytellerStudioProps> = ({ onClose, onStoryG
     
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const videoRef = useRef<HTMLVideoElement | null>(null);
+    
+    // Loading message cycle effect
+    useEffect(() => {
+        // FIX: The return type of setInterval in a browser environment is a number, not NodeJS.Timeout.
+        // Changed the type to 'number' to align with the browser's Web APIs.
+        let interval: number;
+        if (status === 'generating') {
+            const messages = [
+                t('storytellerStudio.loading.script'),
+                t('storytellerStudio.loading.video'),
+                t('storytellerStudio.loading.audio'),
+                t('storytellerStudio.loading.final'),
+            ];
+            let msgIndex = 0;
+            setLoadingMessage(messages[msgIndex]);
+            interval = window.setInterval(() => {
+                msgIndex = (msgIndex + 1) % messages.length;
+                setLoadingMessage(messages[msgIndex]);
+            }, 2500); // Change message every 2.5 seconds
+        }
+        return () => clearInterval(interval);
+    }, [status, t]);
+
 
     useEffect(() => {
         audioRef.current = new Audio();
@@ -97,7 +121,7 @@ const StorytellerStudio: React.FC<StorytellerStudioProps> = ({ onClose, onStoryG
         if (!prompt.trim()) return;
         if (!checkDailyLimit()) return;
 
-        setStatus('script'); // Generic "generating" status
+        setStatus('generating'); 
         setErrorMessage('');
         setStoryResponse(null);
         setIsShared(false);
@@ -136,7 +160,20 @@ const StorytellerStudio: React.FC<StorytellerStudioProps> = ({ onClose, onStoryG
 
         } catch (error: any) {
             console.error("Story generation failed:", error);
-            setErrorMessage(error.message || "An unexpected error occurred.");
+            // FIX: The error from `generate-video.ts` was not being handled correctly.
+            // Now, we properly parse the JSON error response and display it to the user.
+            let message = "An unexpected error occurred.";
+            if (error.message) {
+                try {
+                    // Try to parse if the message is a JSON string
+                    const errJson = JSON.parse(error.message);
+                    message = errJson.error || errJson.details || error.message;
+                } catch {
+                    // If parsing fails, use the raw message
+                    message = error.message;
+                }
+            }
+            setErrorMessage(message);
             setStatus('error');
         }
     };
@@ -182,8 +219,6 @@ const StorytellerStudio: React.FC<StorytellerStudioProps> = ({ onClose, onStoryG
     };
     
     const storyExamples = t('storytellerStudio.examples', { returnObjects: true }) as string[];
-    
-    const isLoading = status !== 'idle' && status !== 'done' && status !== 'error';
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" aria-modal="true" role="dialog">
@@ -236,14 +271,14 @@ const StorytellerStudio: React.FC<StorytellerStudioProps> = ({ onClose, onStoryG
                          </div>
                     )}
 
-                    {isLoading && (
+                    {status === 'generating' && (
                         <div className="text-center h-full flex flex-col items-center justify-center">
                             <svg className="animate-spin h-10 w-10 text-green-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8
- 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
-                            <p className="text-lg font-semibold text-gray-700">Generating your story... This can take a few minutes.</p>
+                            <p className="text-lg font-semibold text-gray-700">{loadingMessage}</p>
+                            <p className="text-sm text-gray-500 mt-2">This can take a moment, please wait...</p>
                         </div>
                     )}
                     
