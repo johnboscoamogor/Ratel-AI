@@ -4,6 +4,7 @@ import { CloseIcon, StorefrontIcon, SearchIcon, TagIcon, TrashIcon, ImageIcon, I
 import { playSound } from '../services/audioService';
 import { MarketItem, UserProfile } from '../types';
 import { marketService } from '../services/marketService';
+import AdBanner from './AdBanner';
 
 interface MarketSquareProps {
   onClose: () => void;
@@ -84,7 +85,6 @@ const BrowseMarketTab: React.FC<{ currentUser: UserProfile }> = ({ currentUser }
                 setItems(fetchedItems);
             } catch (err: any) {
                 console.error("Failed to fetch market items", err);
-                // FIX: Standardized error handling to display the clearer message from the service layer.
                 const errorMessage = err?.message || t('marketSquare.browse.fetchError');
                 setError(errorMessage);
             } finally {
@@ -141,83 +141,88 @@ const BrowseMarketTab: React.FC<{ currentUser: UserProfile }> = ({ currentUser }
     );
 
     return (
-        <div className="p-4">
-            <h2 className="text-2xl font-bold text-gray-800 text-center mb-4">{t('marketSquare.browse.welcome')}</h2>
-            <input
-                type="text"
-                placeholder={t('marketSquare.browse.searchPlaceholder')}
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                className="w-full p-2 mb-4 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
-            />
-            {loading && <p className="text-center text-gray-500">Loading items...</p>}
-            {error && (
-                 <div className="text-center p-4 my-4 bg-red-50 text-red-700 border border-red-200 rounded-lg">
-                    <p className="font-semibold">Error</p>
-                    <p className="text-sm">{error}</p>
-                </div>
-            )}
-            {!loading && !error && filteredItems.length === 0 && (
-                <div className="text-center py-10 text-gray-500">
-                    <p>{t('marketSquare.browse.noItems')}</p>
-                </div>
-            )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredItems.map(item => (
-                    <div key={item.id} className={`bg-white border rounded-lg shadow-sm overflow-hidden transition-opacity ${deletingId === item.id ? 'opacity-50 pointer-events-none' : ''}`}>
-                        <div className="relative">
-                            <img src={item.imageUrl} alt={item.itemName} className="h-48 w-full object-cover"/>
-                             {item.isSold && (
-                                <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
-                                    <span className="text-white text-2xl font-bold tracking-widest transform -rotate-12 border-2 border-white px-4 py-1">SOLD OUT</span>
-                                </div>
-                            )}
-                            {item.sellerId === currentUser.email && (
-                                <button
-                                  onClick={() => handleDelete(item.id)}
-                                  disabled={!!deletingId}
-                                  className="absolute top-2 right-2 p-1.5 bg-red-600 text-white rounded-full transition-opacity hover:bg-red-700 disabled:bg-gray-400 flex items-center justify-center w-7 h-7"
-                                >
-                                    {deletingId === item.id ? (
-                                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                    ) : (
-                                        <TrashIcon className="w-4 h-4"/>
-                                    )}
-                                </button>
-                            )}
-                        </div>
-                        <div className="p-3">
-                            <h3 className="font-bold truncate">{item.itemName}</h3>
-                            <p className="text-sm text-gray-500 truncate">{item.location.area}, {item.location.city}</p>
-                            <p className="text-lg font-bold text-green-600 mt-1">₦{item.price.toLocaleString()}</p>
-                             <div className="mt-2 text-xs text-gray-600">
-                                <p><strong>{t('marketSquare.sell.sellerNameLabel')}:</strong> {item.sellerName}</p>
-                                <p><strong>{t('marketSquare.sell.phoneLabel')}:</strong> {item.contactPhone}</p>
-                                <p><strong>{t('marketSquare.sell.emailLabel')}:</strong> {item.contactEmail}</p>
-                            </div>
-                            <div className="mt-3 pt-3 border-t flex items-center justify-between gap-2">
-                                {item.websiteUrl && (
-                                    <a href={item.websiteUrl.startsWith('http') ? item.websiteUrl : `//${item.websiteUrl}`} target="_blank" rel="noopener noreferrer" className="text-sm bg-gray-100 text-gray-700 font-semibold py-1.5 px-3 rounded-md hover:bg-gray-200 transition-colors truncate">
-                                        Visit Website
-                                    </a>
+        <div>
+            <div className="p-4">
+                <h2 className="text-2xl font-bold text-gray-800 text-center mb-4">{t('marketSquare.browse.welcome')}</h2>
+                <input
+                    type="text"
+                    placeholder={t('marketSquare.browse.searchPlaceholder')}
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    className="w-full p-2 mb-4 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                />
+                {loading && <p className="text-center text-gray-500">Loading items...</p>}
+                {error && (
+                     <div className="text-center p-4 my-4 bg-red-50 text-red-700 border border-red-200 rounded-lg">
+                        <p className="font-semibold">Error</p>
+                        <p className="text-sm">{error}</p>
+                    </div>
+                )}
+                {!loading && !error && filteredItems.length === 0 && (
+                    <div className="text-center py-10 text-gray-500">
+                        <p>{t('marketSquare.browse.noItems')}</p>
+                    </div>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredItems.map(item => (
+                        <div key={item.id} className={`bg-white border rounded-lg shadow-sm overflow-hidden transition-opacity ${deletingId === item.id ? 'opacity-50 pointer-events-none' : ''}`}>
+                            <div className="relative">
+                                <img src={item.imageUrl} alt={item.itemName} className="h-48 w-full object-cover"/>
+                                 {item.isSold && (
+                                    <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
+                                        <span className="text-white text-2xl font-bold tracking-widest transform -rotate-12 border-2 border-white px-4 py-1">SOLD OUT</span>
+                                    </div>
                                 )}
-                                
                                 {item.sellerId === currentUser.email && (
                                     <button
-                                        onClick={() => handleToggleSold(item.id)}
-                                        disabled={updatingSoldStatusId === item.id}
-                                        className="text-sm bg-blue-100 text-blue-700 font-semibold py-1.5 px-3 rounded-md hover:bg-blue-200 transition-colors disabled:opacity-50 disabled:cursor-wait"
+                                      onClick={() => handleDelete(item.id)}
+                                      disabled={!!deletingId}
+                                      className="absolute top-2 right-2 p-1.5 bg-red-600 text-white rounded-full transition-opacity hover:bg-red-700 disabled:bg-gray-400 flex items-center justify-center w-7 h-7"
                                     >
-                                        {updatingSoldStatusId === item.id ? 'Updating...' : (item.isSold ? 'Mark Available' : 'Mark as Sold')}
+                                        {deletingId === item.id ? (
+                                            <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                        ) : (
+                                            <TrashIcon className="w-4 h-4"/>
+                                        )}
                                     </button>
                                 )}
                             </div>
+                            <div className="p-3">
+                                <h3 className="font-bold truncate">{item.itemName}</h3>
+                                <p className="text-sm text-gray-500 truncate">{item.location.area}, {item.location.city}</p>
+                                <p className="text-lg font-bold text-green-600 mt-1">₦{item.price.toLocaleString()}</p>
+                                 <div className="mt-2 text-xs text-gray-600">
+                                    <p><strong>{t('marketSquare.sell.sellerNameLabel')}:</strong> {item.sellerName}</p>
+                                    <p><strong>{t('marketSquare.sell.phoneLabel')}:</strong> {item.contactPhone}</p>
+                                    <p><strong>{t('marketSquare.sell.emailLabel')}:</strong> {item.contactEmail}</p>
+                                </div>
+                                <div className="mt-3 pt-3 border-t flex items-center justify-between gap-2">
+                                    {item.websiteUrl && (
+                                        <a href={item.websiteUrl.startsWith('http') ? item.websiteUrl : `//${item.websiteUrl}`} target="_blank" rel="noopener noreferrer" className="text-sm bg-gray-100 text-gray-700 font-semibold py-1.5 px-3 rounded-md hover:bg-gray-200 transition-colors truncate">
+                                            Visit Website
+                                        </a>
+                                    )}
+                                    
+                                    {item.sellerId === currentUser.email && (
+                                        <button
+                                            onClick={() => handleToggleSold(item.id)}
+                                            disabled={updatingSoldStatusId === item.id}
+                                            className="text-sm bg-blue-100 text-blue-700 font-semibold py-1.5 px-3 rounded-md hover:bg-blue-200 transition-colors disabled:opacity-50 disabled:cursor-wait"
+                                        >
+                                            {updatingSoldStatusId === item.id ? 'Updating...' : (item.isSold ? 'Mark Available' : 'Mark as Sold')}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
+            </div>
+            <div className="mt-4">
+                <AdBanner />
             </div>
         </div>
     );
@@ -250,7 +255,6 @@ const SellItemTab: React.FC<{ currentUser: UserProfile, onListingCreated: () => 
                 setUserItemCount(count);
             } catch (e: any) {
                 console.error("Could not check user post count", e);
-                // FIX: Standardized error handling to display the clearer message from the service layer.
                 const errorMessage = e?.message || 'Could not verify your post count.';
                 setError(errorMessage);
                 setUserItemCount(null); 
@@ -321,7 +325,6 @@ const SellItemTab: React.FC<{ currentUser: UserProfile, onListingCreated: () => 
                     description: `Payment for listing "${formState.itemName}"`,
                 },
                 callback: async (data: any) => {
-                    // This is called on successful payment
                     if (data.status === 'successful') {
                         try {
                             await marketService.logPayment({
@@ -344,10 +347,9 @@ const SellItemTab: React.FC<{ currentUser: UserProfile, onListingCreated: () => 
                         setIsSubmitting(false);
                     }
                 },
-                onclose: () => setIsSubmitting(false) // User closed the modal
+                onclose: () => setIsSubmitting(false)
             });
         } else {
-            // Free post logic
             setIsSubmitting(true);
             try {
                 await marketService.addItem(itemData, imageFile);
@@ -363,7 +365,6 @@ const SellItemTab: React.FC<{ currentUser: UserProfile, onListingCreated: () => 
     
     const renderSubmitButton = () => {
         let buttonText = t('marketSquare.sell.submitButton');
-        let buttonAction = handleSubmit;
         let disabled = isSubmitting || isCheckingPosts;
 
         if (isCheckingPosts) {

@@ -6,6 +6,7 @@ const AdBanner: React.FC = () => {
     const adRef = useRef<HTMLModElement>(null);
     const [adInitialized, setAdInitialized] = useState(false);
     
+    // IMPORTANT: Replace these with your actual AdSense client and slot IDs.
     const AD_CLIENT = 'ca-pub-XXXXXXXXXXXXXXXX';
     const AD_SLOT = 'YYYYYYYYYY';
 
@@ -40,6 +41,7 @@ const AdBanner: React.FC = () => {
         }
 
         // If not, wait for it to become visible using ResizeObserver.
+        // This is crucial for elements in collapsible sidebars.
         const observer = new ResizeObserver(entries => {
             const entry = entries[0];
             if (entry.target.clientWidth > 0) {
@@ -58,16 +60,13 @@ const AdBanner: React.FC = () => {
     const adStyle: React.CSSProperties = {
         display: 'block',
         width: '100%',
-        minHeight: '60px', // Prevents layout shift
+        minHeight: '50px', // Prevents layout shift
         backgroundColor: '#f0f0f0',
-        textAlign: 'center',
-        lineHeight: '60px',
-        fontSize: '12px',
-        color: '#888'
+        borderRadius: '0.5rem'
     };
 
     return (
-        <div className="bg-gray-100 rounded-lg p-1 text-center">
+        <div className="p-2 text-center">
             <ins
                 ref={adRef}
                 className="adsbygoogle"

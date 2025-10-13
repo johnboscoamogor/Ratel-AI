@@ -10,6 +10,7 @@ import TelegramConnect from './TelegramConnect';
 import MyWallet from './MyWallet';
 import RedeemTab from './RedeemTab';
 import AdminPanel from './AdminPanel';
+import AdBanner from './AdBanner';
 
 interface CommunityViewProps {
   userProfile: UserProfile;
@@ -88,6 +89,7 @@ const CommunityView: React.FC<CommunityViewProps> = ({ userProfile, setUserProfi
       </div>
 
       <main className="flex-grow overflow-y-auto bg-gray-100">
+        <AdBanner />
         {renderTabContent()}
       </main>
     </div>
