@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import LandingPage from './components/LandingPage';
 import ChatView from './components/ChatView';

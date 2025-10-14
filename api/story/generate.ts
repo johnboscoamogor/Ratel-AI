@@ -1,109 +1,134 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 
-// --- ENVIRONMENT VARIABLES ---
-const AI_KEY = process.env.AI_STUDIO_API_KEY;
+const GEMINI_API_KEY = process.env.API_KEY;
 
-let ai: GoogleGenAI | null = null;
-if (AI_KEY && AI_KEY !== 'YOUR_GEMINI_API_KEY') {
-    ai = new GoogleGenAI({ apiKey: AI_KEY });
-} else {
-    console.warn("Gemini API key (AI_STUDIO_API_KEY) is not set. Storyteller will use placeholder data.");
+if (!GEMINI_API_KEY) {
+    throw new Error("The API_KEY environment variable is not set.");
 }
 
-// --- MASTER PROMPT FOR GEMINI ---
-const MASTER_PROMPT = `You are RATEL Storyteller assistant. The user gives a prompt. Produce:
-1) A short title.
-2) A story script ~300-700 words for a short video (3-5 scenes). Keep language simple and vivid.
-3) A scene-by-scene breakdown array (3-5 scenes). For each scene include:
-   - scene_index (1-based)
-   - scene_duration_seconds (integer between 5 and 10)
-   - visual_prompt (one-sentence prompt for the scene)
-   - narration_text (1-3 sentences)
-   - subtitle_text (short subtitle)
-4) A single short "video_prompt" summarizing overall mood and style.
-Return JSON only (no extra text) with keys: { "title": "...", "script": "...", "scenes": [ ... ], "video_prompt": "..." }
-If user asks for Pidgin or another language, write narration_text in that language accordingly.`;
+const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
+const generateScript = async (prompt: string, language: string) => {
+    const scriptPrompt = `
+        You are a master African storyteller. Create a short, engaging children's story based on the following prompt. The story should have a clear moral or lesson.
+        The story MUST be structured as a JSON object with the following schema:
+        - "title": A short, catchy title for the story.
+        - "scenes": An array of exactly 3 scene objects. Each scene object must have:
+            - "scene_index": The number of the scene (1, 2, or 3).
+            - "narration_text": The narrator's part for this scene. Keep it to one or two sentences.
+            - "visual_prompt": A rich, descriptive prompt for an AI image generator to create a visual for this scene. Describe the setting, characters, and action in a "cinematic, vibrant, African digital art style".
+        - "lesson": A one-sentence summary of the story's moral or lesson.
 
-// --- HARDCODED PLACEHOLDER FOR RELIABILITY ---
-const getPlaceholderStory = () => ({
-    id: crypto.randomUUID(),
-    title: "The Wise Tortoise",
-    script: "A story about a wise tortoise who teaches the village about patience.",
-    scenes: [
-        { scene_index: 1, scene_duration_seconds: 7, visual_prompt: "A peaceful African village at sunrise, cinematic, warm colors.", narration_text: "In a quiet village, the sun rose, casting a golden light. Everyone was always in a hurry." },
-        { scene_index: 2, scene_duration_seconds: 7, visual_prompt: "A wise old tortoise sitting under a baobab tree.", narration_text: "But under the great baobab tree, sat the wise old tortoise, who moved slow and steady." },
-        { scene_index: 3, scene_duration_seconds: 7, visual_prompt: "The villagers rushing and making mistakes, a pot falling and breaking.", narration_text: "He watched as the villagers rushed, always making mistakes. A dropped pot here, a missed step there." },
-        { scene_index: 4, scene_duration_seconds: 8, visual_prompt: "The tortoise slowly and carefully building a small, perfect wall.", narration_text: "One day, the tortoise taught them, 'The race is not always for the swift.' He showed them how patience builds stronger walls and creates better results." },
-    ],
-    sceneVideoUrls: [
-        'https://videos.pexels.com/video-files/853879/853879-hd_1280_720_30fps.mp4',
-        'https://videos.pexels.com/video-files/3209828/3209828-hd_1280_720_25fps.mp4',
-        'https://videos.pexels.com/video-files/5495832/5495832-hd_1280_720_25fps.mp4',
-        'https://videos.pexels.com/video-files/4434246/4434246-hd_1280_720_24fps.mp4',
-    ],
-    // Audible placeholder audio: "This is a placeholder for the story narration. Please configure your API keys to generate custom audio."
-    audioBase64: "SUQzBAAAAAAB9AMBACABAFRoZSBzaWxlbmNlIGlzIGdvbGRlbgBUU1NFAAAAAA Lavf58.29.100AAAAA/+M4ADkAAAAAGgAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAA==",
-    message: "Placeholder story generated. Please configure API keys for live generation."
-});
+        The language of the entire JSON output (title, narration, lesson, etc.) MUST be in ${language}.
 
+        User Prompt: "${prompt}"
+    `;
 
-// --- MAIN HANDLER ---
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // If AI is not configured, immediately return the reliable placeholder.
-  if (!ai) {
-      return res.status(200).json(getPlaceholderStory());
-  }
-
-  try {
-    const { prompt, language = "english" } = req.body;
-    if (!prompt) {
-        return res.status(400).json({ error: "Missing prompt" });
-    }
-
-    // 1) Ask Gemini to generate JSON story + scenes
-    const fullPrompt = `${MASTER_PROMPT}\n\nUserPrompt: ${prompt}\nLanguage: ${language}`;
-    const gmResp = await ai.models.generateContent({
+    const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: fullPrompt,
-        config: { responseMimeType: 'application/json' },
+        contents: scriptPrompt,
+        config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                    title: { type: Type.STRING },
+                    scenes: {
+                        type: Type.ARRAY,
+                        items: {
+                            type: Type.OBJECT,
+                            properties: {
+                                scene_index: { type: Type.NUMBER },
+                                narration_text: { type: Type.STRING },
+                                visual_prompt: { type: Type.STRING },
+                            },
+                            required: ['scene_index', 'narration_text', 'visual_prompt']
+                        }
+                    },
+                    lesson: { type: Type.STRING },
+                },
+                required: ['title', 'scenes', 'lesson']
+            }
+        },
     });
-    
-    let storyJson;
+
+    return JSON.parse(response.text);
+};
+
+
+const generateAudio = async (text: string): Promise<string> => {
     try {
-        storyJson = JSON.parse(gmResp.text);
-    } catch (e) {
-        console.error("Failed to parse JSON from Gemini:", gmResp.text);
-        throw new Error("The AI returned an invalid story format.");
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash-preview-tts",
+            contents: [{ parts: [{ text }] }],
+            config: {
+                responseModalities: ['AUDIO'],
+                speechConfig: {
+                    voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } },
+                },
+            },
+        });
+        const audioBase64 = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        if (!audioBase64) {
+            throw new Error("TTS response did not contain audio data.");
+        }
+        return audioBase64;
+    } catch (error) {
+        console.error("Error generating audio from Gemini TTS:", error);
+        return ""; // Return empty string on failure
     }
-    
-    if (!storyJson || !Array.isArray(storyJson.scenes)) {
-      throw new Error("Invalid story structure from AI");
+};
+
+const generateVideo = async (prompt: string): Promise<string | null> => {
+     // This function simulates a call to a video generation API on the backend.
+    console.log(`Simulating video generation for prompt: "${prompt}"`);
+    // Simulate a delay
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    // Return a placeholder. In a real app, this would be a generated video URL.
+    const placeholderVideos = [
+        'https://videos.pexels.com/video-files/3209828/3209828-hd_1280_720_25fps.mp4',
+        'https://videos.pexels.com/video-files/853878/853878-hd_1280_720_30fps.mp4',
+        'https://videos.pexels.com/video-files/2099395/2099395-hd_1280_720_25fps.mp4'
+    ];
+    return placeholderVideos[Math.floor(Math.random() * placeholderVideos.length)];
+};
+
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
-    // 2) Generate videos and audio IN PARALLEL to be fast
-    const narrationCombined = storyJson.scenes.map((s: any) => s.narration_text).join(" ");
-    
-    // For live generation, we still use placeholder videos and silent audio
-    // to prevent timeouts and reliance on other paid services for this example.
-    const placeholderData = getPlaceholderStory();
-    const sceneVideoUrls = placeholderData.sceneVideoUrls.slice(0, storyJson.scenes.length);
-    const audioBase64 = placeholderData.audioBase64; // Use silent audio placeholder
+    try {
+        const { prompt, language = 'en' } = req.body;
+        if (!prompt) {
+            return res.status(400).json({ error: 'Prompt is required' });
+        }
 
-    // 3) Return the final combined response
-    return res.status(200).json({
-      id: crypto.randomUUID(),
-      title: storyJson.title,
-      script: storyJson.script,
-      scenes: storyJson.scenes,
-      sceneVideoUrls,
-      audioBase64,
-      message: "Live story generated with placeholder media."
-    });
+        // Step 1: Generate the story script
+        const scriptData = await generateScript(prompt, language);
+        
+        // Step 2: Generate narration audio for the whole story
+        const fullNarration = scriptData.scenes.map((s: any) => s.narration_text).join(' ');
+        const audioBase64 = await generateAudio(fullNarration);
 
-  } catch (err: any) {
-    console.error("[STORY GENERATION ERROR]", err);
-    res.status(500).json({ error: err.message || 'An unknown error occurred during story generation.' });
-  }
+        // Step 3: Generate video for each scene
+        const sceneVideoUrls = await Promise.all(
+            scriptData.scenes.map((scene: any) => generateVideo(scene.visual_prompt))
+        );
+
+        res.status(200).json({
+            id: crypto.randomUUID(),
+            title: scriptData.title,
+            script: scriptData.script,
+            scenes: scriptData.scenes,
+            sceneVideoUrls,
+            audioBase64,
+        });
+
+    } catch (error: any) {
+        console.error('Story generation pipeline failed:', error);
+        res.status(500).json({ error: 'Failed to generate story', details: error.message });
+    }
 }

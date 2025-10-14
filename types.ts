@@ -1,91 +1,23 @@
-// FIX: Added all missing type definitions to resolve import errors across the application.
-import { Modality, type LiveServerMessage, type Blob as GenaiBlob } from "@google/genai";
+import { FunctionDeclaration } from '@google/genai';
 
-export enum Role {
-  USER = 'user',
-  MODEL = 'model',
-}
-
-export type RatelMode = 'hustle' | 'learn' | 'market' | 'general';
-export type RatelTone = 'normal' | 'funny' | 'pidgin';
-
-export interface Task {
-  id: string;
-  description: string;
-  completed: boolean;
-  reminder?: string;
-  reminderFired?: boolean;
-}
-
-export interface Story {
-  id: string;
-  prompt: string;
-  title: string;
-  script: {
-    title: string;
-    scenes: {
-      sceneNumber: number;
-      description: string;
-      narration: string;
-    }[];
-    lesson: string;
-  };
-  videoUrl: string;
-  audioUrl: string; // Blob URL
-  timestamp: number;
-}
-
-export interface MobileWorker {
-  id: string;
-  created_at: string;
-  full_name: string;
-  phone_number: string;
-  skill_category: string;
-  location: string;
-  bio: string;
-  whatsapp_link?: string;
-  profile_photo_url: string;
-  verified: boolean;
-  user_id: string;
-}
-
-export interface Message {
-  id: string;
-  role: Role;
-  content: string;
-  imageUrl?: string;
-  originalImageUrl?: string; // for user uploads
-  videoUrl?: string;
-  tasks?: Task[];
-  workers?: MobileWorker[];
-  sources?: { uri: string; title: string }[];
-  imagePrompt?: string; // The prompt used to generate an image
-  videoPrompt?: string; // The prompt used to generate a video
-}
-
-export interface ChatSession {
-  id: string;
-  title: string;
-  messages: Message[];
-}
-
+// Represents a user's profile information
 export interface UserProfile {
   name: string;
-  email: string;
+  email: string; // Used as a unique ID
   level: number;
   xp: number;
-  communityPoints: number;
   interests: { [key in RatelMode]?: number };
+  communityPoints: number;
+  totalRedeemed?: number;
   joinedDate: string;
   isAdmin?: boolean;
   telegramUsername?: string;
-  totalRedeemed?: number;
-  stories?: Story[];
 }
 
+// Defines the application's settings structure
 export interface AppSettings {
   language: 'en' | 'fr' | 'am' | 'ng' | 'sw';
-  chatTone: RatelTone;
+  chatTone: 'normal' | 'formal' | 'humorous' | 'pidgin';
   customInstructions: {
     nickname: string;
     aboutYou: string;
@@ -93,14 +25,14 @@ export interface AppSettings {
   };
   appearance: {
     theme: 'light' | 'dark';
-    backgroundImage: string;
+    backgroundImage: string; // URL or data URI
   };
   memory: {
     referenceSavedMemories: boolean;
     referenceChatHistory: boolean;
   };
   voice: {
-    selectedVoice: string;
+    selectedVoice: string; // e.g., 'gemini_Zephyr' or a GCP voice ID
   };
   security: {
     mfaEnabled: boolean;
@@ -110,88 +42,158 @@ export interface AppSettings {
   };
 }
 
-export interface Comment {
+// Represents the different functional modes of the AI
+export type RatelMode = 'hustle' | 'learn' | 'market' | 'community' | 'general' | 'image' | 'audio' | 'video' | 'storyteller';
+
+// Represents a single to-do task
+export interface Task {
+  id: string;
+  description: string;
+  completed: boolean;
+  reminder?: string; // ISO 8601 string
+  reminderFired?: boolean;
+}
+
+// Represents a single chat session in the history
+export interface ChatSession {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  timestamp: number;
+  mode: RatelMode;
+}
+
+// Represents a single message within a chat session
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'model' | 'system';
+  parts: MessagePart[];
+  timestamp: number;
+  // Fields for video with multi-track audio
+  audioUrl?: string; // For dialogue
+  videoDialogue?: string;
+  ambianceUrl?: string; // For sound effects/ambiance
+  videoAmbiance?: string;
+}
+
+// Represents a part of a message (text, image, etc.)
+export interface MessagePart {
+  type: 'text' | 'image' | 'video' | 'audio' | 'tasks' | 'workers' | 'market' | 'error' | 'loading' | 'cv';
+  content: any; // Can be a string for text, or an object for other types
+  mimeType?: string; // For images/videos
+  groundingChunks?: any[]; // For search grounding results
+}
+
+
+// Represents a generated story
+export interface Story {
     id: string;
-    authorName: string;
-    authorId: string; // user email
-    content: string;
+    prompt: string;
+    title: string;
+    script: {
+        title: string;
+        scenes: { scene_index: number; narration_text: string; visual_prompt: string }[];
+        lesson: string;
+    };
+    videoUrl?: string;
+    audioUrl?: string;
     timestamp: number;
 }
 
+
+// Represents an item listed in the Market Square
+export interface MarketItem {
+  id: string;
+  sellerId: string; // User's email
+  sellerName: string;
+  itemName: string;
+  description: string;
+  price: number;
+  currency: 'NGN' | 'GHS' | 'KES' | 'USD';
+  location: {
+    country: string;
+    state: string;
+    city: string;
+    area: string;
+  };
+  contactPhone: string;
+  contactEmail: string;
+  websiteUrl?: string;
+  imageUrl: string;
+  timestamp: number;
+  isSold: boolean;
+}
+
+export interface MarketPayment {
+    id: string;
+    sellerId: string;
+    transaction_ref: string;
+    amount: number;
+    currency: string;
+    status: 'successful' | 'failed';
+    created_at: string;
+}
+
+// Represents a post in the community feed
 export interface CommunityPost {
     id: string;
     authorName: string;
-    authorId: string; // user email
+    authorId: string; // User's email
     content: string;
     imageUrl?: string;
     videoUrl?: string;
-    likes: string[]; // array of user emails
+    likes: string[]; // Array of user emails who liked
     comments: Comment[];
     timestamp: number;
     source: 'ratel' | 'telegram';
 }
 
+// Represents a comment on a community post
+export interface Comment {
+    id: string;
+    authorName: string;
+    authorId: string; // User's email
+    content: string;
+    timestamp: number;
+}
+
+// Represents an entry in the community leaderboard
 export interface LeaderboardEntry {
     email: string;
     name: string;
     points: number;
 }
 
-
-export interface VoiceOption {
-  id: string;
-  name: string;
-  type: 'gemini' | 'browser';
-  voice?: SpeechSynthesisVoice;
-}
-
+// Represents a request to redeem community points
 export interface RedemptionRequest {
-  id: string;
-  userId: string; // user email
-  userName: string;
-  telegramUsername?: string;
-  amountPoints: number;
-  amountCash: number;
-  method: 'airtime' | 'bank';
-  details: string; // phone number or bank details
-  status: 'pending' | 'approved' | 'rejected';
-  timestamp: number;
+    id: string;
+    userId: string;
+    userName: string;
+    telegramUsername?: string;
+    amountPoints: number;
+    amountCash: number;
+    method: 'airtime' | 'bank';
+    details: string; // Phone number or bank details
+    status: 'pending' | 'approved' | 'rejected';
+    timestamp: number;
 }
 
+// Represents settings for the community module manageable by an admin
 export interface CommunityAdminSettings {
     enableTelegramNotifications: boolean;
 }
 
-export interface MarketItemLocation {
-  country: string;
-  state: string;
-  city: string;
-  area: string;
-}
-
-export interface MarketItem {
-  id: string;
-  sellerId: string; // user email
-  sellerName: string;
-  itemName: string;
-  description: string;
-  price: number;
-  currency: 'NGN' | 'GHS' | 'KES' | 'USD';
-  imageUrl: string;
-  contactPhone: string;
-  contactEmail: string;
-  location: MarketItemLocation;
-  timestamp: number;
-  isSold?: boolean;
-  websiteUrl?: string;
-}
-
-export interface MarketPayment {
-  id: string;
-  created_at: string;
-  sellerId: string;
-  transaction_ref: string;
-  amount: number;
-  currency: string;
-  status: 'successful' | 'failed';
+// Represents a skilled mobile worker listing
+export interface MobileWorker {
+    id: string;
+    user_id: string; // User's email
+    full_name: string;
+    phone_number: string;
+    whatsapp_link?: string;
+    skill_category: string;
+    location: string;
+    bio: string;
+    profile_photo_url: string;
+    verified: boolean;
+    created_at: string;
 }

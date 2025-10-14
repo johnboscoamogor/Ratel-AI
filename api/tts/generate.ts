@@ -1,71 +1,65 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import fetch from 'node-fetch';
+import { GoogleGenAI } from '@google/genai';
 
-// Access the Google Cloud API Key from Vercel environment variables
-const GCP_API_KEY = process.env.GCP_API_KEY;
+const GEMINI_API_KEY = process.env.API_KEY;
 
-// Helper function to map our simple voice IDs to the format Google Cloud expects.
-function getVoiceConfig(voiceId: string): { languageCode: string; name: string } {
-    const [lang, country, type, name] = voiceId.split('-');
-    const languageCode = `${lang}-${country}`;
-    return { languageCode, name: voiceId };
+if (!GEMINI_API_KEY) {
+    throw new Error("The API_KEY environment variable is not set.");
 }
 
-// A pre-recorded, audible placeholder MP3 file (Base64 encoded).
-// This voice says: "Audio generation test successful. Please configure your API key for custom voices."
-const PLACEHOLDER_AUDIO_BASE64 = "SUQzBAAAAAAB9AMBACABAFRoZSBzaWxlbmNlIGlzIGdvbGRlbgBUU1NFAAAAAA Lavf58.29.100AAAAA/+M4ADkAAAAAGgAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVAA==";
-
+const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    // If the API key is missing or a placeholder, return the audible placeholder immediately.
-    if (!GCP_API_KEY || GCP_API_KEY.includes('YOUR_KEY_HERE')) {
-        console.warn("GCP_API_KEY not configured. Returning placeholder audio.");
-        return res.status(200).json({ audioBase64: PLACEHOLDER_AUDIO_BASE64 });
-    }
-
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
     try {
         const { text, voiceId } = req.body;
-
-        if (!text || !voiceId) {
-            return res.status(400).json({ error: 'Missing required parameters: text and voiceId.' });
+        if (!text) {
+            return res.status(400).json({ error: 'Text is required.' });
         }
+        
+        // Map our internal voice names to Gemini's prebuilt voices
+        const getGeminiVoice = (id: string) => {
+            const mapping: { [key: string]: string } = {
+                'en-NG-Standard-A': 'Kore',
+                'en-NG-Standard-B': 'Charon',
+                'en-US-Wavenet-A': 'Puck',
+                'en-US-Wavenet-F': 'Kore',
+                'en-GB-Wavenet-C': 'Kore',
+                'en-KE-Standard-A': 'Kore',
+                'sw-KE-Standard-B': 'Kore', // No direct Swahili, fallback to a clear voice
+                'en-US-Studio-O': 'Zephyr' // A good voice for sound effects
+            };
+            return mapping[id] || 'Kore'; // Default to Kore
+        };
+        
+        const voiceName = getGeminiVoice(voiceId || 'en-NG-Standard-A');
 
-        const voice = getVoiceConfig(voiceId);
-
-        // Make the API call to Google Cloud Text-to-Speech
-        const ttsResponse = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${GCP_API_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                input: { text },
-                voice: {
-                    languageCode: voice.languageCode,
-                    name: voice.name,
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash-preview-tts",
+            contents: [{ parts: [{ text }] }],
+            config: {
+                responseModalities: ['AUDIO'],
+                speechConfig: {
+                    voiceConfig: {
+                        prebuiltVoiceConfig: { voiceName },
+                    },
                 },
-                audioConfig: {
-                    audioEncoding: 'MP3',
-                },
-            }),
+            },
         });
+        
+        const audioBase64 = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
 
-        if (!ttsResponse.ok) {
-            const errorData = await ttsResponse.json();
-            console.error('Google TTS API Error:', errorData);
-            throw new Error(errorData.error?.message || 'Failed to synthesize speech.');
+        if (!audioBase64) {
+            throw new Error("TTS response did not contain audio data.");
         }
 
-        const ttsData = await ttsResponse.json() as { audioContent: string };
-        const audioBase64 = ttsData.audioContent;
+        res.status(200).json({ audioBase64 });
 
-        // Return the Base64 encoded audio content
-        return res.status(200).json({ audioBase64 });
-
-    } catch (err: any) {
-        console.error("[TTS GENERATION ERROR]", err);
-        res.status(500).json({ error: err.message || 'An unknown error occurred during audio generation.' });
+    } catch (error: any) {
+        console.error('TTS generation failed:', error);
+        res.status(500).json({ error: error.message });
     }
 }
