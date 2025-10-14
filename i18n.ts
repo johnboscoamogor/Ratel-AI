@@ -193,11 +193,18 @@ const resources = {
         "learnStudio": {
             "title": "Learn Studio",
             "description": "What skill do you want to master today? Let's start with your first lesson.",
+            "tutorTitle": "AI Tutor Courses",
+            "skillsTitle": "General Skills",
             "skills": {
                 "video": "Video Editing",
                 "coding": "Basic Coding",
                 "canva": "Canva Design",
                 "ai": "Using AI Tools"
+            },
+            "subjects": {
+                "finance": "gehgeh financial literacy",
+                "marketing": "Digital Marketing",
+                "agribusiness": "Agribusiness Basics"
             }
         },
         "marketSquare": {
@@ -315,7 +322,7 @@ const resources = {
                 "telegramNotifications": "Telegram Notifications",
                 "enableTeleNotifications": "Enable Auto-Messages",
                 "enableTeleNotificationsDesc": "Send automatic Telegram messages for rewards, redemptions, etc.",
-                "triggerWeeklyPost": "Trigger Weekly Top Users Post"
+                "triggerWeeklyTopUsersPost": "Trigger Weekly Top Users Post"
             }
         },
         "settings": {

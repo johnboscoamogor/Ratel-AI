@@ -5,7 +5,7 @@ import {
     RatelLogo, EditIcon, TrashIcon, MenuIcon, ChevronLeftIcon, 
     ImageIcon, AudioIcon, VideoIcon, BookOpenIcon, BriefcaseIcon, 
     StorefrontIcon, UsersIcon, SettingsIcon, InfoIcon, UserIcon, LogoutIcon, AdminIcon,
-    CoffeeIcon, ClapperboardIcon, SparklesIcon
+    CoffeeIcon, ClapperboardIcon, SparklesIcon, DocumentTextIcon
 } from '../constants';
 import { playSound } from '../services/audioService';
 import AdBanner from './AdBanner';
@@ -32,14 +32,15 @@ interface SidebarProps {
   onOpenProfileStudio: () => void;
   onOpenProModal: () => void;
   onOpenVideoArStudio: () => void;
-  setPage: (page: 'chat' | 'settings' | 'contact' | 'community' | 'admin') => void;
+  onOpenExamplesStudio: () => void;
+  setPage: (page: 'chat' | 'settings' | 'contact' | 'community' | 'admin' | 'examples') => void;
   onLogout: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
   history, currentChatId, userProfile, isCurrentChatEmpty, isOpenOnMobile, onCloseMobile,
   onNewChat, onSelectChat, onClearChat, onDeleteChat, onRenameChat,
-  onOpenImageStudio, onOpenAudioStudio, onOpenVideoStudio, onOpenHustleStudio, onOpenLearnStudio, onOpenMarketSquare, onOpenStorytellerStudio, onOpenProfileStudio, onOpenProModal, onOpenVideoArStudio,
+  onOpenImageStudio, onOpenAudioStudio, onOpenVideoStudio, onOpenHustleStudio, onOpenLearnStudio, onOpenMarketSquare, onOpenStorytellerStudio, onOpenProfileStudio, onOpenProModal, onOpenVideoArStudio, onOpenExamplesStudio,
   setPage, onLogout
 }) => {
   const { t } = useTranslation();
@@ -94,6 +95,10 @@ const Sidebar: React.FC<SidebarProps> = ({
       
       {/* Studios */}
        <div className="px-4 py-2">
+          <button onClick={onOpenExamplesStudio} className="w-full flex items-center justify-center gap-2 mb-2 p-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition-colors font-semibold text-sm">
+            <SparklesIcon className="w-4 h-4" />
+            <span>Prompt Examples</span>
+          </button>
         <div className="grid grid-cols-4 gap-2">
             <StudioButton Icon={BriefcaseIcon} label={t('sidebar.hustleStudio')} onClick={onOpenHustleStudio} />
             <StudioButton Icon={BookOpenIcon} label={t('sidebar.learnStudio')} onClick={onOpenLearnStudio} />
@@ -103,7 +108,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             <StudioButton Icon={AudioIcon} label={t('sidebar.audioStudio')} onClick={onOpenAudioStudio} />
             <StudioButton Icon={VideoIcon} label={t('sidebar.videoStudio')} onClick={onOpenVideoStudio} />
             <StudioButton Icon={ClapperboardIcon} label={t('sidebar.storyteller')} onClick={onOpenStorytellerStudio} />
-            <StudioButton Icon={SparklesIcon} label={t('sidebar.videoAr')} onClick={onOpenVideoArStudio} />
         </div>
       </div>
 

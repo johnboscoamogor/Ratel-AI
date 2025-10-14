@@ -28,18 +28,20 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading, speakingM
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const isUser = message.role === Role.USER;
+  
+  const contentToUse = message.content;
   const isSpeaking = speakingMessageId === message.id;
 
   const handleCopy = () => {
     playSound('click');
-    navigator.clipboard.writeText(message.content);
+    navigator.clipboard.writeText(contentToUse);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handlePlayAudio = () => {
     playSound('click');
-    onPlayAudio(message.id, message.content);
+    onPlayAudio(message.id, contentToUse);
   };
 
   const handleStopAudio = () => {
@@ -113,10 +115,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading, speakingM
   );
   
   const codeBlockRegex = /(```[\s\S]*?```)/g;
-  const codeBlocks = message.content.match(codeBlockRegex);
+  const codeBlocks = contentToUse.match(codeBlockRegex);
   const firstLongCodeBlock = codeBlocks ? codeBlocks.find(block => block.split('\n').length > CODE_BLOCK_THRESHOLD_LINES) : null;
 
-  let contentToShow = message.content;
+  let contentToShow = contentToUse;
   let showToggleButton = false;
 
   if (firstLongCodeBlock && !isExpanded) {
@@ -124,80 +126,81 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading, speakingM
       const lines = firstLongCodeBlock.split('\n');
       const truncatedLines = lines.slice(0, CODE_BLOCK_THRESHOLD_LINES);
       const truncatedBlock = truncatedLines.join('\n') + '\n... \n```';
-      contentToShow = message.content.replace(firstLongCodeBlock, truncatedBlock);
+      contentToShow = contentToUse.replace(firstLongCodeBlock, truncatedBlock);
   } else if (firstLongCodeBlock) {
       showToggleButton = true;
   }
-
+  
   return (
     <div className={`flex gap-4 items-start ${containerClass}`}>
       <div className="flex-shrink-0 mt-1">{icon}</div>
       <div className={`flex-1 min-w-0 p-4 rounded-xl shadow-sm ${bubbleClass}`}>
-        <div className="prose prose-sm max-w-none prose-p:my-2 prose-ol:my-2 prose-ul:my-2 prose-headings:my-3">
-          {message.originalImageUrl && (
-            <div className="mb-2">
-              <img src={message.originalImageUrl} alt={t('chatMessage.userUploadAlt')} className="max-w-xs max-h-48 rounded-md border border-gray-300" />
-            </div>
-          )}
-          {isLoading && !message.content && !message.imageUrl && !message.tasks ? (
-            <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse [animation-delay:0.2s]"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse [animation-delay:0.4s]"></div>
-            </div>
-          ) : (
-            <>
-              {message.content && <Markdown remarkPlugins={[remarkGfm]}>{contentToShow}</Markdown>}
-              {message.tasks && <TaskList tasks={message.tasks} onToggleTask={onToggleTask} />}
-              {message.imageUrl && (
-                <div className="mt-2 relative group w-fit">
-                    <img 
-                        src={message.imageUrl} 
-                        alt={t('chatMessage.generatedImageAlt')} 
-                        className="max-w-full md:max-w-md max-h-96 rounded-lg border border-gray-300 cursor-pointer outline-none ring-0" 
-                        onClick={() => { playSound('click'); setIsImageModalOpen(true); }}
-                    />
-                    <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                         {message.imagePrompt && (
-                           <button onClick={handleEditPrompt} className="bg-gray-800/60 text-white p-2 rounded-full hover:bg-black/80" aria-label={t('chatMessage.editPrompt')}>
-                               <EditIcon className="w-4 h-4" />
-                           </button>
-                         )}
-                         <button onClick={() => { playSound('click'); setIsImageModalOpen(true); }} className="bg-gray-800/60 text-white p-2 rounded-full hover:bg-black/80" aria-label={t('chatMessage.expandImage')}>
-                            <ExpandIcon className="w-4 h-4" />
-                        </button>
-                         <button onClick={handleDownloadImage} className="bg-gray-800/60 text-white p-2 rounded-full hover:bg-black/80" aria-label={t('chatMessage.downloadImage')}>
-                            <DownloadIcon className="w-4 h-4" />
-                        </button>
-                    </div>
-                </div>
-              )}
-               {message.videoUrl && (
-                <div className="mt-2 relative group w-fit">
-                    <video
-                        src={message.videoUrl}
-                        controls
-                        loop
-                        muted
-                        playsInline
-                        className="max-w-full md:max-w-md max-h-96 rounded-lg border border-gray-300"
-                        aria-label={t('chatMessage.generatedVideoAlt')}
-                    />
-                    <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {message.videoPrompt && (
-                            <button onClick={handleEditVideoPrompt} className="bg-gray-800/60 text-white p-2 rounded-full hover:bg-black/80" aria-label={t('chatMessage.editPrompt')}>
-                                <EditIcon className="w-4 h-4" />
-                            </button>
-                        )}
-                        <button onClick={handleDownloadVideo} className="bg-gray-800/60 text-white p-2 rounded-full hover:bg-black/80" aria-label={t('chatMessage.downloadVideo')}>
-                            <DownloadIcon className="w-4 h-4" />
-                        </button>
-                    </div>
-                </div>
+          <div className="prose prose-sm max-w-none prose-p:my-2 prose-ol:my-2 prose-ul:my-2 prose-headings:my-3">
+            {message.originalImageUrl && (
+              <div className="mb-2">
+                <img src={message.originalImageUrl} alt={t('chatMessage.userUploadAlt')} className="max-w-xs max-h-48 rounded-md border border-gray-300" />
+              </div>
+            )}
+            {isLoading && !contentToUse && !message.imageUrl && !message.tasks ? (
+              <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse [animation-delay:0.2s]"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse [animation-delay:0.4s]"></div>
+              </div>
+            ) : (
+              <>
+                {contentToUse && <Markdown remarkPlugins={[remarkGfm]}>{contentToShow}</Markdown>}
+                {message.tasks && <TaskList tasks={message.tasks} onToggleTask={onToggleTask} />}
+                {message.imageUrl && (
+                  <div className="mt-2 relative group w-fit">
+                      <img 
+                          src={message.imageUrl} 
+                          alt={t('chatMessage.generatedImageAlt')} 
+                          className="max-w-full md:max-w-md max-h-96 rounded-lg border border-gray-300 cursor-pointer outline-none ring-0" 
+                          onClick={() => { playSound('click'); setIsImageModalOpen(true); }}
+                      />
+                      <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                           {message.imagePrompt && (
+                             <button onClick={handleEditPrompt} className="bg-gray-800/60 text-white p-2 rounded-full hover:bg-black/80" aria-label={t('chatMessage.editPrompt')}>
+                                 <EditIcon className="w-4 h-4" />
+                             </button>
+                           )}
+                           <button onClick={() => { playSound('click'); setIsImageModalOpen(true); }} className="bg-gray-800/60 text-white p-2 rounded-full hover:bg-black/80" aria-label={t('chatMessage.expandImage')}>
+                              <ExpandIcon className="w-4 h-4" />
+                          </button>
+                           <button onClick={handleDownloadImage} className="bg-gray-800/60 text-white p-2 rounded-full hover:bg-black/80" aria-label={t('chatMessage.downloadImage')}>
+                              <DownloadIcon className="w-4 h-4" />
+                          </button>
+                      </div>
+                  </div>
                 )}
-            </>
-          )}
-        </div>
+                 {message.videoUrl && (
+                  <div className="mt-2 relative group w-fit">
+                      <video
+                          src={message.videoUrl}
+                          controls
+                          loop
+                          muted
+                          playsInline
+                          className="max-w-full md:max-w-md max-h-96 rounded-lg border border-gray-300"
+                          aria-label={t('chatMessage.generatedVideoAlt')}
+                      />
+                      <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {message.videoPrompt && (
+                              <button onClick={handleEditVideoPrompt} className="bg-gray-800/60 text-white p-2 rounded-full hover:bg-black/80" aria-label={t('chatMessage.editPrompt')}>
+                                  <EditIcon className="w-4 h-4" />
+                              </button>
+                          )}
+                          <button onClick={handleDownloadVideo} className="bg-gray-800/60 text-white p-2 rounded-full hover:bg-black/80" aria-label={t('chatMessage.downloadVideo')}>
+                              <DownloadIcon className="w-4 h-4" />
+                          </button>
+                      </div>
+                  </div>
+                  )}
+              </>
+            )}
+          </div>
+        
         {showToggleButton && (
             <div className="mt-3 pt-2 text-center border-t border-gray-200/50 -mx-4">
                 <button
@@ -226,7 +229,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading, speakingM
                 </ul>
             </div>
         )}
-        {!isUser && !isLoading && message.content && (
+        {!isUser && !isLoading && contentToUse && (
           <div className="flex items-center gap-2 mt-3 pt-2 border-t border-gray-200/50 -mx-4 px-4">
             <button
               onClick={handleCopy}

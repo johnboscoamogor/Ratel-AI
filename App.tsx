@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import LandingPage from './components/LandingPage';
 import ChatView from './components/ChatView';
@@ -13,7 +14,7 @@ import { playSound } from './services/audioService';
 const App: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [page, setPage] = useState<'landing' | 'chat' | 'settings' | 'contact' | 'community' | 'admin'>('landing');
+  const [page, setPage] = useState<'landing' | 'chat' | 'settings' | 'contact' | 'community' | 'admin' | 'examples'>('landing');
 
   const defaultSettings: AppSettings = {
     language: 'en',

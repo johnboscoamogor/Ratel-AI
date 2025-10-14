@@ -15,13 +15,14 @@ import ProfileStudio from './ProfileStudio';
 import MarketSquare from './MarketStudio';
 import StorytellerStudio from './StorytellerStudio';
 import VideoArStudio from './VideoArStudio';
+import ExamplesStudio from './ExamplesStudio';
 import { Message, Role, ChatSession, AppSettings, Task, UserProfile, RatelMode, RatelTone, Story } from '../types';
 import { ai } from '../services/geminiService';
 import { SYSTEM_INSTRUCTION, taskTools, CoffeeIcon, MenuIcon, ChevronDownIcon } from '../constants';
 // FIX: Changed FunctionCallPart to FunctionCall, which is the correct exported member from @google/genai.
 import { GenerateContentResponse, Modality, Chat, FunctionCall, Part, ContentUnion } from '@google/genai';
 // FIX: Removed import for 'cancelCurrentAudioGeneration' as it's obsolete.
-import { playSound, generateAudioBlob, getAvailableVoices } from '../services/audioService';
+import { playSound, getAvailableVoices } from '../services/audioService';
 import { useTranslation } from 'react-i18next';
 
 interface ChatViewProps {
@@ -29,7 +30,7 @@ interface ChatViewProps {
   setUserProfile: React.Dispatch<React.SetStateAction<UserProfile | null>>;
   settings: AppSettings;
   setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
-  setPage: (page: 'chat' | 'settings' | 'contact' | 'community' | 'admin') => void;
+  setPage: (page: 'chat' | 'settings' | 'contact' | 'community' | 'admin' | 'examples') => void;
   onLogout: () => void;
   addXp: (points: number) => void;
   trackInterest: (mode: RatelMode) => void;
@@ -78,6 +79,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
   const [isMarketSquareOpen, setIsMarketSquareOpen] = useState(false);
   const [isStorytellerStudioOpen, setIsStorytellerStudioOpen] = useState(false);
   const [isVideoArStudioOpen, setIsVideoArStudioOpen] = useState(false);
+  const [isExamplesStudioOpen, setIsExamplesStudioOpen] = useState(false);
   const [isToneDropdownOpen, setIsToneDropdownOpen] = useState(false);
   
   const chatSessionRef = useRef<Chat | null>(null);
@@ -167,10 +169,13 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
     ].filter(Boolean).join('\n\n');
     
     const currentMessages = allHistory.find(c => c.id === currentChatId)?.messages || [];
-    const historyForAPI = currentMessages.map(msg => ({
-        role: msg.role === Role.USER ? 'user' : 'model',
-        parts: [{ text: msg.content }], // Simplified for history
-    }));
+    const historyForAPI = currentMessages.map(msg => {
+        let textContent = msg.content;
+        return {
+            role: msg.role === Role.USER ? 'user' : 'model',
+            parts: [{ text: textContent }],
+        };
+    });
 
     chatSessionRef.current = ai.chats.create({
       model: 'gemini-2.5-flash',
@@ -180,7 +185,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
       },
       history: historyForAPI,
     });
-  }, [currentChatId, settings, userProfile.name]);
+  }, [currentChatId, settings, userProfile.name, allHistory]);
 
 
   // 5. Save messages to allHistory after a stream is complete
@@ -312,7 +317,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
     // ... (omitted for brevity, no changes)
   };
 
-  const handleSendMessage = async (content: string, image?: { data: string; mimeType: string }, options?: { addXpPoints?: number, mode?: RatelMode }) => {
+  const handleSendMessage = async (content: string, image?: { data: string; mimeType: string }, options?: { addXpPoints?: number; mode?: RatelMode; }) => {
     if (isLoading || !chatSessionRef.current) return;
 
     let activeChatId = currentChatId;
@@ -334,7 +339,9 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
     const randomThinkingMessage = thinkingMessages[Math.floor(Math.random() * thinkingMessages.length)];
     const modelPlaceholderId = crypto.randomUUID();
 
-    setMessages(prev => [...prev, userMessage, { id: modelPlaceholderId, role: Role.MODEL, content: randomThinkingMessage }]);
+    const modelPlaceholder: Message = { id: modelPlaceholderId, role: Role.MODEL, content: randomThinkingMessage };
+
+    setMessages(prev => [...prev, userMessage, modelPlaceholder]);
     
     try {
         const messagePayload: ContentUnion = image
@@ -359,7 +366,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
             if(chunk.functionCalls) functionCalls.push(...chunk.functionCalls);
 
             setMessages(prev => prev.map(msg => 
-                msg.id === modelPlaceholderId ? { ...msg, content: modelResponse } : msg
+              msg.id === modelPlaceholderId ? { ...msg, content: modelResponse } : msg
             ));
         }
         
@@ -385,21 +392,20 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
             }
 
             if (functionResponsePart) {
-                const stream2 = await chatSessionRef.current.sendMessageStream({ message: functionResponsePart });
-                let finalModelResponse = '';
-                for await (const chunk of stream2) {
-                     finalModelResponse += chunk.text;
-                     setMessages(prev => prev.map(msg => 
-                        msg.id === modelPlaceholderId ? { ...msg, content: finalModelResponse } : msg
-                    ));
-                }
+                // FIX: Replaced the second streaming call with a standard `sendMessage` to prevent a history sequencing error with the Gemini API.
+                // This is a more robust way to handle function call responses.
+                const result = await chatSessionRef.current.sendMessage({ message: functionResponsePart });
+                const finalModelResponse = result.text;
+                setMessages(prev => prev.map(msg => 
+                    msg.id === modelPlaceholderId ? { ...msg, content: finalModelResponse } : msg
+                ));
             }
         }
         if(options?.addXpPoints) addXp(options.addXpPoints);
     } catch (error) {
       console.error("Error sending message:", error);
       const errorContent = t('common.error');
-      setMessages(prev => prev.map(msg => 
+      setMessages(prev => prev.map(msg =>
         msg.id === modelPlaceholderId ? { ...msg, content: errorContent } : msg
       ));
     } finally {
@@ -408,15 +414,26 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
   };
 
   // --- Feature Mode Handlers ---
-  const handleHustleRequest = (input: string) => {
+  const handleHustleRequest = (type: 'ideas', data: any) => {
     setIsHustleStudioOpen(false);
-    const prompt = `I am in "Hustle Mode". My budget or skill is: "${input}". Please provide 3-5 realistic small business ideas for Nigeria. End your response with the exact question: "Do you want a step-by-step guide for one of these ideas?"`;
-    handleSendMessage(prompt, undefined, { addXpPoints: 10, mode: 'hustle'});
+    let prompt = '';
+    let options: any = { addXpPoints: 10, mode: 'hustle' };
+
+    if (type === 'ideas') {
+        prompt = `I am in "Hustle Mode". My budget or skill is: "${data.input}". Please provide 3-5 realistic small business ideas for Nigeria. End your response with the exact question: "Do you want a step-by-step guide for one of these ideas?"`;
+    }
+
+    handleSendMessage(prompt, undefined, options);
   };
 
-  const handleLearnRequest = (skill: string) => {
+  const handleLearnRequest = (skill: string, isTutorSubject: boolean) => {
     setIsLearnStudioOpen(false);
-    const prompt = `I am in "Learn Mode". My chosen skill is "${skill}". Provide Lesson 1 for me. Structure your response with three sections using markdown: a short "Lesson", 3 "Practice Tasks", and an inspiring "Motivation" quote. End with "Reply 'continue' for the next lesson tomorrow."`;
+    let prompt = '';
+    if (isTutorSubject) {
+        prompt = `I want to start a lesson on "${skill}". Act as a friendly and patient tutor. Provide me with "Lesson 1". Structure your response with a short "Lesson", 3 "Practice Tasks", and an inspiring "Motivation" quote. End with "Reply 'continue' for the next lesson."`;
+    } else {
+        prompt = `I am in "Learn Mode". My chosen skill is "${skill}". Provide Lesson 1 for me. Structure your response with three sections using markdown: a short "Lesson", 3 "Practice Tasks", and an inspiring "Motivation" quote. End with "Reply 'continue' for the next lesson tomorrow."`;
+    }
     handleSendMessage(prompt, undefined, { addXpPoints: 10, mode: 'learn'});
   };
   
@@ -424,7 +441,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
     setIsMarketSquareOpen(false);
     if (isLoading) return;
 
-    const prompt = `I am in "${location}". Find local markets, online vendors, or specific shops where I can buy "${item}". Provide a summary with names, locations, and any available tips. Focus on results within Africa, relevant to the specified location.`;
+    const prompt = `I am in "${location}". What is the average price for "${item}" here? Find local markets, online vendors, or specific shops and list their current prices if available. Provide a summary with names, locations, and pricing information. Focus on results within Africa, relevant to the specified location.`;
 
     let activeChatId = currentChatId;
     if (!activeChatId) {
@@ -432,7 +449,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
         setCurrentChatId(activeChatId);
     }
 
-    const userMessage: Message = { id: crypto.randomUUID(), role: Role.USER, content: `Where can I find "${item}" in ${location}?` };
+    const userMessage: Message = { id: crypto.randomUUID(), role: Role.USER, content: `Price of "${item}" in ${location}?` };
 
     playSound('send');
     setIsLoading(true);
@@ -516,6 +533,10 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
     setProModalMessage(message);
     setIsProModalOpen(true);
   }
+  const handleExampleSelection = (prompt: string) => {
+    setIsExamplesStudioOpen(false);
+    handleSendMessage(prompt);
+  };
   
   const mainStyle: React.CSSProperties = settings.appearance?.backgroundImage ? { backgroundImage: `linear-gradient(rgba(249, 250, 251, 0.85), rgba(249, 250, 251, 0.85)), url(${settings.appearance.backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' } : {};
   const toneLabels: Record<RatelTone, string> = { normal: t('tones.normal'), funny: t('tones.funny'), pidgin: t('tones.pidgin') };
@@ -543,6 +564,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
         onOpenStorytellerStudio={() => setIsStorytellerStudioOpen(true)}
         onOpenProfileStudio={() => setIsProfileStudioOpen(true)}
         onOpenVideoArStudio={() => setIsVideoArStudioOpen(true)}
+        onOpenExamplesStudio={() => setIsExamplesStudioOpen(true)}
         onOpenProModal={() => handleOpenProModal()}
         setPage={setPage}
         onLogout={onLogout}
@@ -581,7 +603,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
                     aria-label={t('sidebar.supportUs')}
                 >
                     <CoffeeIcon className="w-5 h-5 text-yellow-600" />
-                    <span>{t('sidebar.supportUs')}</span>
+                    <span className="hidden sm:inline">{t('sidebar.supportUs')}</span>
                 </button>
                 <LanguageSwitcher
                     currentLang={settings.language}
@@ -615,6 +637,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
         {isStorytellerStudioOpen && <StorytellerStudio onClose={() => setIsStorytellerStudioOpen(false)} onStoryGenerated={handleStoryGenerated} settings={settings} onOpenProModal={handleOpenProModal} />}
         {isProfileStudioOpen && <ProfileStudio onClose={() => setIsProfileStudioOpen(false)} userProfile={userProfile} setUserProfile={setUserProfile} />}
         {isVideoArStudioOpen && <VideoArStudio onClose={() => setIsVideoArStudioOpen(false)} />}
+        {isExamplesStudioOpen && <ExamplesStudio onClose={() => setIsExamplesStudioOpen(false)} onSelectExample={handleExampleSelection} />}
         
         {isSupportModalOpen && <SupportModal onClose={() => setIsSupportModalOpen(false)} />}
         {isProModalOpen && <ProModal onClose={() => setIsProModalOpen(false)} message={proModalMessage} />}

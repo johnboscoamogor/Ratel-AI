@@ -111,8 +111,9 @@ const AdminPanel: React.FC = () => {
     
     const renderSettings = () => {
         const totalUsers = Object.keys(users).length;
-        // FIX: Add type assertion to resolve TypeScript error where 'user' is inferred as 'unknown'.
-        const totalPoints = Object.values(users).reduce((sum, user) => sum + (user as { points: number }).points, 0);
+        // FIX: Operator '+' cannot be applied to types 'unknown' and 'number'.
+        // By casting the array from Object.values, we ensure the 'user' parameter in reduce is correctly typed.
+        const totalPoints = (Object.values(users) as Array<{ points: number }>).reduce((sum, user) => sum + user.points, 0);
 
         return (
             <div className="space-y-6">
@@ -181,7 +182,6 @@ const AdminPanel: React.FC = () => {
                 <div>
                     {activeTab === 'requests' && renderRequests()}
                     {activeTab === 'users' && renderUsers()}
-                    {/* FIX: Corrected typo in variable name from 'active-tab' to 'activeTab'. */}
                     {activeTab === 'settings' && renderSettings()}
                 </div>
             </div>
