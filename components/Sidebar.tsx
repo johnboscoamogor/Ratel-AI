@@ -76,91 +76,97 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const sidebarContent = (
     <div className="flex flex-col h-full bg-gray-100 text-gray-800">
-      {/* Header */}
-      <div className="p-4 flex justify-between items-center border-b border-gray-200">
-        <div className="flex items-center gap-2">
-            <RatelLogo className="w-8 h-8 text-green-600" />
-            <span className="font-bold text-xl">{t('common.ratelAI')}</span>
+      {/* --- FIXED TOP SECTION --- */}
+      <div>
+        {/* Header */}
+        <div className="p-4 flex justify-between items-center border-b border-gray-200">
+          <div className="flex items-center gap-2">
+              <RatelLogo className="w-8 h-8 text-green-600" />
+              <span className="font-bold text-xl">{t('common.ratelAI')}</span>
+          </div>
+          <button onClick={onCloseMobile} className="p-1 rounded-full hover:bg-gray-200 md:hidden">
+              <ChevronLeftIcon className="w-6 h-6"/>
+          </button>
         </div>
-        <button onClick={onCloseMobile} className="p-1 rounded-full hover:bg-gray-200 md:hidden">
-            <ChevronLeftIcon className="w-6 h-6"/>
-        </button>
+
+        {/* New Chat Button */}
+        <div className="p-4">
+          <button onClick={onNewChat} className="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+            {t('sidebar.newChat')}
+          </button>
+        </div>
       </div>
 
-      {/* New Chat Button */}
-      <div className="p-4">
-        <button onClick={onNewChat} className="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
-          {t('sidebar.newChat')}
-        </button>
-      </div>
-      
-      {/* Studios */}
-       <div className="px-4 py-2">
+      {/* --- SCROLLABLE MIDDLE SECTION --- */}
+      <div className="flex-1 overflow-y-auto px-4 py-2 space-y-4">
+        {/* Studios */}
+        <div>
           <button onClick={onOpenExamplesStudio} className="w-full flex items-center justify-center gap-2 mb-2 p-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition-colors font-semibold text-sm">
             <SparklesIcon className="w-4 h-4" />
             <span>Prompt Examples</span>
           </button>
-        <div className="grid grid-cols-4 gap-2">
-            <StudioButton Icon={BriefcaseIcon} label={t('sidebar.hustleStudio')} onClick={onOpenHustleStudio} />
-            <StudioButton Icon={BookOpenIcon} label={t('sidebar.learnStudio')} onClick={onOpenLearnStudio} />
-            <StudioButton Icon={StorefrontIcon} label={t('sidebar.marketSquare')} onClick={onOpenMarketSquare} />
-            <StudioButton Icon={WrenchIcon} label={t('sidebar.mobileWorkers')} onClick={onOpenMobileWorkersStudio} />
-            <StudioButton Icon={UsersIcon} label={t('sidebar.communityStudio')} onClick={() => handlePageChange('community')} />
-            <StudioButton Icon={ImageIcon} label={t('sidebar.imageStudio')} onClick={onOpenImageStudio} />
-            <StudioButton Icon={AudioIcon} label={t('sidebar.audioStudio')} onClick={onOpenAudioStudio} />
-            <StudioButton Icon={VideoIcon} label={t('sidebar.videoStudio')} onClick={onOpenVideoStudio} />
-            <StudioButton Icon={ClapperboardIcon} label={t('sidebar.storyteller')} onClick={onOpenStorytellerStudio} />
+          <div className="grid grid-cols-4 gap-2">
+              <StudioButton Icon={BriefcaseIcon} label={t('sidebar.hustleStudio')} onClick={onOpenHustleStudio} />
+              <StudioButton Icon={BookOpenIcon} label={t('sidebar.learnStudio')} onClick={onOpenLearnStudio} />
+              <StudioButton Icon={StorefrontIcon} label={t('sidebar.marketSquare')} onClick={onOpenMarketSquare} />
+              <StudioButton Icon={WrenchIcon} label={t('sidebar.mobileWorkers')} onClick={onOpenMobileWorkersStudio} />
+              <StudioButton Icon={UsersIcon} label={t('sidebar.communityStudio')} onClick={() => handlePageChange('community')} />
+              <StudioButton Icon={ImageIcon} label={t('sidebar.imageStudio')} onClick={onOpenImageStudio} />
+              <StudioButton Icon={AudioIcon} label={t('sidebar.audioStudio')} onClick={onOpenAudioStudio} />
+              <StudioButton Icon={VideoIcon} label={t('sidebar.videoStudio')} onClick={onOpenVideoStudio} />
+              <StudioButton Icon={ClapperboardIcon} label={t('sidebar.storyteller')} onClick={onOpenStorytellerStudio} />
+              <StudioButton Icon={SparklesIcon} label={t('sidebar.videoArStudio')} onClick={onOpenVideoArStudio} />
+          </div>
+        </div>
 
+        {/* Chat History */}
+        <div>
+          <h3 className="text-xs font-semibold uppercase text-gray-500 mb-2">{t('sidebar.history')}</h3>
+          <input
+              type="text"
+              placeholder={t('sidebar.search')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full text-sm bg-gray-200 border-transparent focus:ring-green-500 focus:border-green-500 rounded-md mb-2 px-3 py-1.5"
+          />
+          {filteredHistory.length > 0 ? (
+            <ul className="space-y-1">
+              {filteredHistory.map(chat => (
+                <li key={chat.id} className="group">
+                  {editingId === chat.id ? (
+                    <input
+                      type="text"
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onBlur={() => handleSaveRename(chat.id)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSaveRename(chat.id)}
+                      className="w-full p-2 text-sm rounded-md bg-white border border-green-500"
+                      autoFocus
+                    />
+                  ) : (
+                    <div className={`flex items-center justify-between p-2 rounded-md cursor-pointer ${currentChatId === chat.id ? 'bg-green-200 text-green-900' : 'hover:bg-gray-200'}`}>
+                      <span onClick={() => onSelectChat(chat.id)} className="truncate flex-1 text-sm">{chat.title}</span>
+                      <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => handleRename(chat.id, chat.title)} className="p-1 hover:text-green-700"><EditIcon className="w-4 h-4" /></button>
+                        <button onClick={() => onDeleteChat(chat.id)} className="p-1 hover:text-red-700"><TrashIcon className="w-4 h-4" /></button>
+                      </div>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-gray-500 px-2">{t('sidebar.noHistory')}</p>
+          )}
+        </div>
+        
+        {/* Ad Banner */}
+        <div>
+          <AdBanner />
         </div>
       </div>
 
-
-      {/* Chat History */}
-      <div className="flex-1 overflow-y-auto px-4">
-        <h3 className="text-xs font-semibold uppercase text-gray-500 mb-2 mt-4">{t('sidebar.history')}</h3>
-         <input
-            type="text"
-            placeholder={t('sidebar.search')}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full text-sm bg-gray-200 border-transparent focus:ring-green-500 focus:border-green-500 rounded-md mb-2 px-3 py-1.5"
-        />
-        {filteredHistory.length > 0 ? (
-          <ul className="space-y-1">
-            {filteredHistory.map(chat => (
-              <li key={chat.id} className="group">
-                {editingId === chat.id ? (
-                  <input
-                    type="text"
-                    value={renameValue}
-                    onChange={(e) => setRenameValue(e.target.value)}
-                    onBlur={() => handleSaveRename(chat.id)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSaveRename(chat.id)}
-                    className="w-full p-2 text-sm rounded-md bg-white border border-green-500"
-                    autoFocus
-                  />
-                ) : (
-                  <div className={`flex items-center justify-between p-2 rounded-md cursor-pointer ${currentChatId === chat.id ? 'bg-green-200 text-green-900' : 'hover:bg-gray-200'}`}>
-                    <span onClick={() => onSelectChat(chat.id)} className="truncate flex-1 text-sm">{chat.title}</span>
-                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => handleRename(chat.id, chat.title)} className="p-1 hover:text-green-700"><EditIcon className="w-4 h-4" /></button>
-                      <button onClick={() => onDeleteChat(chat.id)} className="p-1 hover:text-red-700"><TrashIcon className="w-4 h-4" /></button>
-                    </div>
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-gray-500 px-2">{t('sidebar.noHistory')}</p>
-        )}
-      </div>
-
-      <div className="p-2">
-        <AdBanner />
-      </div>
-
-      {/* Footer */}
+      {/* --- FIXED BOTTOM SECTION --- */}
       <div className="p-4 border-t border-gray-200">
         <div className="mb-4">
             <div className="flex items-center justify-between text-sm mb-1">

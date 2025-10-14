@@ -72,6 +72,7 @@ const resources = {
         "imageStudio": "Image",
         "audioStudio": "Audio",
         "videoStudio": "Video",
+        "videoArStudio": "Video AR",
         "storyteller": "Storyteller",
         "settings": "Settings",
         "contactUs": "Contact Us",
