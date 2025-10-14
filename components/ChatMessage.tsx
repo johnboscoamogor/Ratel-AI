@@ -1,8 +1,8 @@
 // FIX: Replaced placeholder content with the actual ChatMessage component implementation to resolve module errors.
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Message, Role, Task } from '../types';
-import { RatelLogo, UserIcon, CopyIcon, CheckIcon, SpeakerIcon, StopIcon, TrashIcon, ExpandIcon, DownloadIcon, EditIcon, GlobeIcon } from '../constants';
+import { Message, Role, Task, MobileWorker } from '../types';
+import { RatelLogo, UserIcon, CopyIcon, CheckIcon, SpeakerIcon, StopIcon, TrashIcon, ExpandIcon, DownloadIcon, EditIcon, GlobeIcon, AwardIcon } from '../constants';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { playSound } from '../services/audioService';
@@ -21,6 +21,27 @@ interface ChatMessageProps {
 }
 
 const CODE_BLOCK_THRESHOLD_LINES = 15;
+
+const WorkerCard: React.FC<{ worker: MobileWorker }> = ({ worker }) => {
+    const { t } = useTranslation();
+    return (
+        <div className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <img src={worker.profile_photo_url} alt={worker.full_name} className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-sm"/>
+            <div className="flex-grow">
+                <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-gray-900">{worker.full_name}</h4>
+                    {worker.verified && <div className="flex items-center gap-1 bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded-full"><AwardIcon className="w-3 h-3"/> {t('mobileWorkersStudio.find.verified')}</div>}
+                </div>
+                <p className="text-sm text-gray-600">{worker.skill_category} • {worker.location}</p>
+                <div className="mt-2 flex gap-2">
+                    <a href={`tel:${worker.phone_number}`} className="text-xs bg-blue-100 text-blue-800 font-semibold py-1 px-3 rounded-full hover:bg-blue-200">Call</a>
+                    {worker.whatsapp_link && <a href={worker.whatsapp_link} target="_blank" rel="noopener noreferrer" className="text-xs bg-green-100 text-green-800 font-semibold py-1 px-3 rounded-full hover:bg-green-200">WhatsApp</a>}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading, speakingMessageId, onPlayAudio, onStopAudio, onDeleteMessage, onToggleTask, onEditPrompt, onEditVideoPrompt }) => {
   const { t } = useTranslation();
@@ -151,6 +172,11 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading, speakingM
               <>
                 {contentToUse && <Markdown remarkPlugins={[remarkGfm]}>{contentToShow}</Markdown>}
                 {message.tasks && <TaskList tasks={message.tasks} onToggleTask={onToggleTask} />}
+                {message.workers && message.workers.length > 0 && (
+                    <div className="mt-4 border-t border-gray-200/50 -mx-4 px-4 pt-3 space-y-3">
+                        {message.workers.map(worker => <WorkerCard key={worker.id} worker={worker} />)}
+                    </div>
+                )}
                 {message.imageUrl && (
                   <div className="mt-2 relative group w-fit">
                       <img 
@@ -229,7 +255,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading, speakingM
                 </ul>
             </div>
         )}
-        {!isUser && !isLoading && contentToUse && (
+        {!isUser && !isLoading && (contentToUse || message.workers) && (
           <div className="flex items-center gap-2 mt-3 pt-2 border-t border-gray-200/50 -mx-4 px-4">
             <button
               onClick={handleCopy}

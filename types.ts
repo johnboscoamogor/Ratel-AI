@@ -35,6 +35,20 @@ export interface Story {
   timestamp: number;
 }
 
+export interface MobileWorker {
+  id: string;
+  created_at: string;
+  full_name: string;
+  phone_number: string;
+  skill_category: string;
+  location: string;
+  bio: string;
+  whatsapp_link?: string;
+  profile_photo_url: string;
+  verified: boolean;
+  user_id: string;
+}
+
 export interface Message {
   id: string;
   role: Role;
@@ -43,6 +57,7 @@ export interface Message {
   originalImageUrl?: string; // for user uploads
   videoUrl?: string;
   tasks?: Task[];
+  workers?: MobileWorker[];
   sources?: { uri: string; title: string }[];
   imagePrompt?: string; // The prompt used to generate an image
   videoPrompt?: string; // The prompt used to generate a video

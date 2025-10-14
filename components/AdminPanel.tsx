@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RedemptionRequest, CommunityAdminSettings } from '../types';
+import { RedemptionRequest, CommunityAdminSettings, MobileWorker } from '../types';
 import { communityService } from '../services/communityService';
+import { workerService } from '../services/workerService';
 import { playSound } from '../services/audioService';
 import ToggleSwitch from './ToggleSwitch';
 
-type AdminTab = 'requests' | 'users' | 'settings';
+type AdminTab = 'requests' | 'users' | 'workers' | 'settings';
 
 const AdminPanel: React.FC = () => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<AdminTab>('requests');
     const [requests, setRequests] = useState<RedemptionRequest[]>([]);
     const [users, setUsers] = useState<Record<string, { name: string; points: number }>>({});
+    const [workers, setWorkers] = useState<MobileWorker[]>([]);
     const [conversionRate, setConversionRate] = useState(1);
     const [adminSettings, setAdminSettings] = useState<CommunityAdminSettings>({ enableTelegramNotifications: true });
     const [refreshTrigger, setRefreshTrigger] = useState(0); // Used to force re-renders
@@ -21,6 +23,17 @@ const AdminPanel: React.FC = () => {
         setUsers(communityService.getAllUsersWithPoints());
         setConversionRate(communityService.getConversionRate());
         setAdminSettings(communityService.getAdminSettings());
+        
+        const fetchWorkers = async () => {
+            try {
+                const allWorkers = await workerService.getAllWorkers();
+                setWorkers(allWorkers);
+            } catch (error) {
+                console.error("Failed to fetch workers for admin panel:", error);
+            }
+        };
+        fetchWorkers();
+
     }, [refreshTrigger]);
     
     const handleProcessRequest = (requestId: string, status: 'approved' | 'rejected') => {
@@ -45,6 +58,19 @@ const AdminPanel: React.FC = () => {
             } else {
                 alert('Invalid number.');
             }
+        }
+    };
+
+    const handleToggleWorkerVerification = async (workerId: string, currentStatus: boolean) => {
+        playSound('click');
+        try {
+            const updatedWorker = await workerService.toggleVerifiedStatus(workerId, !currentStatus);
+            if(updatedWorker) {
+                setWorkers(prev => prev.map(w => w.id === workerId ? updatedWorker : w));
+            }
+        } catch (error) {
+            console.error("Failed to toggle worker verification", error);
+            alert("An error occurred while updating the worker status.");
         }
     };
 
@@ -109,6 +135,31 @@ const AdminPanel: React.FC = () => {
         </div>
     );
     
+    const renderWorkers = () => (
+        <div className="space-y-3">
+            {workers.map(worker => (
+                <div key={worker.id} className="bg-gray-50 p-3 rounded-lg border flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <img src={worker.profile_photo_url} alt={worker.full_name} className="w-12 h-12 rounded-full object-cover" />
+                        <div>
+                            <p className="font-semibold">{worker.full_name}</p>
+                            <p className="text-sm text-gray-600">{worker.skill_category} - {worker.location}</p>
+                        </div>
+                    </div>
+                    <div>
+                        <ToggleSwitch
+                            id={`verify-worker-${worker.id}`}
+                            label={worker.verified ? "Verified" : "Unverified"}
+                            checked={worker.verified}
+                            onChange={() => handleToggleWorkerVerification(worker.id, worker.verified)}
+                        />
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+
+
     const renderSettings = () => {
         const totalUsers = Object.keys(users).length;
         // FIX: Operator '+' cannot be applied to types 'unknown' and 'number'.
@@ -177,11 +228,13 @@ const AdminPanel: React.FC = () => {
                 <div className="flex justify-around border-b mb-6">
                     <TabButton tab="requests" label={t('community.adminPanel.redemptionRequests')} />
                     <TabButton tab="users" label={t('community.adminPanel.userManagement')} />
+                    <TabButton tab="workers" label={t('community.adminPanel.mobileWorkers')} />
                     <TabButton tab="settings" label={t('community.adminPanel.settings')} />
                 </div>
                 <div>
                     {activeTab === 'requests' && renderRequests()}
                     {activeTab === 'users' && renderUsers()}
+                    {activeTab === 'workers' && renderWorkers()}
                     {activeTab === 'settings' && renderSettings()}
                 </div>
             </div>

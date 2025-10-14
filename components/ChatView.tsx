@@ -16,6 +16,7 @@ import MarketSquare from './MarketStudio';
 import StorytellerStudio from './StorytellerStudio';
 import VideoArStudio from './VideoArStudio';
 import ExamplesStudio from './ExamplesStudio';
+import MobileWorkersStudio from './MobileWorkersStudio';
 import { Message, Role, ChatSession, AppSettings, Task, UserProfile, RatelMode, RatelTone, Story } from '../types';
 import { ai } from '../services/geminiService';
 import { SYSTEM_INSTRUCTION, taskTools, CoffeeIcon, MenuIcon, ChevronDownIcon } from '../constants';
@@ -24,6 +25,7 @@ import { GenerateContentResponse, Modality, Chat, FunctionCall, Part, ContentUni
 // FIX: Removed import for 'cancelCurrentAudioGeneration' as it's obsolete.
 import { playSound, getAvailableVoices } from '../services/audioService';
 import { useTranslation } from 'react-i18next';
+import { workerService } from '../services/workerService';
 
 interface ChatViewProps {
   userProfile: UserProfile;
@@ -80,6 +82,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
   const [isStorytellerStudioOpen, setIsStorytellerStudioOpen] = useState(false);
   const [isVideoArStudioOpen, setIsVideoArStudioOpen] = useState(false);
   const [isExamplesStudioOpen, setIsExamplesStudioOpen] = useState(false);
+  const [isMobileWorkersStudioOpen, setIsMobileWorkersStudioOpen] = useState(false);
   const [isToneDropdownOpen, setIsToneDropdownOpen] = useState(false);
   
   const chatSessionRef = useRef<Chat | null>(null);
@@ -373,6 +376,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
         if (functionCalls.length > 0) {
             const fc = functionCalls[0];
             let functionResponsePart: Part[] | null = null;
+            let finalModelResponse: string | undefined = undefined;
             
             if (fc.name === 'showTasks') {
                 setMessages(prev => prev.map(msg =>
@@ -389,13 +393,32 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
                 };
                 setTasks(prev => [...prev, newTask]);
                 functionResponsePart = [{ functionResponse: { name: 'addTask', response: { success: true, description: newTask.description } } }];
+            } else if (fc.name === 'findWorkers' && fc.args.skill && fc.args.location) {
+                const { skill, location } = fc.args;
+                const workers = await workerService.getWorkers({ skill: skill as string, location: location as string });
+
+                // Update the placeholder message immediately with the worker cards
+                setMessages(prev => prev.map(msg =>
+                    msg.id === modelPlaceholderId ? { ...msg, content: '', workers: workers } : msg
+                ));
+                
+                functionResponsePart = [{ functionResponse: {
+                    name: 'findWorkers',
+                    response: {
+                        status: workers.length > 0 ? 'SUCCESS' : 'NO_RESULTS',
+                        workerCount: workers.length,
+                        workers: workers.map(w => ({ name: w.full_name, location: w.location })), // Send summarized data back to AI
+                    }
+                }}];
             }
 
+
             if (functionResponsePart) {
-                // FIX: Replaced the second streaming call with a standard `sendMessage` to prevent a history sequencing error with the Gemini API.
-                // This is a more robust way to handle function call responses.
                 const result = await chatSessionRef.current.sendMessage({ message: functionResponsePart });
-                const finalModelResponse = result.text;
+                finalModelResponse = result.text;
+            }
+
+            if (finalModelResponse) {
                 setMessages(prev => prev.map(msg => 
                     msg.id === modelPlaceholderId ? { ...msg, content: finalModelResponse } : msg
                 ));
@@ -561,6 +584,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
         onOpenHustleStudio={() => setIsHustleStudioOpen(true)}
         onOpenLearnStudio={() => setIsLearnStudioOpen(true)}
         onOpenMarketSquare={() => setIsMarketSquareOpen(true)}
+        onOpenMobileWorkersStudio={() => setIsMobileWorkersStudioOpen(true)}
         onOpenStorytellerStudio={() => setIsStorytellerStudioOpen(true)}
         onOpenProfileStudio={() => setIsProfileStudioOpen(true)}
         onOpenVideoArStudio={() => setIsVideoArStudioOpen(true)}
@@ -634,6 +658,7 @@ const ChatView: React.FC<ChatViewProps> = ({ userProfile, setUserProfile, settin
         {isHustleStudioOpen && <HustleStudio onClose={() => setIsHustleStudioOpen(false)} onAction={handleHustleRequest} isLoading={isLoading} />}
         {isLearnStudioOpen && <LearnStudio onClose={() => setIsLearnStudioOpen(false)} onAction={handleLearnRequest} />}
         {isMarketSquareOpen && <MarketSquare onClose={() => setIsMarketSquareOpen(false)} onAiSearch={handleMarketAiSearch} isLoading={isLoading} userProfile={userProfile} />}
+        {isMobileWorkersStudioOpen && <MobileWorkersStudio onClose={() => setIsMobileWorkersStudioOpen(false)} userProfile={userProfile} />}
         {isStorytellerStudioOpen && <StorytellerStudio onClose={() => setIsStorytellerStudioOpen(false)} onStoryGenerated={handleStoryGenerated} settings={settings} onOpenProModal={handleOpenProModal} />}
         {isProfileStudioOpen && <ProfileStudio onClose={() => setIsProfileStudioOpen(false)} userProfile={userProfile} setUserProfile={setUserProfile} />}
         {isVideoArStudioOpen && <VideoArStudio onClose={() => setIsVideoArStudioOpen(false)} />}

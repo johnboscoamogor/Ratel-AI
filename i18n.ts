@@ -27,6 +27,7 @@ const resources = {
             "hustleStudio": "Hustle",
             "learnStudio": "Learn",
             "marketSquare": "Market",
+            "mobileWorkers": "Workers",
             "imageStudio": "Image",
             "audioStudio": "Audio",
             "videoStudio": "Video",
@@ -252,6 +253,42 @@ const resources = {
                 }
             }
         },
+        "mobileWorkersStudio": {
+            "title": "Mobile Workers",
+            "tabs": {
+                "find": "Find a Worker",
+                "list": "List Your Skill"
+            },
+            "find": {
+                "searchPlaceholder": "Find a plumber in Abuja...",
+                "skillFilter": "Filter by skill",
+                "locationFilter": "Filter by location",
+                "noResults": "No workers found matching your criteria.",
+                "verified": "Verified"
+            },
+            "list": {
+                "formTitle": "Become a Ratel Mobile Worker",
+                "formDescription": "List your skill and connect with clients near you. Your first listing is free!",
+                "fullNameLabel": "Full Name",
+                "phoneLabel": "Phone Number",
+                "skillLabel": "Primary Skill",
+                "selectSkill": "Select a skill",
+                "locationLabel": "Your Location",
+                "locationPlaceholder": "e.g., Ikeja, Lagos",
+                "bioLabel": "Short Bio",
+                "bioPlaceholder": "e.g., 5+ years of experience in residential plumbing...",
+                "whatsappLabel": "WhatsApp Link (Optional)",
+                "whatsappPlaceholder": "https://wa.me/234...",
+                "photoLabel": "Profile Photo",
+                "submitButton": "List My Skill",
+                "submitting": "Submitting...",
+                "success": "Your skill has been listed successfully!",
+                "error": {
+                    "allFields": "Please fill out all required fields and upload a photo.",
+                    "generic": "Could not list your skill. Please try again."
+                }
+            }
+        },
         "profileStudio": {
             "title": "My Profile",
             "noInterests": "Not yet defined",
@@ -310,6 +347,7 @@ const resources = {
                 "title": "Admin Panel",
                 "redemptionRequests": "Redemption Requests",
                 "userManagement": "User Management",
+                "mobileWorkers": "Mobile Workers",
                 "settings": "Settings",
                 "noPendingRequests": "No pending requests.",
                 "approve": "Approve",
@@ -479,6 +517,7 @@ const resources = {
         "hustleStudio": "Hustle",
         "learnStudio": "Learn",
         "marketSquare": "Market",
+        "mobileWorkers": "Workers",
         "imageStudio": "Image",
         "audioStudio": "Audio",
         "videoStudio": "Video",

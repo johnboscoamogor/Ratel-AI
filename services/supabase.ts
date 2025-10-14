@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { MarketItem, MarketPayment } from '../types';
+import { MarketItem, MarketPayment, MobileWorker } from '../types';
 
 // --- IMPORTANT SETUP ---
 // You are almost there!
@@ -23,6 +23,7 @@ if (isSupabaseConfigured) {
     supabaseClient = createClient<{
         market_items: MarketItem;
         market_payments: MarketPayment;
+        mobile_workers: MobileWorker;
     }>(supabaseUrl, supabaseAnonKey);
 } else {
     // Log a warning to the developer console if Supabase is not configured.
