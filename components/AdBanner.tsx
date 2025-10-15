@@ -82,13 +82,12 @@ const AdBanner: React.FC = () => {
     const adStyle: React.CSSProperties = {
         display: 'block',
         width: '100%',
-        minHeight: '50px', // Prevents layout shift while loading
-        backgroundColor: '#f0f0f0',
-        borderRadius: '0.5rem'
+        minHeight: '50px', // Prevents layout shift
+        backgroundColor: 'transparent',
     };
 
     return (
-        <div className="p-2 text-center">
+        <div className="px-4 pb-2 text-center bg-gray-800">
             <ins
                 ref={adRef}
                 className="adsbygoogle"

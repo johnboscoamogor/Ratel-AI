@@ -16,6 +16,30 @@ const resources = {
         "editing": "Editing...",
         "loading": "Loading..."
       },
+      // Chat Window
+      "chatWindow": {
+        "welcomeTitle": "Ratel AI",
+        "welcomeSubtitle": "Your friendly AI companion for Africa.",
+        "modeNormal": "Normal",
+        "modeFormal": "Formal",
+        "modeHumorous": "Humorous",
+        "modePidgin": "Pidgin",
+        "modeAdvanced": "Advanced",
+        "examples": {
+            "hustle_title": "Get hustle ideas",
+            "hustle_desc": "...for a student in Lagos",
+            "hustle_prompt": "Give me 5 side hustle ideas for a student in Lagos",
+            "image_title": "Create an image",
+            "image_desc": "...of a futuristic matatu flying over Nairobi",
+            "image_prompt": "Create a photorealistic image of a futuristic matatu flying over Nairobi",
+            "explain_title": "Explain a concept",
+            "explain_desc": "...like 'inflation' using Nigerian examples",
+            "explain_prompt": "Explain 'inflation' to me like I'm 10, using Nigerian examples",
+            "story_title": "Tell a story",
+            "story_desc": "...about Anansi the Spider",
+            "story_prompt": "Tell me a short story about Anansi the Spider"
+        }
+      },
       // Landing Page
       "landing": {
         "title": "Ratel AI",
@@ -480,23 +504,70 @@ const resources = {
       }
     }
   },
-  // Add other languages here...
   ng: {
       translation: {
-        // Pidgin translations would go here
-        "common": {
-          "ratelAI": "Ratel AI"
+        "sidebar": {
+            "newChat": "New Tori"
         },
-        "landing": {
-          "title": "Ratel AI",
-          "subtitle": "Your sabi AI padi for Africa. We dey help you learn, earn, and grow.",
-          "startChatting": "Start Chat"
+        "chatInput": {
+            "placeholder": "Ask Ratel anything, my padi..."
         },
+        "chatWindow": {
+            "welcomeTitle": "Ratel AI",
+            "welcomeSubtitle": "Your sabi AI padi for Africa.",
+            "modeNormal": "Normal",
+            "modeFormal": "Formal",
+            "modeHumorous": "Funny",
+            "modePidgin": "Pidgin",
+            "modeAdvanced": "Advanced"
+        }
       }
   },
-  fr: {},
-  am: {},
-  sw: {}
+  fr: {
+    translation: {
+        "sidebar": {
+            "newChat": "Nouveau Tchat"
+        },
+        "chatInput": {
+            "placeholder": "Demandez n'importe quoi à Ratel..."
+        },
+        "chatWindow": {
+            "welcomeTitle": "Ratel AI",
+            "welcomeSubtitle": "Votre compagnon IA pour l'Afrique.",
+            "modeNormal": "Normal",
+            "modeFormal": "Formel",
+            "modeHumorous": "Humoristique",
+            "modePidgin": "Pidgin",
+            "modeAdvanced": "Avancé"
+        }
+    }
+  },
+  am: {
+    translation: {
+        "sidebar": {
+            "newChat": "አዲስ ውይይት"
+        }
+    }
+  },
+  sw: {
+    translation: {
+        "sidebar": {
+            "newChat": "Soga Mpya"
+        },
+        "chatInput": {
+            "placeholder": "Uliza Ratel chochote..."
+        },
+        "chatWindow": {
+            "welcomeTitle": "Ratel AI",
+            "welcomeSubtitle": "Msaidizi wako wa AI kwa Afrika.",
+            "modeNormal": "Kawaida",
+            "modeFormal": "Rasmi",
+            "modeHumorous": "Ucheshi",
+            "modePidgin": "Pidgin",
+            "modeAdvanced": "Juudi"
+        }
+    }
+  }
 };
 
 i18n

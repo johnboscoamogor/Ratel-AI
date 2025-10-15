@@ -13,10 +13,10 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ id, label, description, che
   return (
     <div className="flex items-center justify-between py-2">
       <div className="flex-grow pr-4">
-        <label htmlFor={id} className="font-medium text-gray-800 block cursor-pointer">
+        <label htmlFor={id} className="font-medium text-gray-200 block cursor-pointer">
           {label}
         </label>
-        {description && <p className="text-sm text-gray-500">{description}</p>}
+        {description && <p className="text-sm text-gray-400">{description}</p>}
       </div>
       <div className="relative inline-block w-10 align-middle select-none transition duration-200 ease-in">
         <input
@@ -30,7 +30,7 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ id, label, description, che
         />
         <label
           htmlFor={id}
-          className="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"
+          className="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer"
         ></label>
       </div>
       <style>{`

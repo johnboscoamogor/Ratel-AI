@@ -83,32 +83,32 @@ const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message, onEditVideo
   };
 
   return (
-    <div className={`flex items-start gap-3 ${isUser ? 'justify-end' : ''}`}>
+    <div className={`flex items-start gap-4 ${isUser ? 'justify-end' : ''}`}>
       {!isUser && (
-        <div className="w-8 h-8 rounded-full bg-green-600 flex items-center justify-center flex-shrink-0">
-          <RatelLogo className="w-5 h-5 text-white" />
+        <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0 border-2 border-gray-700 shadow-lg">
+          <RatelLogo className="w-6 h-6 text-green-400" />
         </div>
       )}
-      <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
-          <div className={`max-w-xl p-3 rounded-xl shadow-sm ${isUser ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
+      <div className={`flex flex-col w-full ${isUser ? 'items-end' : 'items-start'}`}>
+          <div className={`max-w-3xl p-4 rounded-xl shadow-md ${isUser ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-200 border border-gray-700'}`}>
             {message.parts.map(renderPart)}
             {message.audioUrl && (
-              <div className="mt-3 pt-3 border-t border-gray-200/50">
-                <p className="text-xs font-semibold mb-1">{t('videoStudio.dialogueLabel')}</p>
+              <div className="mt-3 pt-3 border-t border-gray-600">
+                <p className="text-xs font-semibold mb-1 text-gray-400">{t('videoStudio.dialogueLabel')}</p>
                 <audio src={message.audioUrl} controls className="w-full h-8" />
               </div>
             )}
              {message.ambianceUrl && (
               <div className="mt-2">
-                <p className="text-xs font-semibold mb-1">{t('videoStudio.ambianceLabel')}</p>
+                <p className="text-xs font-semibold mb-1 text-gray-400">{t('videoStudio.ambianceLabel')}</p>
                 <audio src={message.ambianceUrl} controls className="w-full h-8" />
               </div>
             )}
           </div>
       </div>
        {isUser && (
-        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-          <UserIcon className="w-5 h-5 text-gray-600" />
+        <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
+          <UserIcon className="w-5 h-5 text-gray-400" />
         </div>
       )}
     </div>
@@ -130,7 +130,7 @@ const TextContent: React.FC<{ content: string, onTextToSpeech: (text: string) =>
   
   return (
     <div>
-        <div className="relative group">
+        <div className="relative group prose prose-sm max-w-none prose-invert prose-headings:text-gray-100 prose-p:text-gray-300 prose-strong:text-white prose-a:text-green-400 hover:prose-a:text-green-300">
             <Markdown
                 remarkPlugins={[remarkGfm]}
                 components={{
@@ -150,21 +150,21 @@ const TextContent: React.FC<{ content: string, onTextToSpeech: (text: string) =>
             >
                 {content}
             </Markdown>
-             <div className="absolute top-0 right-0 flex opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-gray-100/50 rounded-bl-lg">
-                <button onClick={() => onTextToSpeech(content)} className="p-1 text-gray-600 hover:text-green-700">
+             <div className="absolute top-0 right-0 flex opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-gray-900/50 rounded-bl-lg">
+                <button onClick={() => onTextToSpeech(content)} className="p-1 text-gray-300 hover:text-green-400">
                     {isAudioPlaying ? <StopIcon className="w-4 h-4" /> : <SpeakerIcon className="w-4 h-4" />}
                 </button>
-                <button onClick={handleCopy} className="p-1 text-gray-600 hover:text-green-700">
-                    {copied ? <CheckIcon className="w-4 h-4 text-green-600"/> : <CopyIcon className="w-4 h-4"/>}
+                <button onClick={handleCopy} className="p-1 text-gray-300 hover:text-green-400">
+                    {copied ? <CheckIcon className="w-4 h-4 text-green-400"/> : <CopyIcon className="w-4 h-4"/>}
                 </button>
             </div>
         </div>
         {groundingChunks && groundingChunks.length > 0 && (
-             <div className="mt-3 pt-3 border-t border-gray-200/50">
-                 <h4 className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5"><GlobeIcon className="w-3 h-3"/> Sources</h4>
+             <div className="mt-3 pt-3 border-t border-gray-600">
+                 <h4 className="text-xs font-semibold text-gray-400 mb-2 flex items-center gap-1.5"><GlobeIcon className="w-3 h-3"/> Sources</h4>
                  <div className="flex flex-wrap gap-2">
                      {groundingChunks.map((chunk, i) => chunk.web && (
-                         <a href={chunk.web.uri} key={i} target="_blank" rel="noopener noreferrer" className="text-xs bg-green-100 text-green-800 py-0.5 px-2 rounded-full hover:bg-green-200 hover:underline">
+                         <a href={chunk.web.uri} key={i} target="_blank" rel="noopener noreferrer" className="text-xs bg-green-900/50 text-green-300 py-0.5 px-2 rounded-full hover:bg-green-800/70 hover:underline">
                              {chunk.web.title || new URL(chunk.web.uri).hostname}
                          </a>
                      ))}
@@ -209,25 +209,25 @@ const VideoContent: React.FC<{ content: { url: string; prompt: string }; onEdit:
                     <DownloadIcon className="w-4 h-4" />
                 </a>
             </div>
-            <p className="text-xs italic text-gray-500 mt-1 px-1">"{content.prompt}"</p>
+            <p className="text-xs italic text-gray-400 mt-1 px-1">"{content.prompt}"</p>
         </div>
     );
 };
 
 
 const LoadingIndicator: React.FC<{ content?: string }> = ({ content }) => (
-    <div className="flex flex-col items-center gap-2 text-gray-500">
+    <div className="flex flex-col items-center gap-2 text-gray-400">
         <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
-            <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse [animation-delay:0.2s]"></div>
-            <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse [animation-delay:0.4s]"></div>
+            <div className="w-2 h-2 bg-gray-500 rounded-full animate-pulse"></div>
+            <div className="w-2 h-2 bg-gray-500 rounded-full animate-pulse [animation-delay:0.2s]"></div>
+            <div className="w-2 h-2 bg-gray-500 rounded-full animate-pulse [animation-delay:0.4s]"></div>
         </div>
         {content && <p className="text-sm">{content}</p>}
     </div>
 );
 
 const ErrorMessage: React.FC<{ content: string }> = ({ content }) => (
-  <div className="text-red-800 bg-red-100 p-2 rounded-md border border-red-200 text-sm">
+  <div className="text-red-300 bg-red-500/20 p-2 rounded-md border border-red-500/30 text-sm">
     <strong>Error:</strong> {content}
   </div>
 );

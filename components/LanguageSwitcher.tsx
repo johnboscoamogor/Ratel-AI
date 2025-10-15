@@ -49,14 +49,14 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ currentLang, onChan
         <div ref={dropdownRef} className="relative">
             <button
                 onClick={() => { playSound('click'); setIsOpen(!isOpen); }}
-                className="flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-md hover:bg-gray-100 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200"
+                className="flex items-center justify-center w-10 h-10 bg-gray-700 rounded-full shadow-md hover:bg-gray-600 hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-green-500 transition-all duration-200"
                 aria-label="Change language"
             >
                 <CurrentFlag className="w-6 h-6 rounded-full object-cover" />
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 origin-top-right z-30">
+                <div className="absolute right-0 mt-2 w-48 bg-gray-700 rounded-md shadow-lg border border-gray-600 origin-top-right z-30">
                     <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
                         {(Object.keys(languages) as Array<keyof typeof languages>).map((code) => {
                            const { name, Flag } = languages[code];
@@ -64,7 +64,7 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ currentLang, onChan
                             <button
                                 key={code}
                                 onClick={() => handleLanguageSelect(code)}
-                                className={`w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${
+                                className={`w-full text-left flex items-center px-4 py-2 text-sm text-gray-200 hover:bg-gray-600 ${
                                     currentLang === code ? 'font-bold' : ''
                                 }`}
                                 role="menuitem"

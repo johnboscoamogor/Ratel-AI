@@ -154,41 +154,41 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
     const renderSignupForm = () => (
         <>
             <div className="text-center">
-                <h2 id="auth-modal-title" className="text-2xl font-bold text-gray-800">{t('authModal.signupTitle')}</h2>
-                <p className="mt-2 text-gray-600">{t('authModal.signupDescription')}</p>
+                <h2 id="auth-modal-title" className="text-2xl font-bold text-white">{t('authModal.signupTitle')}</h2>
+                <p className="mt-2 text-gray-400">{t('authModal.signupDescription')}</p>
             </div>
             <form onSubmit={handleSignup} noValidate className="mt-6 text-left space-y-4">
                 <div>
-                    <label htmlFor="nickname" className="block text-sm font-medium text-gray-700">{t('authModal.nicknameLabel')}</label>
+                    <label htmlFor="nickname" className="block text-sm font-medium text-gray-300">{t('authModal.nicknameLabel')}</label>
                     <input id="nickname" type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder={t('authModal.nicknamePlaceholder')} required className="mt-1 input-field" />
                 </div>
                 <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">{t('authModal.emailLabel')}</label>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-300">{t('authModal.emailLabel')}</label>
                     <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('authModal.emailPlaceholder')} required className="mt-1 input-field" />
                 </div>
                 <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">{t('authModal.passwordLabel')}</label>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-300">{t('authModal.passwordLabel')}</label>
                     <div className="relative mt-1">
                         <input id="password" type={isPasswordVisible ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••" required className="input-field pr-10" />
-                        <button type="button" onClick={() => setIsPasswordVisible(!isPasswordVisible)} className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700" aria-label={isPasswordVisible ? "Hide password" : "Show password"}>
+                        <button type="button" onClick={() => setIsPasswordVisible(!isPasswordVisible)} className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-200" aria-label={isPasswordVisible ? "Hide password" : "Show password"}>
                             {isPasswordVisible ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
                         </button>
                     </div>
                 </div>
                  <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">{t('authModal.confirmPasswordLabel')}</label>
+                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300">{t('authModal.confirmPasswordLabel')}</label>
                      <div className="relative mt-1">
                         <input id="confirmPassword" type={isConfirmPasswordVisible ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="••••••" required className="input-field pr-10" />
-                        <button type="button" onClick={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)} className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700" aria-label={isConfirmPasswordVisible ? "Hide password" : "Show password"}>
+                        <button type="button" onClick={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)} className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-200" aria-label={isConfirmPasswordVisible ? "Hide password" : "Show password"}>
                             {isConfirmPasswordVisible ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
                         </button>
                     </div>
                 </div>
-                {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+                {error && <p className="text-red-400 text-sm text-center">{error}</p>}
                 <button type="submit" className="w-full btn-primary">{t('authModal.signupButton')}</button>
             </form>
-            <p className="mt-4 text-center text-sm text-gray-600">
-                {t('authModal.switchToLogin')} <button onClick={() => switchMode('login')} className="font-semibold text-green-600 hover:underline">{t('authModal.switchToLoginLink')}</button>
+            <p className="mt-4 text-center text-sm text-gray-400">
+                {t('authModal.switchToLogin')} <button onClick={() => switchMode('login')} className="font-semibold text-green-500 hover:underline">{t('authModal.switchToLoginLink')}</button>
             </p>
         </>
     );
@@ -196,19 +196,19 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
     const renderLoginForm = () => (
          <>
             <div className="text-center">
-                <h2 id="auth-modal-title" className="text-2xl font-bold text-gray-800">{t('authModal.loginTitle')}</h2>
-                <p className="mt-2 text-gray-600">{t('authModal.loginDescription')}</p>
+                <h2 id="auth-modal-title" className="text-2xl font-bold text-white">{t('authModal.loginTitle')}</h2>
+                <p className="mt-2 text-gray-400">{t('authModal.loginDescription')}</p>
             </div>
             <form onSubmit={handleLogin} noValidate className="mt-6 text-left space-y-4">
                 <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">{t('authModal.emailLabel')}</label>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-300">{t('authModal.emailLabel')}</label>
                     <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('authModal.emailPlaceholder')} required className="mt-1 input-field" />
                 </div>
                 <div>
-                     <label htmlFor="password" className="block text-sm font-medium text-gray-700">{t('authModal.passwordLabel')}</label>
+                     <label htmlFor="password" className="block text-sm font-medium text-gray-300">{t('authModal.passwordLabel')}</label>
                     <div className="relative mt-1">
                         <input id="password" type={isPasswordVisible ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••" required className="input-field pr-10" />
-                        <button type="button" onClick={() => setIsPasswordVisible(!isPasswordVisible)} className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700" aria-label={isPasswordVisible ? "Hide password" : "Show password"}>
+                        <button type="button" onClick={() => setIsPasswordVisible(!isPasswordVisible)} className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-200" aria-label={isPasswordVisible ? "Hide password" : "Show password"}>
                             {isPasswordVisible ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
                         </button>
                     </div>
@@ -221,21 +221,21 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
                             type="checkbox"
                             checked={rememberMe}
                             onChange={(e) => setRememberMe(e.target.checked)}
-                            className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded cursor-pointer"
+                            className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-600 rounded cursor-pointer bg-gray-700"
                         />
-                        <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 cursor-pointer">
+                        <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-300 cursor-pointer">
                             {t('authModal.rememberMe')}
                         </label>
                     </div>
                     <div className="text-sm">
-                        <button type="button" onClick={() => switchMode('forgotPassword')} className="font-semibold text-green-600 hover:underline">{t('authModal.forgotPasswordLink')}</button>
+                        <button type="button" onClick={() => switchMode('forgotPassword')} className="font-semibold text-green-500 hover:underline">{t('authModal.forgotPasswordLink')}</button>
                     </div>
                 </div>
-                {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+                {error && <p className="text-red-400 text-sm text-center">{error}</p>}
                 <button type="submit" className="w-full btn-primary">{t('authModal.loginButton')}</button>
             </form>
-            <p className="mt-4 text-center text-sm text-gray-600">
-                {t('authModal.switchToSignup')} <button onClick={() => switchMode('signup')} className="font-semibold text-green-600 hover:underline">{t('authModal.switchToSignupLink')}</button>
+            <p className="mt-4 text-center text-sm text-gray-400">
+                {t('authModal.switchToSignup')} <button onClick={() => switchMode('signup')} className="font-semibold text-green-500 hover:underline">{t('authModal.switchToSignupLink')}</button>
             </p>
         </>
     );
@@ -243,20 +243,20 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
     const renderForgotPasswordForm = () => (
          <>
             <div className="text-center">
-                <h2 id="auth-modal-title" className="text-2xl font-bold text-gray-800">{t('authModal.forgotPasswordTitle')}</h2>
-                <p className="mt-2 text-gray-600">{t('authModal.forgotPasswordDescription')}</p>
+                <h2 id="auth-modal-title" className="text-2xl font-bold text-white">{t('authModal.forgotPasswordTitle')}</h2>
+                <p className="mt-2 text-gray-400">{t('authModal.forgotPasswordDescription')}</p>
             </div>
             <form onSubmit={handleForgotPassword} noValidate className="mt-6 text-left space-y-4">
                 <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700">{t('authModal.emailLabel')}</label>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-300">{t('authModal.emailLabel')}</label>
                     <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('authModal.emailPlaceholder')} required className="mt-1 input-field" />
                 </div>
-                {error && <p className="text-red-600 text-sm text-center">{error}</p>}
-                {successMessage && <p className="text-green-600 text-sm text-center">{successMessage}</p>}
+                {error && <p className="text-red-400 text-sm text-center">{error}</p>}
+                {successMessage && <p className="text-green-400 text-sm text-center">{successMessage}</p>}
                 <button type="submit" className="w-full btn-primary">{t('authModal.forgotPasswordButton')}</button>
             </form>
-            <p className="mt-4 text-center text-sm text-gray-600">
-                <button onClick={() => switchMode('login')} className="font-semibold text-green-600 hover:underline">{t('authModal.backToLogin')}</button>
+            <p className="mt-4 text-center text-sm text-gray-400">
+                <button onClick={() => switchMode('login')} className="font-semibold text-green-500 hover:underline">{t('authModal.backToLogin')}</button>
             </p>
         </>
     );
@@ -266,9 +266,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
             <style>{`
                 .input-field {
                     width: 100%;
-                    background-color: #f9fafb;
-                    border: 1px solid #d1d5db;
-                    color: #111827;
+                    background-color: #374151; /* gray-700 */
+                    border: 1px solid #4b5563; /* gray-600 */
+                    color: white;
                     font-size: 0.875rem;
                     border-radius: 0.5rem;
                     padding: 0.625rem;
@@ -297,13 +297,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
                     background-color: #15803d;
                 }
             `}</style>
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all relative">
-                <button onClick={onClose} className="absolute top-3 right-3 p-1.5 rounded-full text-gray-500 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+            <div className="bg-gray-800 rounded-xl shadow-2xl w-full max-w-md transform transition-all relative border border-gray-700">
+                <button onClick={onClose} className="absolute top-3 right-3 p-1.5 rounded-full text-gray-400 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-green-500">
                     <CloseIcon className="w-5 h-5" />
                 </button>
                 <div className="p-8">
                     <div className="flex justify-center mb-4">
-                        <RatelLogo className="w-16 h-16 text-green-600" />
+                        <RatelLogo className="w-16 h-16 text-green-500" />
                     </div>
                     {authMode === 'signup' && renderSignupForm()}
                     {authMode === 'login' && renderLoginForm()}

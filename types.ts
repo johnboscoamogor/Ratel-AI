@@ -17,7 +17,7 @@ export interface UserProfile {
 // Defines the application's settings structure
 export interface AppSettings {
   language: 'en' | 'fr' | 'am' | 'ng' | 'sw';
-  chatTone: 'normal' | 'formal' | 'humorous' | 'pidgin';
+  chatTone: 'normal' | 'formal' | 'humorous' | 'pidgin' | 'advanced';
   customInstructions: {
     nickname: string;
     aboutYou: string;

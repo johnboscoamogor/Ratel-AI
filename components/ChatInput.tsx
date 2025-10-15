@@ -226,21 +226,21 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
   }, [input]);
 
   return (
-    <div className="bg-white border-t border-gray-200 p-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="">
+      <div className="max-w-4xl mx-auto">
         {imagePreview && (
           <div className="mb-2 relative w-fit">
             <img src={imagePreview} alt="Selected preview" className="max-h-40 rounded-lg shadow-md" />
             <button
               onClick={handleRemoveImage}
-              className="absolute -top-2 -right-2 bg-gray-800 text-white rounded-full p-1.5 hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 shadow-lg"
+              className="absolute -top-2 -right-2 bg-gray-900 text-white rounded-full p-1.5 hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 shadow-lg"
               aria-label={t('chatInput.removeImage')}
             >
               <CloseIcon className="w-4 h-4" />
             </button>
           </div>
         )}
-        <div className="flex items-end gap-2 bg-gray-100 border border-gray-300 rounded-xl p-2 transition-all focus-within:border-green-500 focus-within:ring-1 focus-within:ring-green-500">
+        <div className="flex items-end gap-2 bg-gray-700 border border-gray-600 rounded-xl p-2 transition-all focus-within:border-green-500 focus-within:ring-1 focus-within:ring-green-500">
             <input
               type="file"
               ref={fileInputRef}
@@ -250,7 +250,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
             />
             <button
                 onClick={handleAttachClick}
-                className={'p-2 rounded-full transition-colors hover:bg-gray-200 text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500'}
+                className={'p-2 rounded-full transition-colors hover:bg-gray-600 text-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500'}
                 aria-label={t('chatInput.attachImage')}
                 disabled={isLoading}
             >
@@ -262,7 +262,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={placeholder}
-                className="flex-1 bg-transparent resize-none focus:outline-none p-2 max-h-48"
+                className="flex-1 bg-transparent resize-none focus:outline-none p-2 max-h-48 text-white placeholder-gray-400"
                 rows={1}
                 disabled={isLoading}
                 aria-label="Chat input"
@@ -270,7 +270,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
             <button
                 onClick={toggleRecording}
                 className={`p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${
-                    isRecording ? 'bg-red-500 text-white' : 'hover:bg-gray-200 text-gray-600'
+                    isRecording ? 'bg-red-500 text-white' : 'hover:bg-gray-600 text-gray-400'
                 }`}
                 aria-label={isRecording ? t('chatInput.stopRecording') : t('chatInput.startRecording')}
                 disabled={isLoading}
@@ -280,7 +280,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
             <button
                 onClick={handleSendMessage}
                 disabled={(!input.trim() && !imageFile) || isLoading}
-                className="p-2 bg-green-600 text-white rounded-full disabled:bg-green-300 disabled:cursor-not-allowed hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                className="p-2 bg-green-600 text-white rounded-full disabled:bg-green-800 disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 aria-label={t('chatInput.sendMessage')}
             >
                 <SendIcon className="w-6 h-6" />

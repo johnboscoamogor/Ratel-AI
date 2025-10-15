@@ -13,8 +13,8 @@ interface SettingsPageProps {
 }
 
 const SettingsSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-  <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-    <h2 className="text-xl font-bold text-gray-800 mb-4">{title}</h2>
+  <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-6">
+    <h2 className="text-xl font-bold text-white mb-4">{title}</h2>
     <div className="space-y-4">
       {children}
     </div>
@@ -88,20 +88,20 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ settings, setSettings, onBa
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8">
       <header className="flex items-center mb-8">
-        <button onClick={handleBackClick} className="p-2 rounded-full hover:bg-gray-200 mr-4">
-          <ChevronLeftIcon className="w-6 h-6 text-gray-600" />
+        <button onClick={handleBackClick} className="p-2 rounded-full hover:bg-gray-700 mr-4">
+          <ChevronLeftIcon className="w-6 h-6 text-gray-400" />
         </button>
-        <RatelLogo className="w-8 h-8 text-green-600 mr-3" />
-        <h1 className="text-3xl font-bold text-gray-900">{t('settings.title')}</h1>
+        <RatelLogo className="w-8 h-8 text-green-500 mr-3" />
+        <h1 className="text-3xl font-bold text-white">{t('settings.title')}</h1>
       </header>
 
       <main>
         <SettingsSection title={t('settings.appearance.title')}>
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('settings.appearance.galleryLabel')}</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">{t('settings.appearance.galleryLabel')}</label>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {predefinedBackgrounds.map(bg => (
-                        <button key={bg.id} onClick={() => handleAppearanceChange('backgroundImage', bg.url)} className={`relative rounded-lg overflow-hidden h-24 focus:outline-none ring-offset-2 ring-green-500 focus:ring-2 ${settings.appearance?.backgroundImage === bg.url ? 'ring-2' : ''}`}>
+                        <button key={bg.id} onClick={() => handleAppearanceChange('backgroundImage', bg.url)} className={`relative rounded-lg overflow-hidden h-24 focus:outline-none ring-offset-2 ring-offset-gray-900 ring-green-500 focus:ring-2 ${settings.appearance?.backgroundImage === bg.url ? 'ring-2' : ''}`}>
                             <img src={bg.url} alt={bg.id} className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-black/20 hover:bg-black/40 transition-colors"></div>
                         </button>
@@ -110,11 +110,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ settings, setSettings, onBa
             </div>
             <div className="flex items-center gap-4">
                 <input type="file" id="bg-upload" className="hidden" accept="image/*" onChange={handleBackgroundImageUpload} />
-                <label htmlFor="bg-upload" className="flex-1 cursor-pointer text-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+                <label htmlFor="bg-upload" className="flex-1 cursor-pointer text-center bg-gray-700 hover:bg-gray-600 text-gray-200 font-semibold py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
                     <UploadIcon className="w-5 h-5"/>
                     <span>{t('settings.appearance.uploadButton')}</span>
                 </label>
-                <button onClick={() => handleAppearanceChange('backgroundImage', '')} className="flex-1 bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2" disabled={!settings.appearance?.backgroundImage}>
+                <button onClick={() => handleAppearanceChange('backgroundImage', '')} className="flex-1 bg-red-900/50 hover:bg-red-900/70 text-red-300 font-semibold py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2" disabled={!settings.appearance?.backgroundImage}>
                     <TrashIcon className="w-5 h-5"/>
                     <span>{t('settings.appearance.removeButton')}</span>
                 </button>
@@ -122,14 +122,14 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ settings, setSettings, onBa
         </SettingsSection>
         <SettingsSection title={t('settings.language.title')}>
           <div>
-            <label htmlFor="language-select" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="language-select" className="block text-sm font-medium text-gray-300 mb-1">
               {t('settings.language.label')}
             </label>
             <select
               id="language-select"
               value={settings.language}
               onChange={(e) => handleSettingChange('language', e.target.value as 'en' | 'fr' | 'am' | 'ng' | 'sw')}
-              className="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block p-2.5"
+              className="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block p-2.5"
             >
               <option value="en">{t('settings.language.en')}</option>
               <option value="ng">{t('settings.language.ng')}</option>
@@ -142,35 +142,35 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ settings, setSettings, onBa
 
         <SettingsSection title={t('settings.customInstructions.title')}>
           <div>
-            <label htmlFor="nickname" className="block text-sm font-medium text-gray-700 mb-1">{t('settings.customInstructions.nicknameLabel')}</label>
+            <label htmlFor="nickname" className="block text-sm font-medium text-gray-300 mb-1">{t('settings.customInstructions.nicknameLabel')}</label>
             <input
               type="text"
               id="nickname"
               value={settings.customInstructions.nickname}
               onChange={e => handleCustomInstructionChange('nickname', e.target.value)}
-              className="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block p-2.5"
+              className="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block p-2.5"
               placeholder={t('settings.customInstructions.nicknamePlaceholder')}
             />
           </div>
           <div>
-            <label htmlFor="aboutYou" className="block text-sm font-medium text-gray-700 mb-1">{t('settings.customInstructions.aboutYouLabel')}</label>
+            <label htmlFor="aboutYou" className="block text-sm font-medium text-gray-300 mb-1">{t('settings.customInstructions.aboutYouLabel')}</label>
             <textarea
               id="aboutYou"
               rows={4}
               value={settings.customInstructions.aboutYou}
               onChange={e => handleCustomInstructionChange('aboutYou', e.target.value)}
-              className="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block p-2.5"
+              className="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block p-2.5"
               placeholder={t('settings.customInstructions.aboutYouPlaceholder')}
             />
           </div>
            <div>
-            <label htmlFor="expectations" className="block text-sm font-medium text-gray-700 mb-1">{t('settings.customInstructions.expectationsLabel')}</label>
+            <label htmlFor="expectations" className="block text-sm font-medium text-gray-300 mb-1">{t('settings.customInstructions.expectationsLabel')}</label>
             <textarea
               id="expectations"
               rows={4}
               value={settings.customInstructions.expectations}
               onChange={e => handleCustomInstructionChange('expectations', e.target.value)}
-              className="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block p-2.5"
+              className="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block p-2.5"
               placeholder={t('settings.customInstructions.expectationsPlaceholder')}
             />
           </div>
@@ -193,14 +193,14 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ settings, setSettings, onBa
 
         <SettingsSection title={t('settings.responses.title')}>
           <div>
-            <label htmlFor="voice-preference" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="voice-preference" className="block text-sm font-medium text-gray-300 mb-1">
               {t('settings.responses.voicePreference')}
             </label>
             <select
               id="voice-preference"
               value={settings.voice.selectedVoice}
               onChange={(e) => handleSettingChange('voice', { selectedVoice: e.target.value })}
-              className="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block p-2.5"
+              className="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block p-2.5"
             >
               {Object.entries(availableVoices).map(([group, voices]: [string, VoiceOption[]]) => (
                 <optgroup label={group} key={group}>
@@ -233,7 +233,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ settings, setSettings, onBa
         </SettingsSection>
 
         <div className="mt-8 text-center">
-            <button onClick={onLogout} className="flex items-center justify-center gap-2 mx-auto text-red-600 font-semibold py-2 px-4 rounded-lg hover:bg-red-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+            <button onClick={onLogout} className="flex items-center justify-center gap-2 mx-auto text-red-400 font-semibold py-2 px-4 rounded-lg hover:bg-red-500/20 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-red-500">
                 <LogoutIcon className="w-5 h-5" />
                 <span>{t('settings.logout')}</span>
             </button>

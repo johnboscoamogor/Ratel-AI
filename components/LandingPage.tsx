@@ -17,11 +17,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartChatting }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 text-gray-900 p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-4">
       <div className="text-center">
-        <RatelLogo className="w-24 h-24 text-green-600 mx-auto mb-6" />
+        <RatelLogo className="w-24 h-24 text-green-500 mx-auto mb-6" />
         <h1 className="text-6xl md:text-7xl font-bold mb-4">{t('landing.title')}</h1>
-        <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-lg mx-auto">
+        <p className="text-lg md:text-xl text-gray-300 mb-8 max-w-lg mx-auto">
           {t('landing.subtitle')}
         </p>
         <button
@@ -31,7 +31,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartChatting }) => {
           {t('landing.startChatting')}
         </button>
       </div>
-      <footer className="absolute bottom-6 text-gray-500 text-sm">
+      <footer className="absolute bottom-6 text-gray-400 text-sm">
         {t('landing.footer')}
       </footer>
     </div>
