@@ -106,16 +106,6 @@ const EmptyChatView: React.FC<{
   onNewChat: () => void;
 }> = ({ onSendMessage, isLoading, onNewChat }) => {
   const { t } = useTranslation();
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    // Programmatically play the video to bypass stricter browser autoplay policies.
-    if (videoRef.current) {
-      videoRef.current.play().catch(error => {
-        console.error("Video autoplay was prevented:", error);
-      });
-    }
-  }, []);
 
   return (
     <div className="flex flex-col items-center justify-center h-full p-4 text-center">
@@ -139,19 +129,15 @@ const EmptyChatView: React.FC<{
             
             <div>
                 <h3 className="font-semibold text-gray-400 mb-2">Video Example (what you can generate)</h3>
-                <div className="max-w-md mx-auto rounded-lg overflow-hidden shadow-lg">
-                    <video 
-                        ref={videoRef}
-                        poster="https://cdn.pixabay.com/vimeo/422894384/honey-badger-36499.jpg?width=1280&hash=0d85348858d4138e604f3d2f2b740510839e1a8a"
-                        autoPlay
-                        muted
-                        loop
-                        playsInline
-                        className="w-full"
-                    >
-                      <source src="https://cdn.pixabay.com/video/2020/05/26/36499-425872111_large.mp4" type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
+                <div className="max-w-md mx-auto rounded-lg overflow-hidden shadow-lg aspect-video">
+                    <iframe
+                        className="w-full h-full"
+                        src="https://www.youtube.com/embed/xkz3agPTcbo?autoplay=1&mute=1&loop=1&playlist=xkz3agPTcbo&controls=0&modestbranding=1&showinfo=0&rel=0"
+                        title="YouTube video player"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                    ></iframe>
                 </div>
             </div>
         </div>
