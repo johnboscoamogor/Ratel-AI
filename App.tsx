@@ -176,8 +176,8 @@ const App: React.FC = () => {
   const renderPage = () => {
     if (!userProfile) {
       return page === 'landing' 
-        ? <LandingPage onStartChatting={handleStartChatting} />
-        : <LandingPage onStartChatting={handleStartChatting} />; // Fallback to landing
+        ? <LandingPage onStartChatting={handleStartChatting} settings={settings} setSettings={setSettings} />
+        : <LandingPage onStartChatting={handleStartChatting} settings={settings} setSettings={setSettings} />; // Fallback to landing
     }
 
     switch (page) {
@@ -196,7 +196,7 @@ const App: React.FC = () => {
         // If not admin, silently redirect to chat to prevent access
         return <ChatView userProfile={userProfile} setUserProfile={setUserProfile} settings={settings} setSettings={setSettings} setPage={setPage} onLogout={handleLogout} addXp={addXp} trackInterest={trackInterest} onLevelUp={handleLevelUp} />;
       default:
-        return <LandingPage onStartChatting={handleStartChatting} />;
+        return <LandingPage onStartChatting={handleStartChatting} settings={settings} setSettings={setSettings} />;
     }
   };
 

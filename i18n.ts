@@ -20,11 +20,13 @@ const resources = {
       "chatWindow": {
         "welcomeTitle": "Ratel AI",
         "welcomeSubtitle": "Your friendly AI companion for Africa.",
-        "modeNormal": "Normal",
-        "modeFormal": "Formal",
-        "modeHumorous": "Humorous",
-        "modePidgin": "Pidgin",
-        "modeAdvanced": "Advanced",
+        "chatTone": "Tone",
+        "tones": {
+            "normal": "Normal",
+            "formal": "Formal",
+            "funny": "Funny",
+            "pidgin": "Pidgin"
+        },
         "examples": {
             "hustle_title": "Get hustle ideas",
             "hustle_desc": "...for a student in Lagos",
@@ -44,7 +46,7 @@ const resources = {
       "landing": {
         "title": "Ratel AI",
         "subtitle": "Your culturally-aware AI companion for Africa. Helping you learn, earn, and grow.",
-        "startChatting": "Start Chatting",
+        "startChatting": "don't play let's dive in",
         "footer": "Empowering the next generation of African hustlers and innovators."
       },
       // Auth Modal
@@ -95,12 +97,12 @@ const resources = {
         "communityStudio": "Community",
         "imageStudio": "Image",
         "audioStudio": "Audio",
-        "videoStudio": "Video",
-        "videoArStudio": "Video AR",
-        "storyteller": "Storyteller",
         "settings": "Settings",
         "contactUs": "Contact Us",
-        "logout": "Logout"
+        "logout": "Logout",
+        "deleteChatTitle": "Delete Chat",
+        "deleteChatMessage": "Are you sure you want to permanently delete this chat session?",
+        "deleteButton": "Delete"
       },
       // Chat Input
       "chatInput": {
@@ -114,25 +116,6 @@ const resources = {
         "sendMessage": "Send message"
       },
       // Studios
-      "videoStudio": {
-        "title": "Video Studio",
-        "promptLabel": "Visual Prompt",
-        "promptPlaceholder": "e.g., A drone shot of a bustling African market",
-        "dialogueLabel": "Dialogue (Optional)",
-        "dialoguePlaceholder": "e.g., 'Welcome to our beautiful city!'",
-        "ambianceLabel": "Ambiance & Sound Effects (Optional)",
-        "ambiancePlaceholder": "e.g., city traffic, birds chirping, rain",
-        "generateButton": "Generate Video",
-        "downloadVideo": "Download Video",
-        "createAnother": "Create Another",
-        "generating": {
-            "title": "Your video is being created...",
-            "video": "Directing your video...",
-            "audio": "Recording the audio tracks...",
-            "final": "Rendering your masterpiece...",
-            "disclaimer": "This can take a few minutes. Please wait."
-        }
-      },
       "imageStudio": {
         "title": "Image Studio",
         "generateTab": "Generate",
@@ -171,41 +154,6 @@ const resources = {
         "stop": "Stop",
         "download": "Download",
         "delete": "Delete"
-      },
-      "videoArStudio": {
-        "errorCamera": "Camera access denied. Please enable camera permissions in your browser settings.",
-        "promptPlaceholder": "e.g., 'give me sunglasses', 'turn my hair blue'",
-        "generateButton": "Generate Effect",
-        "clearButton": "Clear",
-        "resumeFeed": "Resume",
-        "pauseFeed": "Pause",
-        "recenterEffect": "Re-center",
-        "snapshotButton": "Snapshot",
-        "title": "Video AR Studio"
-      },
-      "storytellerStudio": {
-        "title": "Storyteller Studio",
-        "promptPlaceholder": "e.g., A story about a brave honey badger who saves his village",
-        "generateButton": "Create Story",
-        "loading": {
-            "script": "Writing a captivating script...",
-            "video": "Generating video scenes...",
-            "audio": "Recording the narration...",
-            "final": "Putting it all together..."
-        },
-        "error": "Oh no! The story couldn't be created. Error: {{error}}",
-        "disclaimer": "AI-generated content may be inaccurate. Video and audio are synthesized and not real.",
-        "downloadAudio": "Download Narration (MP3)",
-        "share": "Share to Community",
-        "shared": "Shared!",
-        "script": "View Script & Scene Downloads",
-        "tryExample": "... or try an example",
-        "examples": [
-            "A tortoise and a clever monkey in a race",
-            "Why the sky is far from the earth",
-            "The wise old owl who solved a forest mystery",
-            "A little girl who could talk to animals"
-        ]
       },
       "examplesStudio": {
           "title": "Prompt Examples",
@@ -255,7 +203,7 @@ const resources = {
             "title": "Language & Region",
             "label": "Select your preferred language",
             "en": "English (International)",
-            "ng": "Nigerian Pidgin",
+            "ng": "Pidgin (Nigeria)",
             "sw": "Kiswahili",
             "fr": "Français",
             "am": "አማርኛ (Amharic)"
@@ -328,6 +276,7 @@ const resources = {
         "myWalletTitle": "My Wallet",
         "redeemTitle": "Redeem",
         "adminTitle": "Admin",
+        "feedTitle": "Feed",
         "telegramDescription": "Connect your Telegram account to receive notifications about your community points and redemption status.",
         "connectedStatus": "Connected as @{{username}}",
         "disconnectButton": "Disconnect",
@@ -504,29 +453,15 @@ const resources = {
       }
     }
   },
-  ng: {
-      translation: {
-        "sidebar": {
-            "newChat": "New Tori"
-        },
-        "chatInput": {
-            "placeholder": "Ask Ratel anything, my padi..."
-        },
-        "chatWindow": {
-            "welcomeTitle": "Ratel AI",
-            "welcomeSubtitle": "Your sabi AI padi for Africa.",
-            "modeNormal": "Normal",
-            "modeFormal": "Formal",
-            "modeHumorous": "Funny",
-            "modePidgin": "Pidgin",
-            "modeAdvanced": "Advanced"
-        }
-      }
-  },
   fr: {
     translation: {
         "sidebar": {
-            "newChat": "Nouveau Tchat"
+            "newChat": "Nouveau Tchat",
+            "hustleStudio": "Studio Hustle",
+            "learnStudio": "Studio Apprendre",
+            "marketSquare": "Marché",
+            "communityStudio": "Communauté",
+            "settings": "Paramètres"
         },
         "chatInput": {
             "placeholder": "Demandez n'importe quoi à Ratel..."
@@ -537,22 +472,60 @@ const resources = {
             "modeNormal": "Normal",
             "modeFormal": "Formel",
             "modeHumorous": "Humoristique",
-            "modePidgin": "Pidgin",
             "modeAdvanced": "Avancé"
+        },
+        "settings": {
+            "title": "Paramètres",
+            "language": {
+                "title": "Langue & Région",
+                "label": "Choisissez votre langue préférée",
+                "en": "English (International)",
+                "sw": "Kiswahili",
+                "fr": "Français",
+                "am": "አማርኛ (Amharique)"
+            }
         }
     }
   },
   am: {
     translation: {
         "sidebar": {
-            "newChat": "አዲስ ውይይት"
+            "newChat": "አዲስ ውይይት",
+            "history": "ታሪክ",
+            "hustleStudio": "የሥራ ስቱዲዮ",
+            "learnStudio": "የመማሪያ ስቱዲዮ",
+            "marketSquare": "ገበያ",
+            "communityStudio": "ማህበረሰብ",
+            "settings": "ቅንብሮች",
+            "logout": "ውጣ"
+        },
+        "chatInput": {
+            "placeholder": "ራቴልን ማንኛውንም ነገር ይጠይቁ..."
+        },
+        "settings": {
+            "title": "ቅንብሮች",
+            "language": {
+                "title": "ቋንቋ እና ክልል",
+                "label": "የሚመርጡትን ቋንቋ ይምረጡ",
+                "en": "እንግሊዝኛ (ዓለም አቀፍ)",
+                "sw": "ስዋሂሊ",
+                "fr": "ፈረንሳይኛ",
+                "am": "አማርኛ"
+            }
         }
     }
   },
   sw: {
     translation: {
         "sidebar": {
-            "newChat": "Soga Mpya"
+            "newChat": "Soga Mpya",
+            "history": "Historia",
+            "hustleStudio": "Studio ya Kazi",
+            "learnStudio": "Studio ya Kujifunza",
+            "marketSquare": "Sokoni",
+            "communityStudio": "Jumuiya",
+            "settings": "Mipangilio",
+            "logout": "Toka"
         },
         "chatInput": {
             "placeholder": "Uliza Ratel chochote..."
@@ -563,8 +536,18 @@ const resources = {
             "modeNormal": "Kawaida",
             "modeFormal": "Rasmi",
             "modeHumorous": "Ucheshi",
-            "modePidgin": "Pidgin",
-            "modeAdvanced": "Juudi"
+            "modeAdvanced": "Juu"
+        },
+        "settings": {
+            "title": "Mipangilio",
+            "language": {
+                "title": "Lugha na Eneo",
+                "label": "Chagua lugha unayopendelea",
+                "en": "Kiingereza (Kimataifa)",
+                "sw": "Kiswahili",
+                "fr": "Kifaransa",
+                "am": "Kiamhari"
+            }
         }
     }
   }

@@ -7,20 +7,20 @@ import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { UserIcon, RatelLogo, CopyIcon, CheckIcon, SpeakerIcon, StopIcon, ExpandIcon, DownloadIcon, GlobeIcon, EditIcon } from '../constants';
 import { ChatMessage, MessagePart } from '../types';
 import TaskList from './TaskList';
-import { playSound, generateAudioBlob, cancelAndCloseAllAudioSessions } from '../services/audioService';
+import { playSound, generateAudioBlob } from '../services/audioService';
 import CvDisplay from './CvDisplay';
 
 interface ChatMessageProps {
   message: ChatMessage;
-  onEditVideoPrompt?: (originalMessage: ChatMessage) => void;
 }
 
-const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message, onEditVideoPrompt }) => {
+const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message }) => {
   const { t } = useTranslation();
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
   const isUser = message.role === 'user';
+  const isVideoMessage = message.parts.some(p => p.type === 'video');
   
   const handleTextToSpeech = async (text: string) => {
     playSound('click');
@@ -53,183 +53,183 @@ const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message, onEditVideo
   
   React.useEffect(() => {
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-      cancelAndCloseAllAudioSessions();
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current = null;
+        }
     };
   }, []);
 
-  const renderPart = (part: MessagePart, index: number) => {
-    switch (part.type) {
-      case 'text':
-        return <TextContent key={index} content={part.content} onTextToSpeech={handleTextToSpeech} isAudioPlaying={isAudioPlaying} groundingChunks={part.groundingChunks} />;
-      case 'image':
-        return <ImageContent key={index} base64Data={part.content} mimeType={part.mimeType} />;
-      case 'video':
-        return <VideoContent key={index} content={part.content} onEdit={() => onEditVideoPrompt?.(message)} />;
-      case 'loading':
-        return <LoadingIndicator key={index} content={part.content} />;
-      case 'error':
-        return <ErrorMessage key={index} content={part.content} />;
-      case 'tasks':
-        return <TaskList key={index} tasks={part.content} onToggleTask={() => { /* State is managed in ChatView */ }} />;
-      case 'cv':
-        return <CvDisplay key={index} cvData={part.content} isLoading={false} />;
-      default:
-        return <p key={index}>Unsupported content type</p>;
-    }
-  };
+  const messageParts = message.parts.map((part, index) => (
+    <MessagePartComponent 
+      key={`${message.id}-${index}`} 
+      part={part} 
+      handleTextToSpeech={handleTextToSpeech} 
+      isAudioPlaying={isAudioPlaying}
+    />
+  ));
 
-  return (
-    <div className={`flex items-start gap-4 ${isUser ? 'justify-end' : ''}`}>
-      {!isUser && (
-        <div className="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0 border-2 border-gray-700 shadow-lg">
-          <RatelLogo className="w-6 h-6 text-green-400" />
+  // Special centered layout for AI-generated video messages
+  if (isVideoMessage && !isUser) {
+    return (
+      <div className="flex justify-center my-4">
+        <div className="w-full max-w-lg bg-gray-700 rounded-2xl p-3 space-y-2">
+          {messageParts}
         </div>
-      )}
-      <div className={`flex flex-col w-full ${isUser ? 'items-end' : 'items-start'}`}>
-          <div className={`max-w-3xl p-4 rounded-xl shadow-md ${isUser ? 'bg-green-600 text-white' : 'bg-gray-800 text-gray-200 border border-gray-700'}`}>
-            {message.parts.map(renderPart)}
-            {message.audioUrl && (
-              <div className="mt-3 pt-3 border-t border-gray-600">
-                <p className="text-xs font-semibold mb-1 text-gray-400">{t('videoStudio.dialogueLabel')}</p>
-                <audio src={message.audioUrl} controls className="w-full h-8" />
-              </div>
-            )}
-             {message.ambianceUrl && (
-              <div className="mt-2">
-                <p className="text-xs font-semibold mb-1 text-gray-400">{t('videoStudio.ambianceLabel')}</p>
-                <audio src={message.ambianceUrl} controls className="w-full h-8" />
-              </div>
-            )}
-          </div>
       </div>
-       {isUser && (
-        <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0">
-          <UserIcon className="w-5 h-5 text-gray-400" />
+    );
+  }
+
+  return (
+    <div className={`flex items-start gap-3 ${isUser ? 'justify-end' : ''}`}>
+      {!isUser && (
+        <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0">
+          <RatelLogo className="w-5 h-5 text-green-500" />
+        </div>
+      )}
+      <div className={`max-w-xl ${isUser ? 'order-1' : 'order-2'}`}>
+        <div className={`p-3 rounded-2xl ${isUser ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-200'}`}>
+          {messageParts}
+        </div>
+      </div>
+      {isUser && (
+        <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0 order-2">
+          <UserIcon className="w-5 h-5 text-gray-600" />
         </div>
       )}
     </div>
   );
 };
 
+// --- Message Part Component ---
+const MessagePartComponent: React.FC<{ part: MessagePart, handleTextToSpeech: (text:string) => void, isAudioPlaying: boolean }> = ({ part, handleTextToSpeech, isAudioPlaying }) => {
+    const [copied, setCopied] = useState(false);
 
-// --- Sub-components for different content types ---
+    const handleCopy = (code: string) => {
+        navigator.clipboard.writeText(code);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
 
-const TextContent: React.FC<{ content: string, onTextToSpeech: (text: string) => void, isAudioPlaying: boolean, groundingChunks?: any[] }> = ({ content, onTextToSpeech, isAudioPlaying, groundingChunks }) => {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    playSound('click');
-    navigator.clipboard.writeText(content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-  
-  return (
-    <div>
-        <div className="relative group prose prose-sm max-w-none prose-invert prose-headings:text-gray-100 prose-p:text-gray-300 prose-strong:text-white prose-a:text-green-400 hover:prose-a:text-green-300">
-            <Markdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                    code({ node, inline, className, children, ...props }) {
-                    const match = /language-(\w+)/.exec(className || '');
-                    return !inline && match ? (
-                        <SyntaxHighlighter style={oneDark} language={match[1]} PreTag="div" {...props}>
-                            {String(children).replace(/\n$/, '')}
-                        </SyntaxHighlighter>
-                    ) : (
-                        <code className={className} {...props}>
-                        {children}
-                        </code>
-                    );
-                    },
-                }}
-            >
-                {content}
-            </Markdown>
-             <div className="absolute top-0 right-0 flex opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-gray-900/50 rounded-bl-lg">
-                <button onClick={() => onTextToSpeech(content)} className="p-1 text-gray-300 hover:text-green-400">
+    switch (part.type) {
+        case 'text':
+            return (
+                <div>
+                  <div className="prose prose-sm max-w-none prose-invert prose-p:my-2 prose-headings:my-2 prose-ul:my-2 prose-li:my-0">
+                    <Markdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        // FIX: Destructured `inline` prop and added a check to differentiate between
+                        // inline code and code blocks. Removed `...props` from `SyntaxHighlighter` to fix
+                        // a 'ref' type incompatibility error caused by recent versions of react-markdown.
+                        // FIX: The 'inline' prop is deprecated in recent versions of react-markdown.
+                        // Differentiating between code blocks and inline code is now done by checking for a language class.
+                        code({ node, className, children, ...props }) {
+                          const match = /language-(\w+)/.exec(className || '');
+                          const codeText = String(children).replace(/\n$/, '');
+                          return match ? (
+                            <div className="relative">
+                              {/* FIX: Cast `oneDark` style to `any` to resolve TypeScript type incompatibility with the SyntaxHighlighter component. */}
+                              <SyntaxHighlighter
+                                style={oneDark as any}
+                                language={match[1]}
+                                PreTag="div"
+                                /* {...props} was causing a ref type error */
+                              >
+                                {codeText}
+                              </SyntaxHighlighter>
+                              <button
+                                onClick={() => handleCopy(codeText)}
+                                className="absolute top-2 right-2 p-1.5 bg-gray-800 rounded-md text-gray-300 hover:bg-gray-900"
+                              >
+                                {copied ? <CheckIcon className="w-4 h-4" /> : <CopyIcon className="w-4 h-4" />}
+                              </button>
+                            </div>
+                          ) : (
+                            // FIX: Spreading `...props` here can pass non-standard attributes to the `code` tag, causing a TypeScript error.
+                            // Only className and children are needed for inline code.
+                            <code className={`bg-gray-600/50 text-gray-200 rounded px-1.5 py-0.5 ${className || ''}`}>
+                              {children}
+                            </code>
+                          );
+                        }
+                      }}
+                    >
+                      {part.content}
+                    </Markdown>
+                  </div>
+                   {part.groundingChunks && part.groundingChunks.length > 0 && (
+                      <div className="mt-3 pt-2 border-t border-gray-500/50">
+                          <h4 className="text-xs font-semibold text-gray-400 mb-1 flex items-center gap-1.5">
+                              <GlobeIcon className="w-3.5 h-3.5" />
+                              Sources
+                          </h4>
+                          <ul className="text-xs space-y-1">
+                              {part.groundingChunks.map((chunk, i) => (
+                                <li key={i}>
+                                    <a href={chunk.web?.uri} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline truncate block">
+                                      {chunk.web?.title}
+                                    </a>
+                                </li>
+                              ))}
+                          </ul>
+                      </div>
+                  )}
+                  <button onClick={() => handleTextToSpeech(part.content)} className="mt-2 p-1 text-gray-400 hover:text-white">
                     {isAudioPlaying ? <StopIcon className="w-4 h-4" /> : <SpeakerIcon className="w-4 h-4" />}
-                </button>
-                <button onClick={handleCopy} className="p-1 text-gray-300 hover:text-green-400">
-                    {copied ? <CheckIcon className="w-4 h-4 text-green-400"/> : <CopyIcon className="w-4 h-4"/>}
-                </button>
-            </div>
-        </div>
-        {groundingChunks && groundingChunks.length > 0 && (
-             <div className="mt-3 pt-3 border-t border-gray-600">
-                 <h4 className="text-xs font-semibold text-gray-400 mb-2 flex items-center gap-1.5"><GlobeIcon className="w-3 h-3"/> Sources</h4>
-                 <div className="flex flex-wrap gap-2">
-                     {groundingChunks.map((chunk, i) => chunk.web && (
-                         <a href={chunk.web.uri} key={i} target="_blank" rel="noopener noreferrer" className="text-xs bg-green-900/50 text-green-300 py-0.5 px-2 rounded-full hover:bg-green-800/70 hover:underline">
-                             {chunk.web.title || new URL(chunk.web.uri).hostname}
-                         </a>
-                     ))}
-                 </div>
-             </div>
-        )}
-    </div>
-  );
-};
-
-const ImageContent: React.FC<{ base64Data: string, mimeType?: string }> = ({ base64Data, mimeType }) => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const src = `data:${mimeType || 'image/png'};base64,${base64Data}`;
-    
-    return (
-        <>
-            <div className="relative group">
-                <img src={src} alt="Generated content" className="rounded-lg max-w-sm max-h-96" />
-                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
-                    <button onClick={() => setIsModalOpen(true)} className="p-2 bg-white/80 rounded-full text-gray-800 hover:bg-white"><ExpandIcon className="w-5 h-5"/></button>
-                    <a href={src} download="ratel-ai-image.png" className="ml-2 p-2 bg-white/80 rounded-full text-gray-800 hover:bg-white"><DownloadIcon className="w-5 h-5"/></a>
+                  </button>
                 </div>
-            </div>
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center" onClick={() => setIsModalOpen(false)}>
-                    <img src={src} alt="Generated content enlarged" className="max-w-[90vw] max-h-[90vh] object-contain" />
+            );
+        case 'image':
+            return (
+                <div>
+                    <img
+                        src={`data:${part.mimeType};base64,${part.content}`}
+                        alt="Generated"
+                        className="rounded-lg max-w-full h-auto"
+                    />
                 </div>
-            )}
-        </>
-    );
+            );
+        case 'video':
+             return (
+                <div className="relative group">
+                    <video
+                        key={part.content.url}
+                        src={part.content.url}
+                        controls
+                        loop
+                        playsInline
+                        className="rounded-lg w-full bg-black"
+                        aria-label="Generated video"
+                    />
+                    <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <a href={part.content.url} download="ratel-ai-video.mp4" className="p-1.5 bg-black/50 text-white rounded-full hover:bg-black/80">
+                            <DownloadIcon className="w-4 h-4"/>
+                        </a>
+                        <button onClick={() => { if(document.fullscreenEnabled) document.querySelector('video')?.requestFullscreen() }} className="p-1.5 bg-black/50 text-white rounded-full hover:bg-black/80">
+                            <ExpandIcon className="w-4 h-4"/>
+                        </button>
+                    </div>
+                </div>
+            );
+        case 'tasks':
+            return <TaskList tasks={part.content.tasks} onToggleTask={part.content.onToggleTask} />;
+        case 'cv':
+            return <CvDisplay cvData={part.content.cvData} isLoading={part.content.isLoading} />;
+        case 'loading':
+            return (
+                <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse [animation-delay:0.2s]"></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse [animation-delay:0.4s]"></div>
+                    {part.content && <span className="text-sm text-gray-300">{part.content}</span>}
+                </div>
+            );
+        case 'error':
+            return <p className="text-red-400 font-medium">{part.content}</p>;
+        default:
+            return null;
+    }
 };
-
-const VideoContent: React.FC<{ content: { url: string; prompt: string }; onEdit: () => void; }> = ({ content, onEdit }) => {
-    return (
-        <div className="relative group">
-            <video src={content.url} controls loop className="rounded-lg w-full bg-black" />
-            <div className="absolute top-0 right-0 flex opacity-0 group-hover:opacity-100 transition-opacity p-1 bg-gray-900/30 rounded-bl-lg">
-                <button onClick={onEdit} className="p-1 text-white hover:text-green-300">
-                    <EditIcon className="w-4 h-4" />
-                </button>
-                <a href={content.url} download="ratel-ai-video.mp4" className="p-1 text-white hover:text-green-300">
-                    <DownloadIcon className="w-4 h-4" />
-                </a>
-            </div>
-            <p className="text-xs italic text-gray-400 mt-1 px-1">"{content.prompt}"</p>
-        </div>
-    );
-};
-
-
-const LoadingIndicator: React.FC<{ content?: string }> = ({ content }) => (
-    <div className="flex flex-col items-center gap-2 text-gray-400">
-        <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-gray-500 rounded-full animate-pulse"></div>
-            <div className="w-2 h-2 bg-gray-500 rounded-full animate-pulse [animation-delay:0.2s]"></div>
-            <div className="w-2 h-2 bg-gray-500 rounded-full animate-pulse [animation-delay:0.4s]"></div>
-        </div>
-        {content && <p className="text-sm">{content}</p>}
-    </div>
-);
-
-const ErrorMessage: React.FC<{ content: string }> = ({ content }) => (
-  <div className="text-red-300 bg-red-500/20 p-2 rounded-md border border-red-500/30 text-sm">
-    <strong>Error:</strong> {content}
-  </div>
-);
 
 export default ChatMessageComponent;

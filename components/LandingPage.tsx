@@ -3,12 +3,16 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { RatelLogo } from '../constants';
 import { playSound } from '../services/audioService';
+import LanguageSwitcher from './LanguageSwitcher';
+import { AppSettings } from '../types';
 
 interface LandingPageProps {
   onStartChatting: () => void;
+  settings: AppSettings;
+  setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onStartChatting }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onStartChatting, settings, setSettings }) => {
   const { t } = useTranslation();
 
   const handleClick = () => {
@@ -18,6 +22,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartChatting }) => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-4">
+      <div className="absolute top-6 right-6">
+        <LanguageSwitcher
+          currentLang={settings.language}
+          onChangeLang={(lang) => setSettings(prev => ({ ...prev, language: lang }))}
+        />
+      </div>
       <div className="text-center">
         <RatelLogo className="w-24 h-24 text-green-500 mx-auto mb-6" />
         <h1 className="text-6xl md:text-7xl font-bold mb-4">{t('landing.title')}</h1>

@@ -58,7 +58,7 @@ const TelegramConnect: React.FC<TelegramConnectProps> = ({ userProfile, setUserP
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
                                     placeholder={t('community.telegramUsernamePlaceholder')}
-                                    className="w-full pl-7 p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                                    className="w-full pl-7 p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-gray-900"
                                 />
                             </div>
                         </div>

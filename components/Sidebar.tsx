@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { ChatSession, UserProfile } from '../types';
 import { 
     RatelLogo, EditIcon, TrashIcon, MenuIcon, ChevronLeftIcon, 
-    ImageIcon, AudioIcon, VideoIcon, BookOpenIcon, BriefcaseIcon, 
+    ImageIcon, AudioIcon, BookOpenIcon, BriefcaseIcon, 
     StorefrontIcon, UsersIcon, SettingsIcon, InfoIcon, UserIcon, LogoutIcon, AdminIcon,
-    CoffeeIcon, ClapperboardIcon, SparklesIcon, DocumentTextIcon, WrenchIcon
+    SparklesIcon, WrenchIcon
 } from '../constants';
 import { playSound } from '../services/audioService';
+import ConfirmationDialog from './ConfirmationDialog';
 
 interface SidebarProps {
   history: ChatSession[];
@@ -23,15 +24,12 @@ interface SidebarProps {
   onRenameChat: (id: string, newTitle: string) => void;
   onOpenImageStudio: () => void;
   onOpenAudioStudio: () => void;
-  onOpenVideoStudio: () => void;
   onOpenHustleStudio: () => void;
   onOpenLearnStudio: () => void;
   onOpenMarketSquare: () => void;
   onOpenMobileWorkersStudio: () => void;
-  onOpenStorytellerStudio: () => void;
   onOpenProfileStudio: () => void;
   onOpenProModal: () => void;
-  onOpenVideoArStudio: () => void;
   onOpenExamplesStudio: () => void;
   setPage: (page: 'chat' | 'settings' | 'contact' | 'community' | 'admin' | 'examples') => void;
   onLogout: () => void;
@@ -40,13 +38,14 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({
   history, currentChatId, userProfile, isCurrentChatEmpty, isOpenOnMobile, onCloseMobile,
   onNewChat, onSelectChat, onClearChat, onDeleteChat, onRenameChat,
-  onOpenImageStudio, onOpenAudioStudio, onOpenVideoStudio, onOpenHustleStudio, onOpenLearnStudio, onOpenMarketSquare, onOpenMobileWorkersStudio, onOpenStorytellerStudio, onOpenProfileStudio, onOpenProModal, onOpenVideoArStudio, onOpenExamplesStudio,
+  onOpenImageStudio, onOpenAudioStudio, onOpenHustleStudio, onOpenLearnStudio, onOpenMarketSquare, onOpenMobileWorkersStudio, onOpenProfileStudio, onOpenProModal, onOpenExamplesStudio,
   setPage, onLogout
 }) => {
   const { t } = useTranslation();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [chatToDelete, setChatToDelete] = useState<string | null>(null);
 
   const handleRename = (id: string, currentTitle: string) => {
     setEditingId(id);
@@ -58,6 +57,21 @@ const Sidebar: React.FC<SidebarProps> = ({
       onRenameChat(id, renameValue.trim());
     }
     setEditingId(null);
+  };
+
+  const handleDeleteRequest = (id: string) => {
+    setChatToDelete(id);
+  };
+
+  const handleConfirmDelete = () => {
+    if (chatToDelete) {
+      onDeleteChat(chatToDelete);
+    }
+    setChatToDelete(null);
+  };
+
+  const handleCloseDialog = () => {
+    setChatToDelete(null);
   };
 
   const handlePageChange = (page: 'settings' | 'contact' | 'community' | 'admin') => {
@@ -100,9 +114,6 @@ const Sidebar: React.FC<SidebarProps> = ({
               <StudioButton Icon={UsersIcon} label={t('sidebar.communityStudio')} onClick={() => handlePageChange('community')} />
               <StudioButton Icon={ImageIcon} label={t('sidebar.imageStudio')} onClick={onOpenImageStudio} />
               <StudioButton Icon={AudioIcon} label={t('sidebar.audioStudio')} onClick={onOpenAudioStudio} />
-              <StudioButton Icon={VideoIcon} label={t('sidebar.videoStudio')} onClick={onOpenVideoStudio} />
-              <StudioButton Icon={ClapperboardIcon} label={t('sidebar.storyteller')} onClick={onOpenStorytellerStudio} />
-              <StudioButton Icon={SparklesIcon} label={t('sidebar.videoArStudio')} onClick={onOpenVideoArStudio} />
           </div>
         </div>
 
@@ -141,7 +152,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                       <span onClick={() => onSelectChat(chat.id)} className="truncate flex-1 text-sm">{chat.title}</span>
                       <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => handleRename(chat.id, chat.title)} className="p-1 hover:text-green-400"><EditIcon className="w-4 h-4" /></button>
-                        <button onClick={() => onDeleteChat(chat.id)} className="p-1 hover:text-red-400"><TrashIcon className="w-4 h-4" /></button>
+                        <button onClick={() => handleDeleteRequest(chat.id)} className="p-1 hover:text-red-400"><TrashIcon className="w-4 h-4" /></button>
                       </div>
                     </div>
                   )}
@@ -170,6 +181,16 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
       {isOpenOnMobile && <div className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" onClick={onCloseMobile}></div>}
+
+      <ConfirmationDialog
+        isOpen={!!chatToDelete}
+        onClose={handleCloseDialog}
+        onConfirm={handleConfirmDelete}
+        title={t('sidebar.deleteChatTitle')}
+        message={t('sidebar.deleteChatMessage')}
+        confirmText={t('sidebar.deleteButton')}
+        confirmButtonClass="bg-red-600 text-white hover:bg-red-700 focus:ring-red-500"
+      />
     </>
   );
 };

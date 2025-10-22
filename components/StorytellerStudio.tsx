@@ -240,7 +240,7 @@ const StorytellerStudio: React.FC<StorytellerStudioProps> = ({ onClose, onStoryG
                              <textarea
                                  id="story-prompt"
                                  rows={4}
-                                 className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                                 className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-gray-900"
                                  placeholder={t('storytellerStudio.promptPlaceholder')}
                                  value={prompt}
                                  onChange={(e) => setPrompt(e.target.value)}

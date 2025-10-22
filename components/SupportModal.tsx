@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CloseIcon, CoffeeIcon, FlutterwaveIcon, TelebirrIcon, ChevronLeftIcon } from '../constants';
+import { CloseIcon, CoinIcon, FlutterwaveIcon, TelebirrIcon, ChevronLeftIcon } from '../constants';
 import { playSound } from '../services/audioService';
 
 interface SupportModalProps {
@@ -67,7 +67,7 @@ const SupportModal: React.FC<SupportModalProps> = ({ onClose }) => {
     const renderInitialScreen = () => (
         <>
             <div className="inline-block bg-yellow-100 p-3 rounded-full mb-4">
-                <CoffeeIcon className="w-8 h-8 text-yellow-600" />
+                <CoinIcon className="w-8 h-8 text-yellow-600" />
             </div>
             <h2 id="support-modal-title" className="text-2xl font-bold text-gray-800">{t('supportModal.title')}</h2>
             <p className="mt-2 text-gray-600 max-w-sm mx-auto">{t('supportModal.description')}</p>

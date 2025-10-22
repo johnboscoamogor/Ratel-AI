@@ -19,7 +19,8 @@ import { ChatSession, UserProfile, AppSettings, ChatMessage, MessagePart, RatelM
 import { playSound } from '../services/audioService';
 import { ai } from '../services/geminiService';
 import { GenerateContentResponse } from '@google/genai';
-import { SYSTEM_INSTRUCTION, taskTools } from '../constants';
+// FIX: Changed import from SYSTEM_INSTRUCTION to the createSystemInstruction function.
+import { createSystemInstruction, taskTools } from '../constants';
 
 interface ChatViewProps {
   userProfile: UserProfile;
@@ -32,30 +33,6 @@ interface ChatViewProps {
   trackInterest: (mode: RatelMode) => void;
   onLevelUp: (newLevel: number, newXp: number) => void;
 }
-
-const getSystemInstruction = (tone: AppSettings['chatTone'], userName: string): string => {
-    let instruction = `${SYSTEM_INSTRUCTION}\n\nIMPORTANT: Always start every response with "Alright ${userName},". This is a strict rule.`;
-    switch (tone) {
-        case 'formal':
-            instruction += "\nYour tone must be strictly formal and professional.";
-            break;
-        case 'humorous':
-            instruction += "\nYour tone should be humorous and witty. Feel free to use jokes and puns.";
-            break;
-        case 'pidgin':
-            instruction += "\nYour responses MUST be in Nigerian Pidgin English. Maintain a casual, friendly Pidgin tone.";
-            break;
-        case 'advanced':
-            instruction += "\nProvide detailed, expert-level, and comprehensive responses. Assume the user is knowledgeable on the topic.";
-            break;
-        case 'normal':
-        default:
-            // No modification needed for normal tone
-            break;
-    }
-    return instruction;
-};
-
 
 const ChatView: React.FC<ChatViewProps> = ({
   userProfile, setUserProfile, settings, setSettings, setPage, onLogout, addXp, trackInterest, onLevelUp
@@ -239,14 +216,16 @@ const ChatView: React.FC<ChatViewProps> = ({
         model: 'gemini-2.5-flash',
         history: geminiHistory,
         config: {
-            systemInstruction: getSystemInstruction(settings.chatTone, userProfile.name)
+            // FIX: Call createSystemInstruction with the current settings.
+            systemInstruction: createSystemInstruction(settings)
         }
     });
 
     chatSessionsRef.current.set(chatId, newChatInstance);
     return newChatInstance;
 
-  }, [history, settings.chatTone, userProfile.name]);
+  // FIX: Add settings to the dependency array.
+  }, [history, settings]);
   
   // FIX: Moved `onRenameChat` before `handleSendMessage` to resolve usage-before-declaration error.
   // Wrapped in useCallback for referential stability as it's a dependency of handleSendMessage.
@@ -474,45 +453,36 @@ const ChatView: React.FC<ChatViewProps> = ({
             updateLoadingMessage(loadingMessages[msgIndex]);
         }, 4000);
 
-        const videoPromise = ai.models.generateVideos({
-            model: 'veo-2.0-generate-001',
-            prompt,
-            ...(image && { image: { imageBytes: image.data, mimeType: image.mimeType } }),
-            config: { numberOfVideos: 1 }
+        // Call the new backend function
+        const response = await fetch('/api/video/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                prompt, 
+                image, 
+                dialogue, 
+                ambiance,
+                voiceId: settings.voice.selectedVoice 
+            })
         });
-
-        const audioPromises = [
-            dialogue ? fetch('/api/tts/generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: dialogue, voiceId: settings.voice.selectedVoice })
-            }).then(res => res.json()) : Promise.resolve(null),
-            ambiance ? fetch('/api/tts/generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: `[Sound effect of ${ambiance}]`, voiceId: 'en-US-Studio-O' })
-            }).then(res => res.json()) : Promise.resolve(null)
-        ];
         
-        let [videoOperation, dialogueResult, ambianceResult] = await Promise.all([videoPromise, ...audioPromises]);
-
-        while (!videoOperation.done) {
-            await new Promise(resolve => setTimeout(resolve, 10000));
-            videoOperation = await ai.operations.getVideosOperation({ operation: videoOperation });
-        }
         clearInterval(interval);
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.details || errorData.error || 'Video generation failed.');
+        }
 
-        const downloadLink = videoOperation.response?.generatedVideos?.[0]?.video?.uri;
-        if (!downloadLink) throw new Error("Video generation failed to return a URL.");
-
+        const data = await response.json();
+        
         const finalMessage: ChatMessage = {
             id: crypto.randomUUID(),
             role: 'model',
-            parts: [{ type: 'video', content: { url: `${downloadLink}&key=${process.env.API_KEY}`, prompt } }],
+            parts: [{ type: 'video', content: { url: data.videoUrl, prompt } }],
             timestamp: Date.now(),
-            ...(dialogueResult?.audioBase64 && { audioUrl: `data:audio/mp3;base64,${dialogueResult.audioBase64}` }),
+            ...(data.dialogueAudioBase64 && { audioUrl: `data:audio/mp3;base64,${data.dialogueAudioBase64}` }),
             ...(dialogue && { videoDialogue: dialogue }),
-            ...(ambianceResult?.audioBase64 && { ambianceUrl: `data:audio/mp3;base64,${ambianceResult.audioBase64}` }),
+            ...(data.ambianceAudioBase64 && { ambianceUrl: `data:audio/mp3;base64,${data.ambianceAudioBase64}` }),
             ...(ambiance && { videoAmbiance: ambiance }),
         };
 
@@ -549,7 +519,7 @@ const ChatView: React.FC<ChatViewProps> = ({
   }
 
   return (
-    <div className="flex h-screen bg-gray-900 overflow-hidden">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       <Sidebar
         history={history}
         currentChatId={currentChatId}
@@ -588,9 +558,6 @@ const ChatView: React.FC<ChatViewProps> = ({
           settings={settings}
           setSettings={setSettings}
           onEditVideoPrompt={handleEditVideoPrompt}
-          userProfile={userProfile}
-          onLogout={onLogout}
-          setPage={setPage}
         />
       </main>
       

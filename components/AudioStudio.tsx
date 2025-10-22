@@ -207,7 +207,7 @@ const AudioStudio: React.FC<AudioStudioProps> = ({ onClose }) => {
                         <textarea
                             id="tts-text"
                             rows={5}
-                            className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                            className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-gray-900"
                             placeholder={t('audioStudio.textPlaceholder')}
                             value={text}
                             onChange={(e) => setText(e.target.value)}
@@ -221,7 +221,7 @@ const AudioStudio: React.FC<AudioStudioProps> = ({ onClose }) => {
                             <button
                                 type="button"
                                 onClick={() => { playSound('click'); setIsDropdownOpen(!isDropdownOpen); }}
-                                className="relative w-full cursor-default rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm"
+                                className="relative w-full cursor-default rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500 sm:text-sm text-gray-900"
                                 aria-haspopup="listbox"
                                 aria-expanded={isDropdownOpen}
                                 aria-labelledby="voice-select-label"

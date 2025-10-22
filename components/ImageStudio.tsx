@@ -114,7 +114,7 @@ const ImageStudio: React.FC<ImageStudioProps> = ({ onClose, onGenerate, onEdit, 
                                 <textarea
                                     id="generate-prompt"
                                     rows={4}
-                                    className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                                    className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-gray-900"
                                     placeholder={t('imageStudio.promptPlaceholder')}
                                     value={prompt}
                                     onChange={(e) => setPrompt(e.target.value)}
@@ -164,7 +164,7 @@ const ImageStudio: React.FC<ImageStudioProps> = ({ onClose, onGenerate, onEdit, 
                             <textarea
                                 id="edit-prompt"
                                 rows={3}
-                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                                className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-gray-900"
                                 placeholder={t('imageStudio.editPromptPlaceholder')}
                                 value={editPrompt}
                                 onChange={(e) => setEditPrompt(e.target.value)}

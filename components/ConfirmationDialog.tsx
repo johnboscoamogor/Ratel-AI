@@ -28,18 +28,18 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({ isOpen, onClose
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
       role="dialog"
       aria-modal="true"
       aria-labelledby="dialog-title"
     >
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4" role="document">
-        <h2 id="dialog-title" className="text-xl font-bold text-gray-900 mb-4">{title}</h2>
-        <p className="text-gray-600 mb-6">{message}</p>
+      <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-xl p-6 w-full max-w-md mx-4" role="document">
+        <h2 id="dialog-title" className="text-xl font-bold text-white mb-4">{title}</h2>
+        <p className="text-gray-300 mb-6">{message}</p>
         <div className="flex justify-end gap-4">
           <button
             onClick={handleClose}
-            className="px-4 py-2 rounded-lg bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
+            className="px-4 py-2 rounded-lg bg-gray-600 text-gray-200 font-semibold hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
           >
             {t('common.cancel')}
           </button>

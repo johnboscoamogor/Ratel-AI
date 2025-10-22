@@ -131,14 +131,14 @@ const FindWorkerTab: React.FC = () => {
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleAiSearch()}
-                    className="flex-grow p-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                    className="flex-grow p-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900"
                 />
                 <button onClick={handleAiSearch} disabled={isLoading} className="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 disabled:bg-green-300">
                     <SearchIcon className="w-5 h-5"/>
                 </button>
             </div>
             <div className="grid grid-cols-2 gap-2">
-                <select value={skillFilter} onChange={e => setSkillFilter(e.target.value)} className="w-full p-2 border bg-white border-gray-300 rounded-lg text-sm">
+                <select value={skillFilter} onChange={e => setSkillFilter(e.target.value)} className="w-full p-2 border bg-white border-gray-300 rounded-lg text-sm text-gray-900">
                     <option value="">{t('mobileWorkersStudio.find.skillFilter')}</option>
                     {SKILL_CATEGORIES.map(s => <option key={s} value={s}>{s}</option>)}
                 </select>
@@ -147,7 +147,7 @@ const FindWorkerTab: React.FC = () => {
                     placeholder={t('mobileWorkersStudio.find.locationFilter')}
                     value={locationFilter}
                     onChange={e => setLocationFilter(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                    className="w-full p-2 border border-gray-300 rounded-lg text-sm text-gray-900"
                 />
             </div>
 
@@ -268,13 +268,13 @@ const InputField: React.FC<any> = ({ label, name, as = 'input', children, ...pro
     <div>
         <label htmlFor={name} className="block text-sm font-medium text-gray-700">{label}</label>
         {as === 'textarea' ? (
-            <textarea id={name} name={name} {...props} className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"/>
+            <textarea id={name} name={name} {...props} className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-gray-900"/>
         ) : as === 'select' ? (
-            <select id={name} name={name} {...props} className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 bg-white">
+            <select id={name} name={name} {...props} className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 bg-white text-gray-900">
                 {children}
             </select>
         ) : (
-            <input id={name} name={name} {...props} className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"/>
+            <input id={name} name={name} {...props} className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-gray-900"/>
         )}
     </div>
 );

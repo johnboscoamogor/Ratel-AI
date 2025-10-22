@@ -128,7 +128,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ settings, setSettings, onBa
             <select
               id="language-select"
               value={settings.language}
-              onChange={(e) => handleSettingChange('language', e.target.value as 'en' | 'fr' | 'am' | 'ng' | 'sw')}
+              // FIX: Use the AppSettings['language'] type for stronger type safety and to resolve the error.
+              onChange={(e) => handleSettingChange('language', e.target.value as AppSettings['language'])}
               className="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-green-500 focus:border-green-500 block p-2.5"
             >
               <option value="en">{t('settings.language.en')}</option>

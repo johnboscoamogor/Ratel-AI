@@ -149,7 +149,7 @@ const BrowseMarketTab: React.FC<{ currentUser: UserProfile }> = ({ currentUser }
                     placeholder={t('marketSquare.browse.searchPlaceholder')}
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
-                    className="w-full p-2 mb-4 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
+                    className="w-full p-2 mb-4 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 text-gray-900"
                 />
                 {loading && <p className="text-center text-gray-500">Loading items...</p>}
                 {error && (
@@ -409,7 +409,7 @@ const SellItemTab: React.FC<{ currentUser: UserProfile, onListingCreated: () => 
                             <ImageIcon className="w-10 h-10"/>
                         </div>
                     )}
-                    <input type="file" accept="image/*" onChange={handleFileChange} className="ml-4" required/>
+                    <input type="file" accept="image/*" onChange={handleFileChange} className="ml-4 text-gray-900" required/>
                 </div>
             </div>
 
@@ -453,11 +453,11 @@ const InputField: React.FC<any> = ({ label, name, as = 'input', ...props }) => (
     <div>
         <label htmlFor={name} className="block text-sm font-medium text-gray-700">{label}</label>
         {as === 'textarea' ? (
-            <textarea id={name} name={name} {...props} className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"/>
+            <textarea id={name} name={name} {...props} className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-gray-900"/>
         ) : as === 'select' ? (
-             <select id={name} name={name} {...props} className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 bg-white"/>
+             <select id={name} name={name} {...props} className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 bg-white text-gray-900"/>
         ) : (
-            <input id={name} name={name} {...props} className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"/>
+            <input id={name} name={name} {...props} className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-gray-900"/>
         )}
     </div>
 );

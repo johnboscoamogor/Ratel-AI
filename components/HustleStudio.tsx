@@ -45,7 +45,7 @@ const HustleStudio: React.FC<HustleStudioProps> = ({ onClose, onAction, isLoadin
                         <input
                             id="hustle-input"
                             type="text"
-                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-gray-900"
                             placeholder={t('hustleStudio.placeholder')}
                             value={ideasInput}
                             onChange={(e) => setIdeasInput(e.target.value)}

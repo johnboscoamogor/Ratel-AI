@@ -232,7 +232,7 @@ const VideoArStudio: React.FC<VideoArStudioProps> = ({ onClose }) => {
                                 value={prompt}
                                 onChange={(e) => setPrompt(e.target.value)}
                                 placeholder={t('videoArStudio.promptPlaceholder')}
-                                className="flex-grow p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500"
+                                className="flex-grow p-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500 text-gray-900"
                                 disabled={isLoading}
                             />
                             <button

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { UKFlagIcon, FranceFlagIcon, EthiopiaFlagIcon, NigeriaFlagIcon, TanzaniaFlagIcon } from '../constants';
+// FIX: Import NigeriaFlagIcon to support the 'ng' language option.
+import { UKFlagIcon, FranceFlagIcon, EthiopiaFlagIcon, TanzaniaFlagIcon, NigeriaFlagIcon } from '../constants';
 import { playSound } from '../services/audioService';
 import { AppSettings } from '../types';
 
@@ -11,10 +12,11 @@ interface LanguageSwitcherProps {
 
 const languages = {
     en: { name: 'English', Flag: UKFlagIcon },
-    ng: { name: 'Pidgin', Flag: NigeriaFlagIcon },
-    sw: { name: 'Kiswahili', Flag: TanzaniaFlagIcon },
     fr: { name: 'Français', Flag: FranceFlagIcon },
     am: { name: 'አማርኛ', Flag: EthiopiaFlagIcon },
+    sw: { name: 'Kiswahili', Flag: TanzaniaFlagIcon },
+    // FIX: Add Nigerian Pidgin ('ng') to the list of available languages.
+    ng: { name: 'Pidgin', Flag: NigeriaFlagIcon },
 };
 
 const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ currentLang, onChangeLang }) => {
