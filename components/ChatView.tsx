@@ -37,7 +37,6 @@ interface ChatViewProps {
 const ChatView: React.FC<ChatViewProps> = ({
   userProfile, setUserProfile, settings, setSettings, setPage, onLogout, addXp, trackInterest, onLevelUp
 }) => {
-  // FIX: Destructured `i18n` from `useTranslation` to make it available in the component scope.
   const { t, i18n } = useTranslation();
   const [history, setHistory] = useState<ChatSession[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
@@ -228,7 +227,6 @@ const ChatView: React.FC<ChatViewProps> = ({
   }, [history, settings]);
   
   // FIX: Moved `onRenameChat` before `handleSendMessage` to resolve usage-before-declaration error.
-  // Wrapped in useCallback for referential stability as it's a dependency of handleSendMessage.
   const onRenameChat = useCallback((id: string, newTitle: string) => {
     setHistory(prev => prev.map(chat => chat.id === id ? { ...chat, title: newTitle } : chat));
   }, []);

@@ -1,7 +1,7 @@
 /**
  * NOTE: To deploy this, deploy your project to Vercel.
  * You must set the Gemini and Telegram API keys as environment variables in your Vercel project settings:
- * - GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
+ * - API_KEY="YOUR_GEMINI_API_KEY"
  * - TELEGRAM_BOT_TOKEN="YOUR_TELEGRAM_BOT_TOKEN"
  * Your webhook URL will be https://your-app.vercel.app/api/telegram_webhook
  */
@@ -12,16 +12,16 @@ import fetch from 'node-fetch';
 
 // --- CONFIGURATION ---
 // Access environment variables set in Vercel project settings
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const API_KEY = process.env.API_KEY;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_API_URL = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 
 // --- INITIALIZE GEMINI AI ---
 let ai: GoogleGenAI;
-if (GEMINI_API_KEY) {
-    ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+if (API_KEY) {
+    ai = new GoogleGenAI({ apiKey: API_KEY });
 } else {
-    console.error("Gemini API key is not set in Vercel environment variables.");
+    console.error("API_KEY is not set in Vercel environment variables.");
 }
 
 // --- DATABASE SIMULATION ---
