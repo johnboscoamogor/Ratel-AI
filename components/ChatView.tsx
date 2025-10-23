@@ -19,7 +19,7 @@ import { ChatSession, UserProfile, AppSettings, ChatMessage, MessagePart, RatelM
 import { playSound } from '../services/audioService';
 import { ai } from '../services/geminiService';
 import { GenerateContentResponse } from '@google/genai';
-// FIX: Changed import from SYSTEM_INSTRUCTION to the createSystemInstruction function.
+// FIX: Changed import from the non-existent 'SYSTEM_INSTRUCTION' to the function 'createSystemInstruction'.
 import { createSystemInstruction, taskTools } from '../constants';
 
 interface ChatViewProps {
@@ -37,7 +37,6 @@ interface ChatViewProps {
 const ChatView: React.FC<ChatViewProps> = ({
   userProfile, setUserProfile, settings, setSettings, setPage, onLogout, addXp, trackInterest, onLevelUp
 }) => {
-  // FIX: Destructured `i18n` from `useTranslation` to make it available for language changes.
   const { t, i18n } = useTranslation();
   const [history, setHistory] = useState<ChatSession[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
@@ -216,7 +215,7 @@ const ChatView: React.FC<ChatViewProps> = ({
         model: 'gemini-2.5-flash',
         history: geminiHistory,
         config: {
-            // FIX: Call createSystemInstruction with the current settings.
+            // FIX: Replaced non-existent constant 'SYSTEM_INSTRUCTION' with a call to 'createSystemInstruction(settings)'.
             systemInstruction: createSystemInstruction(settings)
         }
     });
@@ -224,10 +223,9 @@ const ChatView: React.FC<ChatViewProps> = ({
     chatSessionsRef.current.set(chatId, newChatInstance);
     return newChatInstance;
 
-  // FIX: Add settings to the dependency array.
+  // FIX: Added 'settings' to the dependency array as it's now used inside the callback.
   }, [history, settings]);
   
-  // FIX: Moved `onRenameChat` before `handleSendMessage` to resolve usage-before-declaration error.
   const onRenameChat = useCallback((id: string, newTitle: string) => {
     setHistory(prev => prev.map(chat => chat.id === id ? { ...chat, title: newTitle } : chat));
   }, []);

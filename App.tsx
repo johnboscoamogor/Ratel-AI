@@ -8,25 +8,8 @@ import CommunityView from './components/CommunityView';
 import AdminDashboard from './components/AdminDashboard';
 import { UserProfile, AppSettings, RatelMode, Task } from './types';
 import { playSound } from './services/audioService';
-import { apiKeyError } from './services/geminiService'; // Import the error state
 
 const App: React.FC = () => {
-  // Display an error screen if the API key is not configured.
-  if (apiKeyError) {
-    return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white p-4">
-            <div className="text-center bg-red-900/50 border border-red-500/30 p-8 rounded-xl max-w-lg">
-                <h1 className="text-2xl font-bold mb-4 text-red-300">Configuration Error</h1>
-                <p className="text-red-300 font-mono bg-gray-800 p-3 rounded-md mb-4">{apiKeyError}</p>
-                <p className="text-gray-400">
-                    It seems the app is not configured correctly. If you are the developer, please ensure the 
-                    <code>API_KEY</code> environment variable is set in your Vercel project settings and a new deployment has been triggered.
-                </p>
-            </div>
-        </div>
-    );
-  }
-
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [page, setPage] = useState<'landing' | 'chat' | 'settings' | 'contact' | 'community' | 'admin' | 'examples'>('landing');

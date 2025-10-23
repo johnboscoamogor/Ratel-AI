@@ -1,26 +1,87 @@
+// FIX: Export a global `ai` instance to be used by client-side components.
+// This resolves import errors in ChatView, MobileWorkersStudio, and VideoArStudio.
+// The coding guidelines state to assume `process.env.API_KEY` is available.
 import { GoogleGenAI } from '@google/genai';
 
-// Initialize ai and apiKeyError as exportable variables.
-let ai: GoogleGenAI | null = null;
-let apiKeyError: string | null = null;
+export const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
-try {
-    // Check for the existence of the API_KEY environment variable.
-    if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable not set. Please add it to your Vercel project settings and redeploy.");
+// This file is now a client for our own backend API routes, 
+// which securely handle the Gemini API key on the server.
+
+/**
+ * Sends a chat message to the backend for processing.
+ * Handles streaming responses.
+ */
+export async function streamChat(
+    history: any[], 
+    message: string, 
+    image: { data: string, mimeType: string } | undefined,
+    systemInstruction: string,
+): Promise<ReadableStreamDefaultReader<Uint8Array>> {
+    const response = await fetch('/api/gemini/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ history, message, image, systemInstruction }),
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to start chat stream.");
     }
-    // Initialize the client if the key exists.
-    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-} catch (e) {
-    // Catch any error during initialization and store the message.
-    if (e instanceof Error) {
-        apiKeyError = e.message;
-        console.error("Gemini AI Initialization Error:", e.message);
-    } else {
-        apiKeyError = "An unknown error occurred during AI client initialization.";
-        console.error("Gemini AI Initialization Error:", e);
+
+    if (!response.body) {
+        throw new Error("Response has no body");
     }
+
+    return response.body.getReader();
 }
 
-// Export both the client instance (which may be null) and the error message.
-export { ai, apiKeyError };
+/**
+ * Generates a title for a chat.
+ */
+export async function generateTitle(prompt: string): Promise<string> {
+     const response = await fetch('/api/gemini/generate-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to generate title");
+    }
+    const data = await response.json();
+    return data.text;
+}
+
+/**
+ * Generates an image.
+ */
+export async function generateImage(prompt: string, aspectRatio: string): Promise<string> {
+    const response = await fetch('/api/gemini/generate-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, aspectRatio }),
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to generate image");
+    }
+    const data = await response.json();
+    return data.base64Image;
+}
+
+/**
+ * Edits an image.
+ */
+export async function editImage(image: { data: string; mimeType: string }, prompt: string): Promise<{ data: string; mimeType: string }> {
+    const response = await fetch('/api/gemini/edit-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image, prompt }),
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to edit image");
+    }
+    return await response.json();
+}
