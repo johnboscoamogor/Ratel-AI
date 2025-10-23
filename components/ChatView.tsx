@@ -17,6 +17,7 @@ import ExamplesStudio from './ExamplesStudio';
 import VideoArStudio from './VideoArStudio';
 import { ChatSession, UserProfile, AppSettings, ChatMessage, MessagePart, RatelMode, Task, Story } from '../types';
 import { playSound } from '../services/audioService';
+// FIX: Changed import from 'ai' to specific service functions, as 'ai' is not exported from geminiService.
 import { streamChat, generateTitle, generateImage, editImage } from '../services/geminiService';
 import { GenerateContentResponse } from '@google/genai';
 // FIX: Changed import from the non-existent 'SYSTEM_INSTRUCTION' to the function 'createSystemInstruction'.
@@ -132,6 +133,7 @@ const ChatView: React.FC<ChatViewProps> = ({
     setHistory(prev => prev.map(chat => chat.id === id ? { ...chat, title: newTitle } : chat));
   }, []);
 
+  // FIX: Replaced client-side Gemini logic with calls to the backend proxy service functions.
   const handleSendMessage = useCallback(async (message: string, image?: { data: string; mimeType: string }) => {
     if (!currentChatId || !currentChat) return;
 
@@ -168,7 +170,6 @@ const ChatView: React.FC<ChatViewProps> = ({
                 })
             }));
 
-        // FIX: The import for 'ai' from 'geminiService' was incorrect. This component should use the service functions like 'streamChat' which act as a proxy to the backend. This also resolves the second error as 'createSystemInstruction' is now used correctly.
         const reader = await streamChat(geminiHistory, message, image, createSystemInstruction(settings));
         const decoder = new TextDecoder();
         let fullText = "";
@@ -184,7 +185,7 @@ const ChatView: React.FC<ChatViewProps> = ({
 
             for (const jsonStr of jsonStrs) {
                 const chunk = JSON.parse(jsonStr) as GenerateContentResponse;
-                fullText += chunk.text;
+                fullText += chunk.text || '';
                 if (chunk.candidates?.[0]?.groundingMetadata?.groundingChunks) {
                     groundingChunks.push(...chunk.candidates[0].groundingMetadata.groundingChunks);
                 }
