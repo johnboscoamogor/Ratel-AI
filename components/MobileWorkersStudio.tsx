@@ -5,9 +5,8 @@ import { playSound } from '../services/audioService';
 import { MobileWorker, UserProfile } from '../types';
 import { SKILL_CATEGORIES } from '../constants';
 import { workerService } from '../services/workerService';
-import { ai } from '../services/geminiService';
+import { findWorkersWithAi } from '../services/geminiService';
 import AdBanner from './AdBanner';
-import { taskTools } from '../constants';
 
 interface MobileWorkersStudioProps {
   onClose: () => void;
@@ -102,14 +101,11 @@ const FindWorkerTab: React.FC = () => {
         setIsLoading(true);
         setError('');
         try {
-            const chat = ai.chats.create({ model: 'gemini-2.5-flash', config: { tools: taskTools }});
-            const result = await chat.sendMessage({ message: searchTerm });
-
-            const fc = result.functionCalls?.[0];
-            if (fc && fc.name === 'findWorkers') {
-                const { skill, location } = fc.args;
-                setSkillFilter(skill as string || '');
-                setLocationFilter(location as string || '');
+            const resultArgs = await findWorkersWithAi(searchTerm);
+            
+            if (resultArgs) {
+                setSkillFilter(resultArgs.skill || '');
+                setLocationFilter(resultArgs.location || '');
                 // The useEffect will trigger the fetch
             } else {
                  setWorkers([]);

@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CloseIcon, SparklesIcon, TrashIcon, PlayIcon, PauseIcon, RefreshIcon, ImageIcon } from '../constants';
 import { playSound } from '../services/audioService';
-import { ai } from '../services/geminiService';
-import { Modality } from '@google/genai';
+import { generateArEffect } from '../services/geminiService';
 
 interface VideoArStudioProps {
   onClose: () => void;
@@ -78,44 +77,18 @@ const VideoArStudio: React.FC<VideoArStudioProps> = ({ onClose }) => {
         const fullPrompt = `You are an expert image editor. Your task is to apply the user's request directly to the image provided. Do not ask questions or start a conversation. Simply perform the edit and return the modified image. The user's request is: "${prompt}"`;
 
         try {
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-image',
-                contents: {
-                    parts: [
-                        { inlineData: { data: frame.data, mimeType: frame.mimeType } },
-                        { text: fullPrompt },
-                    ],
-                },
-                config: {
-                    responseModalities: [Modality.IMAGE, Modality.TEXT],
-                },
-            });
+            const editedImage = await generateArEffect(frame, fullPrompt);
 
-            const parts = response.candidates?.[0]?.content?.parts;
-            const blockReason = response.promptFeedback?.blockReason;
-            if (blockReason) {
-                throw new Error(`Request blocked due to ${blockReason}. Please modify your prompt.`);
-            }
-            if (!parts || parts.length === 0) {
-                throw new Error("AI returned an empty response. Please try again.");
-            }
-
-            const imagePart = parts.find(part => part.inlineData);
-            if (imagePart && imagePart.inlineData) {
-                const mimeType = imagePart.inlineData.mimeType || 'image/png';
-                setOverlayImage(`data:${mimeType};base64,${imagePart.inlineData.data}`);
+            if (editedImage && editedImage.data) {
+                const mimeType = editedImage.mimeType || 'image/png';
+                setOverlayImage(`data:${mimeType};base64,${editedImage.data}`);
                 // Pause the video to show a static preview of the effect
                 if (videoRef.current && !videoRef.current.paused) {
                     videoRef.current.pause();
                     setIsPaused(true);
                 }
             } else {
-                const textPart = parts.find(part => part.text);
-                if (textPart && textPart.text) {
-                    throw new Error(`AI response: ${textPart.text}`);
-                } else {
-                    throw new Error("AI did not return an image. Try rephrasing your prompt.");
-                }
+                throw new Error("AI did not return an image. Try rephrasing your prompt.");
             }
         } catch (err: any) {
             console.error("AR effect generation failed:", err);

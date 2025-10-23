@@ -1,20 +1,14 @@
-// FIX: Export a global `ai` instance to be used by client-side components.
-// This resolves import errors in ChatView, MobileWorkersStudio, and VideoArStudio.
-// The coding guidelines state to assume `process.env.API_KEY` is available.
-import { GoogleGenAI } from '@google/genai';
-
-export const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
-
-// This file is now a client for our own backend API routes, 
+// This file is now a client for our own backend API routes,
 // which securely handle the Gemini API key on the server.
+import { GenerateContentResponse } from '@google/genai';
 
 /**
  * Sends a chat message to the backend for processing.
- * Handles streaming responses.
+ * Handles streaming responses by returning the reader of the response body.
  */
 export async function streamChat(
-    history: any[], 
-    message: string, 
+    history: any[],
+    message: string,
     image: { data: string, mimeType: string } | undefined,
     systemInstruction: string,
 ): Promise<ReadableStreamDefaultReader<Uint8Array>> {
@@ -37,7 +31,7 @@ export async function streamChat(
 }
 
 /**
- * Generates a title for a chat.
+ * Generates a title for a chat by calling the backend.
  */
 export async function generateTitle(prompt: string): Promise<string> {
      const response = await fetch('/api/gemini/generate-text', {
@@ -54,7 +48,7 @@ export async function generateTitle(prompt: string): Promise<string> {
 }
 
 /**
- * Generates an image.
+ * Generates an image by calling the backend.
  */
 export async function generateImage(prompt: string, aspectRatio: string): Promise<string> {
     const response = await fetch('/api/gemini/generate-image', {
@@ -71,7 +65,7 @@ export async function generateImage(prompt: string, aspectRatio: string): Promis
 }
 
 /**
- * Edits an image.
+ * Edits an image by calling the backend.
  */
 export async function editImage(image: { data: string; mimeType: string }, prompt: string): Promise<{ data: string; mimeType: string }> {
     const response = await fetch('/api/gemini/edit-image', {
@@ -82,6 +76,39 @@ export async function editImage(image: { data: string; mimeType: string }, promp
     if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || "Failed to edit image");
+    }
+    return await response.json();
+}
+
+/**
+ * Uses AI to find skilled workers via a backend function call.
+ */
+export async function findWorkersWithAi(searchTerm: string): Promise<{ skill: string; location: string } | null> {
+    const response = await fetch('/api/gemini/find-workers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ searchTerm }),
+    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to search for workers.");
+    }
+    const data = await response.json();
+    return data.args || null;
+}
+
+/**
+ * Generates an AR effect for a video frame via the backend.
+ */
+export async function generateArEffect(frame: { data: string; mimeType: string }, prompt: string): Promise<{ data: string; mimeType: string }> {
+    const response = await fetch('/api/gemini/ar-effect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ frame, prompt }),
+    });
+     if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to generate AR effect.");
     }
     return await response.json();
 }

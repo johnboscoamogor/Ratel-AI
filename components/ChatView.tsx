@@ -17,10 +17,10 @@ import ExamplesStudio from './ExamplesStudio';
 import VideoArStudio from './VideoArStudio';
 import { ChatSession, UserProfile, AppSettings, ChatMessage, MessagePart, RatelMode, Task, Story } from '../types';
 import { playSound } from '../services/audioService';
-import { ai } from '../services/geminiService';
+import { streamChat, generateTitle, generateImage, editImage } from '../services/geminiService';
 import { GenerateContentResponse } from '@google/genai';
 // FIX: Changed import from the non-existent 'SYSTEM_INSTRUCTION' to the function 'createSystemInstruction'.
-import { createSystemInstruction, taskTools } from '../constants';
+import { createSystemInstruction } from '../constants';
 
 interface ChatViewProps {
   userProfile: UserProfile;
@@ -63,8 +63,6 @@ const ChatView: React.FC<ChatViewProps> = ({
   const [tasks, setTasks] = useState<Task[]>([]);
   const [stories, setStories] = useState<Story[]>([]);
   
-  const chatSessionsRef = useRef<Map<string, any>>(new Map());
-
   // Load data on mount
   useEffect(() => {
     try {
@@ -130,108 +128,12 @@ const ChatView: React.FC<ChatViewProps> = ({
     }));
   }, [updateCurrentChat]);
 
-  const streamMessageToChat = useCallback((stream: AsyncGenerator<GenerateContentResponse>) => {
-    const messageId = crypto.randomUUID();
-    
-    const placeholderMessage: ChatMessage = {
-      id: messageId,
-      role: 'model',
-      parts: [{ type: 'loading', content: '' }],
-      timestamp: Date.now()
-    };
-    addMessageToChat(placeholderMessage);
-
-    let fullText = "";
-    let groundingChunks: any[] = [];
-    
-    const processStream = async () => {
-        for await (const chunk of stream) {
-            fullText += chunk.text;
-            if (chunk.candidates?.[0]?.groundingMetadata?.groundingChunks) {
-                groundingChunks = chunk.candidates[0].groundingMetadata.groundingChunks;
-            }
-            
-            updateCurrentChat(chat => ({
-                ...chat,
-                messages: chat.messages.map(msg => 
-                    msg.id === messageId 
-                    ? { ...msg, parts: [{ type: 'text', content: fullText, groundingChunks }] } 
-                    : msg
-                )
-            }));
-        }
-        
-        updateCurrentChat(chat => ({
-            ...chat,
-            messages: chat.messages.map(msg => {
-                if(msg.id === messageId) {
-                    const finalPart: MessagePart = { type: 'text', content: fullText.trim() };
-                    if(groundingChunks.length > 0) finalPart.groundingChunks = groundingChunks;
-                    return { ...msg, parts: [finalPart] };
-                }
-                return msg;
-            })
-        }));
-    };
-    
-    processStream().catch(err => {
-        console.error("Error processing stream:", err);
-        const errorMessage: ChatMessage = {
-            id: crypto.randomUUID(),
-            role: 'model',
-            parts: [{ type: 'error', content: "Sorry, I couldn't process that. Please try again." }],
-            timestamp: Date.now()
-        };
-        updateCurrentChat(chat => ({
-            ...chat,
-            messages: chat.messages.filter(msg => msg.id !== messageId).concat(errorMessage)
-        }));
-    }).finally(() => setIsLoading(false));
-
-  }, [addMessageToChat, updateCurrentChat]);
-
-
-  const getOrCreateChatSession = useCallback(async (chatId: string) => {
-    if (chatSessionsRef.current.has(chatId)) {
-        return chatSessionsRef.current.get(chatId);
-    }
-    
-    const chatSession = history.find(c => c.id === chatId);
-    if(!chatSession) return null;
-    
-    const geminiHistory = chatSession.messages
-        .filter(m => m.role !== 'system' && m.parts[0]?.type !== 'error' && m.parts[0]?.type !== 'loading')
-        .map(m => {
-            const content = m.parts.map(p => {
-                if (p.type === 'image') {
-                    return { inlineData: { mimeType: p.mimeType, data: p.content } };
-                }
-                return { text: p.content };
-            });
-            return { role: m.role, parts: content };
-        });
-
-    const newChatInstance = ai.chats.create({
-        model: 'gemini-2.5-flash',
-        history: geminiHistory,
-        config: {
-            // FIX: Replaced non-existent constant 'SYSTEM_INSTRUCTION' with a call to 'createSystemInstruction(settings)'.
-            systemInstruction: createSystemInstruction(settings)
-        }
-    });
-
-    chatSessionsRef.current.set(chatId, newChatInstance);
-    return newChatInstance;
-
-  // FIX: Added 'settings' to the dependency array as it's now used inside the callback.
-  }, [history, settings]);
-  
   const onRenameChat = useCallback((id: string, newTitle: string) => {
     setHistory(prev => prev.map(chat => chat.id === id ? { ...chat, title: newTitle } : chat));
   }, []);
 
   const handleSendMessage = useCallback(async (message: string, image?: { data: string; mimeType: string }) => {
-    if (!currentChatId) return;
+    if (!currentChatId || !currentChat) return;
 
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
@@ -244,40 +146,100 @@ const ChatView: React.FC<ChatViewProps> = ({
     addMessageToChat(userMessage);
     setIsLoading(true);
 
-    try {
-        const chat = await getOrCreateChatSession(currentChatId);
-        if (!chat) throw new Error("Could not initialize chat session.");
+    // Create a placeholder for the streaming response
+    const responseMessageId = crypto.randomUUID();
+    const placeholderMessage: ChatMessage = {
+        id: responseMessageId,
+        role: 'model',
+        parts: [{ type: 'loading', content: '' }],
+        timestamp: Date.now()
+    };
+    addMessageToChat(placeholderMessage);
 
-        const parts: any[] = message ? [{ text: message }] : [];
-        if(image) {
-            parts.push({ inlineData: { mimeType: image.mimeType, data: image.data }});
+    try {
+        const geminiHistory = currentChat.messages
+            .filter(m => m.id !== userMessage.id) // Exclude the message we just added
+            .filter(m => m.role !== 'system' && m.parts[0]?.type !== 'error' && m.parts[0]?.type !== 'loading')
+            .map(m => ({
+                role: m.role,
+                parts: m.parts.map(p => {
+                    if (p.type === 'image') return { inlineData: { mimeType: p.mimeType, data: p.content } };
+                    return { text: p.content };
+                })
+            }));
+
+        // FIX: The import for 'ai' from 'geminiService' was incorrect. This component should use the service functions like 'streamChat' which act as a proxy to the backend. This also resolves the second error as 'createSystemInstruction' is now used correctly.
+        const reader = await streamChat(geminiHistory, message, image, createSystemInstruction(settings));
+        const decoder = new TextDecoder();
+        let fullText = "";
+        let groundingChunks: any[] = [];
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunkStr = decoder.decode(value);
+            // The stream sends newline-delimited JSONs.
+            const jsonStrs = chunkStr.split('\n').filter(s => s.trim());
+
+            for (const jsonStr of jsonStrs) {
+                const chunk = JSON.parse(jsonStr) as GenerateContentResponse;
+                fullText += chunk.text;
+                if (chunk.candidates?.[0]?.groundingMetadata?.groundingChunks) {
+                    groundingChunks.push(...chunk.candidates[0].groundingMetadata.groundingChunks);
+                }
+                
+                // Update the placeholder message with the streaming content
+                updateCurrentChat(chat => ({
+                    ...chat,
+                    messages: chat.messages.map(msg => 
+                        msg.id === responseMessageId
+                        ? { ...msg, parts: [{ type: 'text', content: fullText, groundingChunks }] }
+                        : msg
+                    )
+                }));
+            }
         }
         
-        const resultStream = await chat.sendMessageStream({ message: { parts }});
-        
-        streamMessageToChat(resultStream);
+        // Final update to clean up the message part
+        updateCurrentChat(chat => ({
+            ...chat,
+            messages: chat.messages.map(msg => {
+                if(msg.id === responseMessageId) {
+                    const finalPart: MessagePart = { type: 'text', content: fullText.trim() };
+                    if(groundingChunks.length > 0) finalPart.groundingChunks = groundingChunks;
+                    return { ...msg, parts: [finalPart] };
+                }
+                return msg;
+            })
+        }));
         
         addXp(5);
         
-        if (currentChat && currentChat.messages.length <= 1) {
+        if (currentChat.messages.length <= 2) { // User message + placeholder
             const titlePrompt = `Create a very short, concise title (4-5 words max) for this user's first prompt: "${message}"`;
-            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: titlePrompt });
-            const newTitle = response.text.replace(/"/g, '');
-            onRenameChat(currentChatId, newTitle);
+            const newTitle = await generateTitle(titlePrompt);
+            onRenameChat(currentChatId, newTitle.replace(/"/g, ''));
         }
 
     } catch (e) {
       console.error("Failed to send message:", e);
-      const errorMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: 'model',
-        parts: [{ type: 'error', content: e instanceof Error ? e.message : "An unknown error occurred." }],
-        timestamp: Date.now()
-      };
-      addMessageToChat(errorMessage);
-      setIsLoading(false);
+      // Replace the placeholder with an error message
+       updateCurrentChat(chat => ({
+            ...chat,
+            messages: chat.messages.map(msg => 
+                msg.id === responseMessageId
+                ? {
+                    id: responseMessageId,
+                    role: 'model',
+                    parts: [{ type: 'error', content: e instanceof Error ? e.message : "An unknown error occurred." }],
+                    timestamp: Date.now()
+                } : msg)
+        }));
+    } finally {
+        setIsLoading(false);
     }
-  }, [currentChatId, addMessageToChat, streamMessageToChat, addXp, getOrCreateChatSession, currentChat, onRenameChat]);
+  }, [currentChatId, currentChat, addMessageToChat, addXp, onRenameChat, settings, updateCurrentChat]);
 
   const handleNewChat = useCallback(() => {
     playSound('click');
@@ -309,13 +271,11 @@ const ChatView: React.FC<ChatViewProps> = ({
              handleNewChat();
         }
     }
-    chatSessionsRef.current.delete(id);
   };
   
   const onClearChat = () => {
       if(currentChatId) {
           updateCurrentChat(chat => ({ ...chat, messages: [] }));
-          chatSessionsRef.current.delete(currentChatId);
       }
   };
   
@@ -347,12 +307,7 @@ const ChatView: React.FC<ChatViewProps> = ({
     setIsLoading(true);
 
     try {
-        const response = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
-            prompt,
-            config: { numberOfImages: 1, outputMimeType: 'image/png', aspectRatio: aspectRatio as any }
-        });
-        const base64ImageBytes = response.generatedImages[0].image.imageBytes;
+        const base64ImageBytes = await generateImage(prompt, aspectRatio);
         addMessageToChat({
             id: crypto.randomUUID(),
             role: 'model',
@@ -387,21 +342,13 @@ const ChatView: React.FC<ChatViewProps> = ({
       setIsLoading(true);
       
        try {
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-image',
-                contents: { parts: [ { inlineData: { data: image.data, mimeType: image.mimeType } }, { text: prompt } ] },
-                config: { responseModalities: ['IMAGE'] },
+            const editedImage = await editImage(image, prompt);
+            addMessageToChat({
+                id: crypto.randomUUID(),
+                role: 'model',
+                parts: [{ type: 'image', content: editedImage.data, mimeType: editedImage.mimeType }],
+                timestamp: Date.now()
             });
-            const imagePart = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
-
-            if(imagePart?.inlineData) {
-                 addMessageToChat({
-                    id: crypto.randomUUID(),
-                    role: 'model',
-                    parts: [{ type: 'image', content: imagePart.inlineData.data, mimeType: imagePart.inlineData.mimeType }],
-                    timestamp: Date.now()
-                });
-            } else { throw new Error("The AI did not return an edited image."); }
         } catch(e) {
             console.error(e);
             addMessageToChat({
