@@ -102,7 +102,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, isTrans
 
   const handleSendMessage = useCallback(async () => {
     const trimmedInput = input.trim();
-    if ((!trimmedInput && !imageFile) || isLoading) return;
+    if ((!trimmedInput && !imageFile)) return;
 
     playSound('click');
 
@@ -120,7 +120,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, isTrans
 
     setInput('');
     handleRemoveImage();
-  }, [input, imageFile, isLoading, onSendMessage, handleRemoveImage]);
+  }, [input, imageFile, onSendMessage, handleRemoveImage]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -229,7 +229,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, isTrans
                     isTransparent ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-200'
                 }`}
                 aria-label={t('chatInput.attachImage')}
-                disabled={isLoading}
             >
                 <PaperclipIcon className="w-6 h-6" />
             </button>
@@ -238,12 +237,11 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, isTrans
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={placeholder}
+                placeholder={isLoading ? "Ratel is thinking..." : placeholder}
                 className={`flex-1 bg-transparent resize-none focus:outline-none p-2 max-h-48 ${
                   isTransparent ? 'text-white placeholder-gray-400' : 'text-gray-800 placeholder-gray-500'
                 }`}
                 rows={1}
-                disabled={isLoading}
                 aria-label="Chat input"
             />
             <button
@@ -254,7 +252,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, isTrans
                         : (isTransparent ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-200')
                 }`}
                 aria-label={isRecording ? t('chatInput.stopRecording') : t('chatInput.startRecording')}
-                disabled={isLoading}
             >
                 <MicrophoneIcon className="w-6 h-6" />
             </button>
@@ -264,7 +261,11 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, isTrans
                 className="p-3 bg-green-600 text-white rounded-full disabled:bg-green-800 disabled:cursor-not-allowed hover:bg-green-700 transition-colors focus:outline-none"
                 aria-label={t('chatInput.sendMessage')}
             >
+              {isLoading ? (
+                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
                 <SendIcon className="w-6 h-6" />
+              )}
             </button>
         </div>
       </div>

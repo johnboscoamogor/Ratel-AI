@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ChatMessageComponent from './ChatMessage';
 import ChatInput from './ChatInput';
-import { ChatSession, AppSettings, ChatMessage, UserProfile } from '../types';
-import { MenuIcon, CoffeeIcon, ChevronDownIcon, UserIcon } from '../constants';
+import { ChatSession, AppSettings, UserProfile, ChatMessage } from '../types';
+import { MenuIcon, CoffeeIcon, ChevronDownIcon, UserIcon, RatelLogo } from '../constants';
 import LanguageSwitcher from './LanguageSwitcher';
 import { playSound } from '../services/audioService';
 
@@ -17,10 +17,11 @@ interface ChatWindowProps {
   settings: AppSettings;
   setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
   userProfile: UserProfile;
+  onEditVideoPrompt: (originalMessage: ChatMessage) => void;
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
-  chatSession, isLoading, onToggleSidebar, onSendMessage, onNewChat, onOpenSupportModal, settings, setSettings, userProfile
+  chatSession, isLoading, onToggleSidebar, onSendMessage, onNewChat, onOpenSupportModal, settings, setSettings, userProfile, onEditVideoPrompt
 }) => {
   const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -50,10 +51,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const ExamplePromptButton: React.FC<{title: string, description: string, prompt: string}> = ({title, description, prompt}) => (
       <button 
           onClick={() => onSendMessage(prompt)} 
-          className="bg-gray-700 p-3 rounded-xl text-left text-sm text-white hover:bg-gray-600 transition-colors w-full"
+          className="bg-white/10 backdrop-blur-sm border border-white/20 p-3 rounded-xl text-left text-sm text-white hover:bg-white/20 transition-colors w-full"
       >
           <p className="font-semibold">{title}</p>
-          <p className="text-gray-400 block">{description}</p>
+          <p className="text-gray-300 block">{description}</p>
       </button>
   );
 
@@ -112,18 +113,29 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         </div>
       </header>
       
-      <div className={`flex-1 overflow-y-auto ${chatSession && chatSession.messages.length > 0 ? 'p-4' : ''}`}>
+      <div className={`flex-1 overflow-y-auto ${chatSession && chatSession.messages.length > 0 ? 'p-4' : 'p-0'}`}>
         {chatSession && chatSession.messages.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-4 max-w-4xl mx-auto w-full">
             {chatSession.messages.map((msg) => (
-              <ChatMessageComponent key={msg.id} message={msg} />
+              <ChatMessageComponent key={msg.id} message={msg} onEditVideoPrompt={onEditVideoPrompt} />
             ))}
              <div ref={messagesEndRef} />
           </div>
         ) : (
-          <div className="relative min-h-full w-full flex items-start justify-center p-4">
-            <div className="relative z-20 flex flex-col items-center text-center text-white w-full">
+          <div className="relative h-full w-full overflow-hidden flex items-center justify-center">
+             <iframe
+                className="absolute top-1/2 left-1/2 w-full h-full -translate-x-1/2 -translate-y-1/2 z-0 pointer-events-none"
+                style={{ minWidth: '177.77vh', minHeight: '100vw' }} // Maintain 16:9 aspect ratio and cover all screen sizes
+                src="https://www.youtube.com/embed/xkz3agPTcbo?autoplay=1&mute=1&loop=1&playlist=xkz3agPTcbo&controls=0&showinfo=0&autohide=1&modestbranding=1&rel=0&iv_load_policy=3"
+                frameBorder="0"
+                allow="autoplay; encrypted-media"
+                title="Background Video"
+            ></iframe>
+            <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-60 z-10"></div>
+
+            <div className="relative z-20 flex flex-col items-center text-center text-white w-full p-4 h-full overflow-y-auto justify-center">
                 <div className="w-full pt-8 sm:pt-12">
+                    <RatelLogo className="w-16 h-16 text-white mx-auto mb-4" />
                     <h1 className="text-5xl font-bold">Ratel AI</h1>
                     <p className="mt-2 mb-6 max-w-md mx-auto text-gray-300">Your friendly AI companion for Africa.</p>
                 </div>
@@ -155,20 +167,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                               prompt={t('chatWindow.examples.story_prompt')}
                           />
                       </div>
-                    </div>
-                    
-                    <div className="max-w-lg mx-auto">
-                        <h3 className="text-sm font-semibold text-gray-400 mb-2 text-center">Video Example (what you can generate)</h3>
-                        <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-lg">
-                            <iframe
-                                className="w-full h-full"
-                                src="https://www.youtube.com/embed/xkz3agPTcbo"
-                                title="YouTube video player - Pet Honey Badger"
-                                frameBorder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                allowFullScreen
-                            ></iframe>
-                        </div>
                     </div>
                 </div>
             </div>
