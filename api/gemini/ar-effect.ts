@@ -27,8 +27,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                     { text: prompt } 
                 ] 
             },
+            // FIX: Corrected the config to only request an image modality, which is what this model is designed for.
             config: { 
-                responseModalities: [Modality.IMAGE, Modality.TEXT],
+                responseModalities: [Modality.IMAGE],
             },
         });
         

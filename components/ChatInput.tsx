@@ -41,7 +41,6 @@ interface SpeechRecognition extends EventTarget {
   onerror: (event: SpeechRecognitionErrorEvent) => void;
   start: () => void;
   stop: () => void;
-  // FIX: The 'abort' method was missing from the SpeechRecognition interface definition, causing a TypeScript error.
   abort: () => void;
 }
 
@@ -60,6 +59,7 @@ interface ChatInputProps {
   onSendMessage: (message: string, image?: { data: string; mimeType: string }) => void;
   isLoading: boolean;
   onNewChat: () => void;
+  isTransparent?: boolean;
 }
 
 const blobToBase64 = (blob: Blob): Promise<string> => {
@@ -74,7 +74,7 @@ const blobToBase64 = (blob: Blob): Promise<string> => {
     });
 };
 
-const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
+const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, isTransparent }) => {
   const { t, i18n } = useTranslation();
   const [input, setInput] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -112,7 +112,6 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
         onSendMessage(trimmedInput, { data: base64Data, mimeType: imageFile.type });
       } catch (error) {
         console.error("Error reading image file:", error);
-        // Optionally show an error message to the user here
         return;
       }
     } else {
@@ -147,16 +146,10 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = true;
-    recognition.lang = i18n.language; // Use current language for speech recognition
+    recognition.lang = i18n.language;
 
-    recognition.onstart = () => {
-      setIsRecording(true);
-    };
-
-    recognition.onend = () => {
-      setIsRecording(false);
-    };
-
+    recognition.onstart = () => setIsRecording(true);
+    recognition.onend = () => setIsRecording(false);
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error('Speech recognition error:', event.error);
       const defaultPlaceholder = t('chatInput.placeholder');
@@ -165,41 +158,19 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
         setTimeout(() => setPlaceholder(defaultPlaceholder), 3000);
       }
     };
-
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let finalTranscript = '';
-      let interimTranscript = '';
-
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
-        } else {
-          interimTranscript += event.results[i][0].transcript;
-        }
-      }
-
-      setInput(prev => prev + finalTranscript);
-      if (interimTranscript) {
-          setInput(finalTranscript + interimTranscript);
-      }
-
-      if (finalTranscript) {
-          setTimeout(() => {
-              const messageToSend = finalTranscript.trim();
-              onSendMessage(messageToSend);
-              setInput('');
-          }, 500);
+      const transcript = Array.from(event.results)
+        .map(result => result[0])
+        .map(result => result.transcript)
+        .join('');
+      setInput(transcript);
+      if (event.results[event.results.length - 1].isFinal) {
+        handleSendMessage();
       }
     };
-
     recognitionRef.current = recognition;
-    
-    // Update lang if app language changes
-    return () => {
-        recognition.abort();
-    }
-
-  }, [onSendMessage, i18n.language, t]);
+    return () => recognition.abort();
+  }, [handleSendMessage, i18n.language, t]);
 
   const toggleRecording = () => {
     playSound('click');
@@ -240,7 +211,11 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
             </button>
           </div>
         )}
-        <div className="flex items-end gap-2 bg-gray-700 border border-gray-600 rounded-xl p-2 transition-all focus-within:border-green-500 focus-within:ring-1 focus-within:ring-green-500">
+        <div className={`flex items-end gap-2 rounded-xl p-2 transition-all focus-within:ring-2 focus-within:ring-green-500 ${
+          isTransparent 
+            ? 'bg-gray-900 border border-gray-700' 
+            : 'bg-gray-100 border border-gray-300'
+        }`}>
             <input
               type="file"
               ref={fileInputRef}
@@ -250,7 +225,9 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
             />
             <button
                 onClick={handleAttachClick}
-                className={'p-2 rounded-full transition-colors hover:bg-gray-600 text-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500'}
+                className={`p-2 rounded-full transition-colors focus:outline-none ${
+                    isTransparent ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-200'
+                }`}
                 aria-label={t('chatInput.attachImage')}
                 disabled={isLoading}
             >
@@ -262,15 +239,19 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={placeholder}
-                className="flex-1 bg-transparent resize-none focus:outline-none p-2 max-h-48 text-white placeholder-gray-400"
+                className={`flex-1 bg-transparent resize-none focus:outline-none p-2 max-h-48 ${
+                  isTransparent ? 'text-white placeholder-gray-400' : 'text-gray-800 placeholder-gray-500'
+                }`}
                 rows={1}
                 disabled={isLoading}
                 aria-label="Chat input"
             />
             <button
                 onClick={toggleRecording}
-                className={`p-2 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${
-                    isRecording ? 'bg-red-500 text-white' : 'hover:bg-gray-600 text-gray-400'
+                className={`p-2 rounded-full transition-colors focus:outline-none ${
+                    isRecording 
+                        ? 'bg-red-500 text-white' 
+                        : (isTransparent ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-500 hover:bg-gray-200')
                 }`}
                 aria-label={isRecording ? t('chatInput.stopRecording') : t('chatInput.startRecording')}
                 disabled={isLoading}
@@ -280,7 +261,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading }) => {
             <button
                 onClick={handleSendMessage}
                 disabled={(!input.trim() && !imageFile) || isLoading}
-                className="p-2 bg-green-600 text-white rounded-full disabled:bg-green-800 disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                className="p-3 bg-green-600 text-white rounded-full disabled:bg-green-800 disabled:cursor-not-allowed hover:bg-green-700 transition-colors focus:outline-none"
                 aria-label={t('chatInput.sendMessage')}
             >
                 <SendIcon className="w-6 h-6" />

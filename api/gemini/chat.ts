@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI, GenerateContentResponse } from '@google/genai';
+import { taskTools } from '../../constants';
 
 const API_KEY = process.env.API_KEY;
 
@@ -27,6 +28,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             contents: contents,
             config: {
                 systemInstruction: systemInstruction,
+                tools: taskTools,
             },
         });
         

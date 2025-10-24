@@ -4,7 +4,7 @@ import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { UserIcon, RatelLogo, CopyIcon, CheckIcon, SpeakerIcon, StopIcon, ExpandIcon, DownloadIcon, GlobeIcon, EditIcon } from '../constants';
+import { UserIcon, RatelLogo, CopyIcon, CheckIcon, SpeakerIcon, StopIcon, ExpandIcon, DownloadIcon, GlobeIcon } from '../constants';
 import { ChatMessage, MessagePart } from '../types';
 import TaskList from './TaskList';
 import { playSound, generateAudioBlob } from '../services/audioService';
@@ -73,7 +73,7 @@ const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message }) => {
   if (isVideoMessage && !isUser) {
     return (
       <div className="flex justify-center my-4">
-        <div className="w-full max-w-lg bg-gray-700 rounded-2xl p-3 space-y-2">
+        <div className="w-full max-w-lg bg-gray-100 border border-gray-200 rounded-2xl p-3 space-y-2">
           {messageParts}
         </div>
       </div>
@@ -83,12 +83,12 @@ const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message }) => {
   return (
     <div className={`flex items-start gap-3 ${isUser ? 'justify-end' : ''}`}>
       {!isUser && (
-        <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
           <RatelLogo className="w-5 h-5 text-green-500" />
         </div>
       )}
       <div className={`max-w-xl ${isUser ? 'order-1' : 'order-2'}`}>
-        <div className={`p-3 rounded-2xl ${isUser ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-200'}`}>
+        <div className={`p-3 rounded-2xl ${isUser ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
           {messageParts}
         </div>
       </div>
@@ -115,26 +115,19 @@ const MessagePartComponent: React.FC<{ part: MessagePart, handleTextToSpeech: (t
         case 'text':
             return (
                 <div>
-                  <div className="prose prose-sm max-w-none prose-invert prose-p:my-2 prose-headings:my-2 prose-ul:my-2 prose-li:my-0">
+                  <div className="prose prose-sm max-w-none prose-p:my-2 prose-headings:my-2 prose-ul:my-2 prose-li:my-0">
                     <Markdown
                       remarkPlugins={[remarkGfm]}
                       components={{
-                        // FIX: Destructured `inline` prop and added a check to differentiate between
-                        // inline code and code blocks. Removed `...props` from `SyntaxHighlighter` to fix
-                        // a 'ref' type incompatibility error caused by recent versions of react-markdown.
-                        // FIX: The 'inline' prop is deprecated in recent versions of react-markdown.
-                        // Differentiating between code blocks and inline code is now done by checking for a language class.
                         code({ node, className, children, ...props }) {
                           const match = /language-(\w+)/.exec(className || '');
                           const codeText = String(children).replace(/\n$/, '');
                           return match ? (
                             <div className="relative">
-                              {/* FIX: Cast `oneDark` style to `any` to resolve TypeScript type incompatibility with the SyntaxHighlighter component. */}
                               <SyntaxHighlighter
                                 style={oneDark as any}
                                 language={match[1]}
                                 PreTag="div"
-                                /* {...props} was causing a ref type error */
                               >
                                 {codeText}
                               </SyntaxHighlighter>
@@ -146,9 +139,7 @@ const MessagePartComponent: React.FC<{ part: MessagePart, handleTextToSpeech: (t
                               </button>
                             </div>
                           ) : (
-                            // FIX: Spreading `...props` here can pass non-standard attributes to the `code` tag, causing a TypeScript error.
-                            // Only className and children are needed for inline code.
-                            <code className={`bg-gray-600/50 text-gray-200 rounded px-1.5 py-0.5 ${className || ''}`}>
+                            <code className={`bg-gray-200 text-gray-800 rounded px-1.5 py-0.5 ${className || ''}`}>
                               {children}
                             </code>
                           );
@@ -160,14 +151,14 @@ const MessagePartComponent: React.FC<{ part: MessagePart, handleTextToSpeech: (t
                   </div>
                    {part.groundingChunks && part.groundingChunks.length > 0 && (
                       <div className="mt-3 pt-2 border-t border-gray-500/50">
-                          <h4 className="text-xs font-semibold text-gray-400 mb-1 flex items-center gap-1.5">
+                          <h4 className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1.5">
                               <GlobeIcon className="w-3.5 h-3.5" />
                               Sources
                           </h4>
                           <ul className="text-xs space-y-1">
                               {part.groundingChunks.map((chunk, i) => (
                                 <li key={i}>
-                                    <a href={chunk.web?.uri} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline truncate block">
+                                    <a href={chunk.web?.uri} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate block">
                                       {chunk.web?.title}
                                     </a>
                                 </li>
@@ -175,7 +166,7 @@ const MessagePartComponent: React.FC<{ part: MessagePart, handleTextToSpeech: (t
                           </ul>
                       </div>
                   )}
-                  <button onClick={() => handleTextToSpeech(part.content)} className="mt-2 p-1 text-gray-400 hover:text-white">
+                  <button onClick={() => handleTextToSpeech(part.content)} className="mt-2 p-1 text-gray-400 hover:text-black">
                     {isAudioPlaying ? <StopIcon className="w-4 h-4" /> : <SpeakerIcon className="w-4 h-4" />}
                   </button>
                 </div>
@@ -222,11 +213,11 @@ const MessagePartComponent: React.FC<{ part: MessagePart, handleTextToSpeech: (t
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse [animation-delay:0.2s]"></div>
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse [animation-delay:0.4s]"></div>
-                    {part.content && <span className="text-sm text-gray-300">{part.content}</span>}
+                    {part.content && <span className="text-sm text-gray-500">{part.content}</span>}
                 </div>
             );
         case 'error':
-            return <p className="text-red-400 font-medium">{part.content}</p>;
+            return <p className="text-red-600 font-medium">{part.content}</p>;
         default:
             return null;
     }

@@ -51,7 +51,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // Asynchronously generate video and audio tracks
         const videoPromise = ai.models.generateVideos({
-            model: 'veo-2.0-generate-001',
+            // FIX: Updated model name to a recommended one from the guidelines.
+            model: 'veo-3.1-fast-generate-preview',
             prompt,
             ...(image && { image: { imageBytes: image.data, mimeType: image.mimeType } }),
             config: { numberOfVideos: 1 }

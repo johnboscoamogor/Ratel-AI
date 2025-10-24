@@ -1,26 +1,23 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import Sidebar from './Sidebar';
 import ChatWindow from './ChatWindow';
 import ImageStudio from './ImageStudio';
 import AudioStudio from './AudioStudio';
-import VideoStudio from './VideoStudio';
 import HustleStudio from './HustleStudio';
 import LearnStudio from './LearnStudio';
 import MarketSquare from './MarketStudio';
-import StorytellerStudio from './StorytellerStudio';
 import MobileWorkersStudio from './MobileWorkersStudio';
 import ProfileStudio from './ProfileStudio';
 import ProModal from './ProModal';
 import SupportModal from './SupportModal';
 import ExamplesStudio from './ExamplesStudio';
-import VideoArStudio from './VideoArStudio';
-import { ChatSession, UserProfile, AppSettings, ChatMessage, MessagePart, RatelMode, Task, Story } from '../types';
+import { ChatSession, UserProfile, AppSettings, ChatMessage, RatelMode, Task, Story } from '../types';
 import { playSound } from '../services/audioService';
-// FIX: Changed import from 'ai' to specific service functions, as 'ai' is not exported from geminiService.
+// FIX: Changed imports to use the backend proxy functions instead of a direct 'ai' instance.
 import { streamChat, generateTitle, generateImage, editImage } from '../services/geminiService';
 import { GenerateContentResponse } from '@google/genai';
-// FIX: Changed import from the non-existent 'SYSTEM_INSTRUCTION' to the function 'createSystemInstruction'.
+// FIX: Imported the `createSystemInstruction` function instead of the non-existent `SYSTEM_INSTRUCTION` constant.
 import { createSystemInstruction } from '../constants';
 
 interface ChatViewProps {
@@ -46,23 +43,19 @@ const ChatView: React.FC<ChatViewProps> = ({
   
   const [showImageStudio, setShowImageStudio] = useState(false);
   const [showAudioStudio, setShowAudioStudio] = useState(false);
-  const [showVideoStudio, setShowVideoStudio] = useState(false);
   const [showHustleStudio, setShowHustleStudio] = useState(false);
   const [showLearnStudio, setShowLearnStudio] = useState(false);
   const [showMarketSquare, setShowMarketSquare] = useState(false);
   const [showMobileWorkersStudio, setShowMobileWorkersStudio] = useState(false);
-  const [showStorytellerStudio, setShowStorytellerStudio] = useState(false);
   const [showProfileStudio, setShowProfileStudio] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
   const [proModalMessage, setProModalMessage] = useState<string | undefined>(undefined);
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [showExamplesStudio, setShowExamplesStudio] = useState(false);
-  const [showVideoArStudio, setShowVideoArStudio] = useState(false);
 
   const [initialStudioData, setInitialStudioData] = useState<any>({});
   
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [stories, setStories] = useState<Story[]>([]);
   
   // Load data on mount
   useEffect(() => {
@@ -84,9 +77,6 @@ const ChatView: React.FC<ChatViewProps> = ({
       const savedTasks = localStorage.getItem('ratel_tasks');
       if(savedTasks) setTasks(JSON.parse(savedTasks));
 
-      const savedStories = localStorage.getItem('ratel_stories');
-      if(savedStories) setStories(JSON.parse(savedStories));
-
     } catch (e) {
       console.error("Failed to load user data:", e);
       handleNewChat();
@@ -102,10 +92,6 @@ const ChatView: React.FC<ChatViewProps> = ({
   useEffect(() => {
     localStorage.setItem('ratel_tasks', JSON.stringify(tasks));
   }, [tasks]);
-
-  useEffect(() => {
-    localStorage.setItem('ratel_stories', JSON.stringify(stories));
-  }, [stories]);
 
   useEffect(() => {
     i18n.changeLanguage(settings.language);
@@ -133,115 +119,6 @@ const ChatView: React.FC<ChatViewProps> = ({
     setHistory(prev => prev.map(chat => chat.id === id ? { ...chat, title: newTitle } : chat));
   }, []);
 
-  // FIX: Replaced client-side Gemini logic with calls to the backend proxy service functions.
-  const handleSendMessage = useCallback(async (message: string, image?: { data: string; mimeType: string }) => {
-    if (!currentChatId || !currentChat) return;
-
-    const userMessage: ChatMessage = {
-      id: crypto.randomUUID(),
-      role: 'user',
-      parts: image
-        ? [{ type: 'text', content: message }, { type: 'image', content: image.data, mimeType: image.mimeType }]
-        : [{ type: 'text', content: message }],
-      timestamp: Date.now()
-    };
-    addMessageToChat(userMessage);
-    setIsLoading(true);
-
-    // Create a placeholder for the streaming response
-    const responseMessageId = crypto.randomUUID();
-    const placeholderMessage: ChatMessage = {
-        id: responseMessageId,
-        role: 'model',
-        parts: [{ type: 'loading', content: '' }],
-        timestamp: Date.now()
-    };
-    addMessageToChat(placeholderMessage);
-
-    try {
-        const geminiHistory = currentChat.messages
-            .filter(m => m.id !== userMessage.id) // Exclude the message we just added
-            .filter(m => m.role !== 'system' && m.parts[0]?.type !== 'error' && m.parts[0]?.type !== 'loading')
-            .map(m => ({
-                role: m.role,
-                parts: m.parts.map(p => {
-                    if (p.type === 'image') return { inlineData: { mimeType: p.mimeType, data: p.content } };
-                    return { text: p.content };
-                })
-            }));
-
-        const reader = await streamChat(geminiHistory, message, image, createSystemInstruction(settings));
-        const decoder = new TextDecoder();
-        let fullText = "";
-        let groundingChunks: any[] = [];
-
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const chunkStr = decoder.decode(value);
-            // The stream sends newline-delimited JSONs.
-            const jsonStrs = chunkStr.split('\n').filter(s => s.trim());
-
-            for (const jsonStr of jsonStrs) {
-                const chunk = JSON.parse(jsonStr) as GenerateContentResponse;
-                fullText += chunk.text || '';
-                if (chunk.candidates?.[0]?.groundingMetadata?.groundingChunks) {
-                    groundingChunks.push(...chunk.candidates[0].groundingMetadata.groundingChunks);
-                }
-                
-                // Update the placeholder message with the streaming content
-                updateCurrentChat(chat => ({
-                    ...chat,
-                    messages: chat.messages.map(msg => 
-                        msg.id === responseMessageId
-                        ? { ...msg, parts: [{ type: 'text', content: fullText, groundingChunks }] }
-                        : msg
-                    )
-                }));
-            }
-        }
-        
-        // Final update to clean up the message part
-        updateCurrentChat(chat => ({
-            ...chat,
-            messages: chat.messages.map(msg => {
-                if(msg.id === responseMessageId) {
-                    const finalPart: MessagePart = { type: 'text', content: fullText.trim() };
-                    if(groundingChunks.length > 0) finalPart.groundingChunks = groundingChunks;
-                    return { ...msg, parts: [finalPart] };
-                }
-                return msg;
-            })
-        }));
-        
-        addXp(5);
-        
-        if (currentChat.messages.length <= 2) { // User message + placeholder
-            const titlePrompt = `Create a very short, concise title (4-5 words max) for this user's first prompt: "${message}"`;
-            const newTitle = await generateTitle(titlePrompt);
-            onRenameChat(currentChatId, newTitle.replace(/"/g, ''));
-        }
-
-    } catch (e) {
-      console.error("Failed to send message:", e);
-      // Replace the placeholder with an error message
-       updateCurrentChat(chat => ({
-            ...chat,
-            messages: chat.messages.map(msg => 
-                msg.id === responseMessageId
-                ? {
-                    id: responseMessageId,
-                    role: 'model',
-                    parts: [{ type: 'error', content: e instanceof Error ? e.message : "An unknown error occurred." }],
-                    timestamp: Date.now()
-                } : msg)
-        }));
-    } finally {
-        setIsLoading(false);
-    }
-  }, [currentChatId, currentChat, addMessageToChat, addXp, onRenameChat, settings, updateCurrentChat]);
-
   const handleNewChat = useCallback(() => {
     playSound('click');
     const newChat: ChatSession = {
@@ -262,11 +139,11 @@ const ChatView: React.FC<ChatViewProps> = ({
 
   const onDeleteChat = (id: string) => {
     playSound('click');
-    setHistory(prev => prev.filter(chat => chat.id !== id));
+    const newHistory = history.filter(chat => chat.id !== id);
+    setHistory(newHistory);
     if (currentChatId === id) {
-        const remainingChats = history.filter(chat => chat.id !== id);
-        if(remainingChats.length > 0) {
-            const sorted = [...remainingChats].sort((a,b) => b.timestamp - a.timestamp);
+        if (newHistory.length > 0) {
+            const sorted = [...newHistory].sort((a,b) => b.timestamp - a.timestamp);
             setCurrentChatId(sorted[0].id);
         } else {
              handleNewChat();
@@ -279,18 +156,155 @@ const ChatView: React.FC<ChatViewProps> = ({
           updateCurrentChat(chat => ({ ...chat, messages: [] }));
       }
   };
-  
-  const handleEditVideoPrompt = (originalMessage: ChatMessage) => {
-      const videoPart = originalMessage.parts.find(p => p.type === 'video');
-      if (videoPart) {
-          setInitialStudioData({
-              initialPrompt: videoPart.content.prompt,
-              initialDialogue: originalMessage.videoDialogue,
-              initialAmbiance: originalMessage.videoAmbiance,
-          });
-          setShowVideoStudio(true);
-      }
+
+  // --- Task Management ---
+  const handleAddTask = useCallback((args: { description: string, reminder?: string }) => {
+      const newTask: Task = {
+          id: crypto.randomUUID(),
+          description: args.description,
+          completed: false,
+          reminder: args.reminder,
+      };
+      setTasks(prev => [...prev, newTask]);
+      addMessageToChat({
+          id: crypto.randomUUID(),
+          role: 'model',
+          parts: [{ type: 'text', content: `✅ Okay, I've added "${args.description}" to your to-do list.` }],
+          timestamp: Date.now(),
+      });
+  }, [addMessageToChat]);
+
+  const handleShowTasks = useCallback(() => {
+      addMessageToChat({
+          id: crypto.randomUUID(),
+          role: 'model',
+          parts: [{ type: 'tasks', content: { tasks, onToggleTask: (taskId: string) => handleToggleTask(taskId) } }],
+          timestamp: Date.now(),
+      });
+  }, [addMessageToChat, tasks]);
+
+  const handleToggleTask = (taskId: string) => {
+      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t));
   };
+  
+  // Update the show tasks message whenever tasks change
+  useEffect(() => {
+      if(currentChatId) {
+          updateCurrentChat(chat => ({
+              ...chat,
+              messages: chat.messages.map(msg => {
+                  if (msg.parts[0]?.type === 'tasks') {
+                      return { ...msg, parts: [{ type: 'tasks', content: { tasks, onToggleTask: handleToggleTask }}]};
+                  }
+                  return msg;
+              })
+          }))
+      }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tasks, currentChatId]);
+
+
+  // --- Message Sending & Streaming ---
+  const handleSendMessage = useCallback(async (message: string, image?: { data: string; mimeType: string }) => {
+    if (!currentChatId) return;
+
+    const userMessage: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: 'user',
+      parts: image
+        ? [{ type: 'text', content: message }, { type: 'image', content: image.data, mimeType: image.mimeType }]
+        : [{ type: 'text', content: message }],
+      timestamp: Date.now()
+    };
+    addMessageToChat(userMessage);
+    setIsLoading(true);
+    addXp(5);
+
+    // Auto-generate title for the first message
+    if (currentChat && currentChat.messages.length <= 1) {
+        generateTitle(`Create a very short, concise title (4-5 words max) for this user's first prompt: "${message}"`)
+            .then(newTitle => onRenameChat(currentChatId, newTitle.replace(/"/g, '')))
+            .catch(e => console.error("Title generation failed:", e));
+    }
+    
+    // Process stream from backend
+    try {
+        const geminiHistory = (currentChat?.messages || [])
+            .filter(m => m.role !== 'system' && m.parts[0]?.type !== 'error' && m.parts[0]?.type !== 'loading')
+            .map(m => ({
+                role: m.role,
+                parts: m.parts.map(p => {
+                    if (p.type === 'image') return { inlineData: { mimeType: p.mimeType, data: p.content } };
+                    return { text: p.content };
+                })
+            }));
+
+        const reader = await streamChat(geminiHistory, message, image, createSystemInstruction(settings));
+        
+        const messageId = crypto.randomUUID();
+        addMessageToChat({ id: messageId, role: 'model', parts: [{ type: 'loading', content: '' }], timestamp: Date.now() });
+
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let fullText = '';
+        let functionCalls: any[] = [];
+        
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+                if (line.trim() === '') continue;
+                try {
+                    const chunk: GenerateContentResponse = JSON.parse(line);
+                    
+                    if (chunk.text) {
+                        fullText += chunk.text;
+                        updateCurrentChat(chat => ({
+                            ...chat,
+                            messages: chat.messages.map(msg => msg.id === messageId ? { ...msg, parts: [{ type: 'text', content: fullText }] } : msg)
+                        }));
+                    }
+                    if (chunk.functionCalls) {
+                        functionCalls.push(...chunk.functionCalls);
+                    }
+                } catch (e) {
+                    console.error("Error parsing stream chunk:", e, "Line:", line);
+                }
+            }
+        }
+        
+        if (functionCalls.length > 0) {
+            // Remove the loading message
+            updateCurrentChat(chat => ({...chat, messages: chat.messages.filter(msg => msg.id !== messageId)}));
+            for (const fc of functionCalls) {
+                if (fc.name === 'addTask') handleAddTask(fc.args);
+                if (fc.name === 'showTasks') handleShowTasks();
+            }
+        } else {
+            // Finalize the text message
+            updateCurrentChat(chat => ({
+                ...chat,
+                messages: chat.messages.map(msg => msg.id === messageId ? { ...msg, parts: [{ type: 'text', content: fullText }] } : msg)
+            }));
+        }
+
+    } catch (e) {
+      console.error("Failed to send message:", e);
+      addMessageToChat({
+        id: crypto.randomUUID(),
+        role: 'model',
+        parts: [{ type: 'error', content: e instanceof Error ? e.message : "An unknown error occurred." }],
+        timestamp: Date.now()
+      });
+    } finally {
+        setIsLoading(false);
+    }
+  }, [currentChatId, addMessageToChat, addXp, currentChat, onRenameChat, settings, updateCurrentChat, handleAddTask, handleShowTasks]);
 
   // --- Studio Handlers ---
 
@@ -298,33 +312,16 @@ const ChatView: React.FC<ChatViewProps> = ({
     setShowImageStudio(false);
     trackInterest('image');
     addXp(10);
-    const userMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: 'user',
-        parts: [{ type: 'text', content: `Generate an image of: ${prompt} (Aspect ratio: ${aspectRatio})` }],
-        timestamp: Date.now()
-    };
-    addMessageToChat(userMessage);
-    setIsLoading(true);
-
+    addMessageToChat({ id: crypto.randomUUID(), role: 'user', parts: [{ type: 'text', content: `Generate an image: ${prompt}` }], timestamp: Date.now() });
+    const loadingId = crypto.randomUUID();
+    addMessageToChat({ id: loadingId, role: 'model', parts: [{ type: 'loading', content: 'Generating image...' }], timestamp: Date.now() });
+    
     try {
-        const base64ImageBytes = await generateImage(prompt, aspectRatio);
-        addMessageToChat({
-            id: crypto.randomUUID(),
-            role: 'model',
-            parts: [{ type: 'image', content: base64ImageBytes, mimeType: 'image/png' }],
-            timestamp: Date.now()
-        });
-    } catch(e) {
-        console.error(e);
-        addMessageToChat({
-            id: crypto.randomUUID(),
-            role: 'model',
-            parts: [{ type: 'error', content: e instanceof Error ? e.message : "Image generation failed." }],
-            timestamp: Date.now()
-        });
-    } finally {
-        setIsLoading(false);
+        const base64Image = await generateImage(prompt, aspectRatio);
+        updateCurrentChat(chat => ({ ...chat, messages: chat.messages.filter(m => m.id !== loadingId) }));
+        addMessageToChat({ id: crypto.randomUUID(), role: 'model', parts: [{ type: 'image', content: base64Image, mimeType: 'image/png' }], timestamp: Date.now() });
+    } catch (e) {
+        updateCurrentChat(chat => ({ ...chat, messages: chat.messages.map(m => m.id === loadingId ? { ...m, parts: [{ type: 'error', content: e instanceof Error ? e.message : 'Image generation failed.' }] } : m) }));
     }
   };
   
@@ -332,116 +329,17 @@ const ChatView: React.FC<ChatViewProps> = ({
       setShowImageStudio(false);
       trackInterest('image');
       addXp(15);
-      
-      const userMessage: ChatMessage = {
-          id: crypto.randomUUID(),
-          role: 'user',
-          parts: [ { type: 'text', content: prompt }, { type: 'image', content: image.data, mimeType: image.mimeType } ],
-          timestamp: Date.now()
-      };
-      addMessageToChat(userMessage);
-      setIsLoading(true);
-      
-       try {
+      addMessageToChat({ id: crypto.randomUUID(), role: 'user', parts: [ { type: 'text', content: prompt }, { type: 'image', content: image.data, mimeType: image.mimeType } ], timestamp: Date.now() });
+      const loadingId = crypto.randomUUID();
+      addMessageToChat({ id: loadingId, role: 'model', parts: [{ type: 'loading', content: 'Editing image...' }], timestamp: Date.now() });
+
+      try {
             const editedImage = await editImage(image, prompt);
-            addMessageToChat({
-                id: crypto.randomUUID(),
-                role: 'model',
-                parts: [{ type: 'image', content: editedImage.data, mimeType: editedImage.mimeType }],
-                timestamp: Date.now()
-            });
-        } catch(e) {
-            console.error(e);
-            addMessageToChat({
-                id: crypto.randomUUID(),
-                role: 'model',
-                parts: [{ type: 'error', content: e instanceof Error ? e.message : "Image editing failed." }],
-                timestamp: Date.now()
-            });
-        } finally {
-            setIsLoading(false);
-        }
-  };
-
-  const handleGenerateVideo = async (prompt: string, image?: { data: string; mimeType: string }, dialogue?: string, ambiance?: string) => {
-    setShowVideoStudio(false);
-    trackInterest('video');
-    addXp(50);
-
-    const userMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: 'user',
-        parts: [{ type: 'text', content: `Create a video: ${prompt}` }],
-        timestamp: Date.now()
-    };
-    addMessageToChat(userMessage);
-
-    const loadingMessageId = crypto.randomUUID();
-    addMessageToChat({
-        id: loadingMessageId, role: 'model', parts: [{ type: 'loading', content: '' }], timestamp: Date.now()
-    });
-
-    try {
-        const loadingMessages = [
-            t('videoStudio.generating.video'), t('videoStudio.generating.audio'), t('videoStudio.generating.final')
-        ];
-        let msgIndex = 0;
-        const updateLoadingMessage = (message: string) => {
-            updateCurrentChat(chat => ({
-                ...chat,
-                messages: chat.messages.map(msg => msg.id === loadingMessageId ? { ...msg, parts: [{ type: 'loading', content: message }] } : msg)
-            }));
-        };
-        updateLoadingMessage(loadingMessages[msgIndex]);
-        const interval = setInterval(() => {
-            msgIndex = (msgIndex + 1) % loadingMessages.length;
-            updateLoadingMessage(loadingMessages[msgIndex]);
-        }, 4000);
-
-        // Call the new backend function
-        const response = await fetch('/api/video/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                prompt, 
-                image, 
-                dialogue, 
-                ambiance,
-                voiceId: settings.voice.selectedVoice 
-            })
-        });
-        
-        clearInterval(interval);
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.details || errorData.error || 'Video generation failed.');
-        }
-
-        const data = await response.json();
-        
-        const finalMessage: ChatMessage = {
-            id: crypto.randomUUID(),
-            role: 'model',
-            parts: [{ type: 'video', content: { url: data.videoUrl, prompt } }],
-            timestamp: Date.now(),
-            ...(data.dialogueAudioBase64 && { audioUrl: `data:audio/mp3;base64,${data.dialogueAudioBase64}` }),
-            ...(dialogue && { videoDialogue: dialogue }),
-            ...(data.ambianceAudioBase64 && { ambianceUrl: `data:audio/mp3;base64,${data.ambianceAudioBase64}` }),
-            ...(ambiance && { videoAmbiance: ambiance }),
-        };
-
-        updateCurrentChat(chat => ({ ...chat, messages: chat.messages.filter(msg => msg.id !== loadingMessageId).concat(finalMessage) }));
-
-    } catch (e) {
-        console.error(e);
-        updateCurrentChat(chat => ({
-            ...chat,
-            messages: chat.messages.map(msg => msg.id === loadingMessageId ? {
-                id: loadingMessageId, role: 'model', parts: [{ type: 'error', content: e instanceof Error ? e.message : "Video generation failed." }], timestamp: Date.now()
-            } : msg)
-        }));
-    }
+            updateCurrentChat(chat => ({...chat, messages: chat.messages.filter(m => m.id !== loadingId)}));
+            addMessageToChat({ id: crypto.randomUUID(), role: 'model', parts: [{ type: 'image', content: editedImage.data, mimeType: editedImage.mimeType }], timestamp: Date.now() });
+      } catch (e) {
+          updateCurrentChat(chat => ({ ...chat, messages: chat.messages.map(m => m.id === loadingId ? { ...m, parts: [{ type: 'error', content: e instanceof Error ? e.message : 'Image editing failed.' }] } : m) }));
+      }
   };
 
   const handleStudioAction = (mode: RatelMode, prompt: string) => {
@@ -453,18 +351,13 @@ const ChatView: React.FC<ChatViewProps> = ({
     setShowMarketSquare(false);
   };
   
-  const handleStoryGenerated = (story: Story) => {
-      setStories(prev => [story, ...prev]);
-      addXp(25);
-  };
-  
   const openStudio = (setter: React.Dispatch<React.SetStateAction<boolean>>, initialData = {}) => {
       setInitialStudioData(initialData);
       setter(true);
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-gray-900 overflow-hidden">
       <Sidebar
         history={history}
         currentChatId={currentChatId}
@@ -479,15 +372,12 @@ const ChatView: React.FC<ChatViewProps> = ({
         onRenameChat={onRenameChat}
         onOpenImageStudio={() => openStudio(setShowImageStudio)}
         onOpenAudioStudio={() => openStudio(setShowAudioStudio)}
-        onOpenVideoStudio={() => openStudio(setShowVideoStudio)}
         onOpenHustleStudio={() => openStudio(setShowHustleStudio)}
         onOpenLearnStudio={() => openStudio(setShowLearnStudio)}
         onOpenMarketSquare={() => openStudio(setShowMarketSquare)}
         onOpenMobileWorkersStudio={() => openStudio(setShowMobileWorkersStudio)}
-        onOpenStorytellerStudio={() => openStudio(setShowStorytellerStudio)}
         onOpenProfileStudio={() => openStudio(setShowProfileStudio)}
         onOpenProModal={() => { setProModalMessage(undefined); setShowProModal(true); }}
-        onOpenVideoArStudio={() => openStudio(setShowVideoArStudio)}
         onOpenExamplesStudio={() => openStudio(setShowExamplesStudio)}
         setPage={setPage}
         onLogout={onLogout}
@@ -502,24 +392,21 @@ const ChatView: React.FC<ChatViewProps> = ({
           onOpenSupportModal={() => setShowSupportModal(true)}
           settings={settings}
           setSettings={setSettings}
-          onEditVideoPrompt={handleEditVideoPrompt}
+          userProfile={userProfile}
         />
       </main>
       
       {/* Modals and Studios */}
       {showImageStudio && <ImageStudio onClose={() => setShowImageStudio(false)} onGenerate={handleGenerateImage} onEdit={handleEditImage} isLoading={isLoading} initialPrompt={initialStudioData.initialPrompt} />}
       {showAudioStudio && <AudioStudio onClose={() => setShowAudioStudio(false)} />}
-      {showVideoStudio && <VideoStudio onClose={() => setShowVideoStudio(false)} onGenerate={handleGenerateVideo} isLoading={isLoading} {...initialStudioData} />}
       {showHustleStudio && <HustleStudio onClose={() => setShowHustleStudio(false)} isLoading={isLoading} onAction={(type, data) => handleStudioAction('hustle', `Give me hustle ideas based on: ${data.input}`)} />}
       {showLearnStudio && <LearnStudio onClose={() => setShowLearnStudio(false)} onAction={(skill, isTutor) => handleStudioAction('learn', isTutor ? `I want to learn about ${skill}. Act as an expert tutor.` : `Teach me the basics of ${skill}.`)} />}
       {showMarketSquare && <MarketSquare onClose={() => setShowMarketSquare(false)} isLoading={isLoading} onAiSearch={(item, location) => handleStudioAction('market', `Find a ${item} for sale in ${location}`)} userProfile={userProfile} />}
       {showMobileWorkersStudio && <MobileWorkersStudio onClose={() => setShowMobileWorkersStudio(false)} userProfile={userProfile} />}
-      {showStorytellerStudio && <StorytellerStudio onClose={() => setShowStorytellerStudio(false)} onStoryGenerated={handleStoryGenerated} settings={settings} onOpenProModal={(msg) => { setProModalMessage(msg); setShowProModal(true); }} />}
       {showProfileStudio && <ProfileStudio onClose={() => setShowProfileStudio(false)} userProfile={userProfile} setUserProfile={setUserProfile} />}
       {showProModal && <ProModal onClose={() => setShowProModal(false)} message={proModalMessage} />}
       {showSupportModal && <SupportModal onClose={() => setShowSupportModal(false)} />}
       {showExamplesStudio && <ExamplesStudio onClose={() => setShowExamplesStudio(false)} onSelectExample={prompt => { setShowExamplesStudio(false); handleSendMessage(prompt); }} />}
-      {showVideoArStudio && <VideoArStudio onClose={() => setShowVideoArStudio(false)} />}
     </div>
   );
 };
