@@ -2,7 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ChatMessageComponent from './ChatMessage';
 import ChatInput from './ChatInput';
+// FIX: Added UserProfile to imports to accept the userProfile prop.
 import { ChatSession, AppSettings, UserProfile, ChatMessage } from '../types';
+// FIX: Added UserIcon and ChevronDownIcon for UI updates in the header.
 import { MenuIcon, CoffeeIcon, ChevronDownIcon, UserIcon, RatelLogo } from '../constants';
 import LanguageSwitcher from './LanguageSwitcher';
 import { playSound } from '../services/audioService';
@@ -16,6 +18,7 @@ interface ChatWindowProps {
   onOpenSupportModal: () => void;
   settings: AppSettings;
   setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
+  // FIX: Added userProfile prop to the interface to resolve the type error in ChatView.
   userProfile: UserProfile;
   onEditVideoPrompt: (originalMessage: ChatMessage) => void;
 }

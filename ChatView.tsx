@@ -19,7 +19,8 @@ import { ChatSession, UserProfile, AppSettings, ChatMessage, MessagePart, RatelM
 import { playSound } from '../services/audioService';
 import { ai } from '../services/geminiService';
 import { GenerateContentResponse } from '@google/genai';
-import { SYSTEM_INSTRUCTION, taskTools } from '../constants';
+// FIX: Replaced the incorrect import of `SYSTEM_INSTRUCTION` with the `createSystemInstruction` function.
+import { createSystemInstruction, taskTools } from './constants.tsx';
 
 interface ChatViewProps {
   userProfile: UserProfile;
@@ -36,7 +37,6 @@ interface ChatViewProps {
 const ChatView: React.FC<ChatViewProps> = ({
   userProfile, setUserProfile, settings, setSettings, setPage, onLogout, addXp, trackInterest, onLevelUp
 }) => {
-  // FIX: Destructured `i18n` from `useTranslation` to make it available in the component scope.
   const { t, i18n } = useTranslation();
   const [history, setHistory] = useState<ChatSession[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
@@ -64,6 +64,19 @@ const ChatView: React.FC<ChatViewProps> = ({
   const [stories, setStories] = useState<Story[]>([]);
   
   const chatSessionsRef = useRef<Map<string, any>>(new Map());
+
+  const handleNewChat = useCallback(() => {
+    playSound('click');
+    const newChat: ChatSession = {
+      id: crypto.randomUUID(),
+      title: 'New Chat',
+      messages: [],
+      timestamp: Date.now(),
+      mode: 'general',
+    };
+    setHistory(prev => [newChat, ...prev]);
+    setCurrentChatId(newChat.id);
+  }, []);
 
   // Load data on mount
   useEffect(() => {
@@ -112,6 +125,11 @@ const ChatView: React.FC<ChatViewProps> = ({
     i18n.changeLanguage(settings.language);
   }, [settings.language, i18n]);
 
+  // FIX: Clear cached chat sessions when settings change to ensure the new system instruction is applied.
+  useEffect(() => {
+    chatSessionsRef.current.clear();
+  }, [settings.chatTone, settings.customInstructions]);
+
   const currentChat = history.find(c => c.id === currentChatId);
 
   const updateCurrentChat = useCallback((updater: (chat: ChatSession) => ChatSession) => {
@@ -130,67 +148,10 @@ const ChatView: React.FC<ChatViewProps> = ({
     }));
   }, [updateCurrentChat]);
 
-  const streamMessageToChat = useCallback((stream: AsyncGenerator<GenerateContentResponse>) => {
-    const messageId = crypto.randomUUID();
-    
-    const placeholderMessage: ChatMessage = {
-      id: messageId,
-      role: 'model',
-      parts: [{ type: 'loading', content: '' }],
-      timestamp: Date.now()
-    };
-    addMessageToChat(placeholderMessage);
-
-    let fullText = "";
-    let groundingChunks: any[] = [];
-    
-    const processStream = async () => {
-        for await (const chunk of stream) {
-            fullText += chunk.text;
-            if (chunk.candidates?.[0]?.groundingMetadata?.groundingChunks) {
-                groundingChunks = chunk.candidates[0].groundingMetadata.groundingChunks;
-            }
-            
-            updateCurrentChat(chat => ({
-                ...chat,
-                messages: chat.messages.map(msg => 
-                    msg.id === messageId 
-                    ? { ...msg, parts: [{ type: 'text', content: fullText, groundingChunks }] } 
-                    : msg
-                )
-            }));
-        }
-        
-        updateCurrentChat(chat => ({
-            ...chat,
-            messages: chat.messages.map(msg => {
-                if(msg.id === messageId) {
-                    const finalPart: MessagePart = { type: 'text', content: fullText.trim() };
-                    if(groundingChunks.length > 0) finalPart.groundingChunks = groundingChunks;
-                    return { ...msg, parts: [finalPart] };
-                }
-                return msg;
-            })
-        }));
-    };
-    
-    processStream().catch(err => {
-        console.error("Error processing stream:", err);
-        const errorMessage: ChatMessage = {
-            id: crypto.randomUUID(),
-            role: 'model',
-            parts: [{ type: 'error', content: "Sorry, I couldn't process that. Please try again." }],
-            timestamp: Date.now()
-        };
-        updateCurrentChat(chat => ({
-            ...chat,
-            messages: chat.messages.filter(msg => msg.id !== messageId).concat(errorMessage)
-        }));
-    }).finally(() => setIsLoading(false));
-
-  }, [addMessageToChat, updateCurrentChat]);
-
-
+  const onRenameChat = useCallback((id: string, newTitle: string) => {
+    setHistory(prev => prev.map(chat => chat.id === id ? { ...chat, title: newTitle } : chat));
+  }, []);
+  
   const getOrCreateChatSession = useCallback(async (chatId: string) => {
     if (chatSessionsRef.current.has(chatId)) {
         return chatSessionsRef.current.get(chatId);
@@ -215,20 +176,15 @@ const ChatView: React.FC<ChatViewProps> = ({
         model: 'gemini-2.5-flash',
         history: geminiHistory,
         config: {
-            systemInstruction: SYSTEM_INSTRUCTION
+            // FIX: Replaced the incorrect constant with a call to the `createSystemInstruction` function.
+            systemInstruction: createSystemInstruction(settings)
         }
     });
 
     chatSessionsRef.current.set(chatId, newChatInstance);
     return newChatInstance;
 
-  }, [history]);
-  
-  // FIX: Moved `onRenameChat` before `handleSendMessage` to resolve usage-before-declaration error.
-  // Wrapped in useCallback for referential stability as it's a dependency of handleSendMessage.
-  const onRenameChat = useCallback((id: string, newTitle: string) => {
-    setHistory(prev => prev.map(chat => chat.id === id ? { ...chat, title: newTitle } : chat));
-  }, []);
+  }, [history, settings]);
 
   const handleSendMessage = useCallback(async (message: string, image?: { data: string; mimeType: string }) => {
     if (!currentChatId) return;
@@ -244,7 +200,18 @@ const ChatView: React.FC<ChatViewProps> = ({
     addMessageToChat(userMessage);
     setIsLoading(true);
 
+    const slugMessageId = crypto.randomUUID();
+    const slugMessage: ChatMessage = {
+        id: slugMessageId,
+        role: 'model',
+        parts: [{ type: 'text', content: 'Alright...' }],
+        timestamp: Date.now()
+    };
+    addMessageToChat(slugMessage);
+
     try {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
         const chat = await getOrCreateChatSession(currentChatId);
         if (!chat) throw new Error("Could not initialize chat session.");
 
@@ -253,13 +220,27 @@ const ChatView: React.FC<ChatViewProps> = ({
             parts.push({ inlineData: { mimeType: image.mimeType, data: image.data }});
         }
         
-        const resultStream = await chat.sendMessageStream({ message: { parts }});
-        
-        streamMessageToChat(resultStream);
+        const result = await chat.sendMessage({ message: { parts } });
+        const groundingChunks = result.candidates?.[0]?.groundingMetadata?.groundingChunks;
+
+        const modelResponsePart: MessagePart = {
+            type: 'text',
+            content: result.text.trim(),
+            ...(groundingChunks && { groundingChunks })
+        };
+
+        updateCurrentChat(chat => ({
+            ...chat,
+            messages: chat.messages.map(msg => 
+                msg.id === slugMessageId 
+                ? { ...msg, parts: [modelResponsePart], timestamp: Date.now() } 
+                : msg
+            )
+        }));
         
         addXp(5);
         
-        if (currentChat && currentChat.messages.length <= 1) {
+        if (currentChat && currentChat.messages.length <= 2) {
             const titlePrompt = `Create a very short, concise title (4-5 words max) for this user's first prompt: "${message}"`;
             const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: titlePrompt });
             const newTitle = response.text.replace(/"/g, '');
@@ -268,29 +249,22 @@ const ChatView: React.FC<ChatViewProps> = ({
 
     } catch (e) {
       console.error("Failed to send message:", e);
-      const errorMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: 'model',
-        parts: [{ type: 'error', content: e instanceof Error ? e.message : "An unknown error occurred." }],
-        timestamp: Date.now()
+      const errorMessagePart: MessagePart = { 
+          type: 'error', 
+          content: e instanceof Error ? e.message : "An unknown error occurred." 
       };
-      addMessageToChat(errorMessage);
-      setIsLoading(false);
+      updateCurrentChat(chat => ({
+          ...chat,
+          messages: chat.messages.map(msg => 
+              msg.id === slugMessageId 
+              ? { ...msg, parts: [errorMessagePart], timestamp: Date.now() } 
+              : msg
+          )
+      }));
+    } finally {
+        setIsLoading(false);
     }
-  }, [currentChatId, addMessageToChat, streamMessageToChat, addXp, getOrCreateChatSession, currentChat, onRenameChat]);
-
-  const handleNewChat = useCallback(() => {
-    playSound('click');
-    const newChat: ChatSession = {
-      id: crypto.randomUUID(),
-      title: 'New Chat',
-      messages: [],
-      timestamp: Date.now(),
-      mode: 'general',
-    };
-    setHistory(prev => [newChat, ...prev]);
-    setCurrentChatId(newChat.id);
-  }, []);
+  }, [currentChatId, addMessageToChat, addXp, getOrCreateChatSession, currentChat, onRenameChat, updateCurrentChat]);
 
   const onSelectChat = (id: string) => {
     playSound('click');
@@ -299,11 +273,11 @@ const ChatView: React.FC<ChatViewProps> = ({
 
   const onDeleteChat = (id: string) => {
     playSound('click');
-    setHistory(prev => prev.filter(chat => chat.id !== id));
+    const newHistory = history.filter(chat => chat.id !== id);
+    setHistory(newHistory);
     if (currentChatId === id) {
-        const remainingChats = history.filter(chat => chat.id !== id);
-        if(remainingChats.length > 0) {
-            const sorted = [...remainingChats].sort((a,b) => b.timestamp - a.timestamp);
+        if (newHistory.length > 0) {
+            const sorted = [...newHistory].sort((a,b) => b.timestamp - a.timestamp);
             setCurrentChatId(sorted[0].id);
         } else {
              handleNewChat();
@@ -554,6 +528,7 @@ const ChatView: React.FC<ChatViewProps> = ({
           onOpenSupportModal={() => setShowSupportModal(true)}
           settings={settings}
           setSettings={setSettings}
+          userProfile={userProfile}
           onEditVideoPrompt={handleEditVideoPrompt}
         />
       </main>

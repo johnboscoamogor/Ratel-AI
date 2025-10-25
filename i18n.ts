@@ -213,7 +213,7 @@ const resources = {
             "nicknameLabel": "How should Ratel call you?",
             "nicknamePlaceholder": "e.g., Oga John, Mama T, CodeMaster",
             "aboutYouLabel": "What would you like Ratel to know about you to provide better responses?",
-            "aboutYouPlaceholder": "e.g., I'm a student in Accra studying marketing. I love football and afrobeats music. My side hustle is graphic design.",
+            "aboutYouPlaceholder": "e.g., I'm a 25-year-old student in Accra studying marketing. I love football, afrobeats music, and my side hustle is graphic design.",
             "expectationsLabel": "How would you like Ratel to respond?",
             "expectationsPlaceholder": "e.g., Be direct and to the point. Use simple language. Feel free to use emojis. Always respond in Nigerian Pidgin unless I ask otherwise."
         },
