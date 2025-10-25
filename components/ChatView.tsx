@@ -4,21 +4,17 @@ import Sidebar from './Sidebar';
 import ChatWindow from './ChatWindow';
 import ImageStudio from './ImageStudio';
 import AudioStudio from './AudioStudio';
-import VideoStudio from './VideoStudio';
 import HustleStudio from './HustleStudio';
 import LearnStudio from './LearnStudio';
 import MarketSquare from './MarketStudio';
-import StorytellerStudio from './StorytellerStudio';
 import MobileWorkersStudio from './MobileWorkersStudio';
 import ProfileStudio from './ProfileStudio';
 import ProModal from './ProModal';
 import SupportModal from './SupportModal';
 import ExamplesStudio from './ExamplesStudio';
-import VideoArStudio from './VideoArStudio';
-import { ChatSession, UserProfile, AppSettings, ChatMessage, MessagePart, RatelMode, Task, Story } from '../types';
+import { ChatSession, UserProfile, AppSettings, ChatMessage, MessagePart, RatelMode, Task } from '../types';
 import { playSound } from '../services/audioService';
 import { ai } from '../services/geminiService';
-import { GenerateContentResponse } from '@google/genai';
 import { createSystemInstruction, taskTools } from '../constants';
 
 interface ChatViewProps {
@@ -44,23 +40,19 @@ const ChatView: React.FC<ChatViewProps> = ({
   
   const [showImageStudio, setShowImageStudio] = useState(false);
   const [showAudioStudio, setShowAudioStudio] = useState(false);
-  const [showVideoStudio, setShowVideoStudio] = useState(false);
   const [showHustleStudio, setShowHustleStudio] = useState(false);
   const [showLearnStudio, setShowLearnStudio] = useState(false);
   const [showMarketSquare, setShowMarketSquare] = useState(false);
   const [showMobileWorkersStudio, setShowMobileWorkersStudio] = useState(false);
-  const [showStorytellerStudio, setShowStorytellerStudio] = useState(false);
   const [showProfileStudio, setShowProfileStudio] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
   const [proModalMessage, setProModalMessage] = useState<string | undefined>(undefined);
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [showExamplesStudio, setShowExamplesStudio] = useState(false);
-  const [showVideoArStudio, setShowVideoArStudio] = useState(false);
 
   const [initialStudioData, setInitialStudioData] = useState<any>({});
   
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [stories, setStories] = useState<Story[]>([]);
   
   const chatSessionsRef = useRef<Map<string, any>>(new Map());
 
@@ -97,9 +89,6 @@ const ChatView: React.FC<ChatViewProps> = ({
       const savedTasks = localStorage.getItem('ratel_tasks');
       if(savedTasks) setTasks(JSON.parse(savedTasks));
 
-      const savedStories = localStorage.getItem('ratel_stories');
-      if(savedStories) setStories(JSON.parse(savedStories));
-
     } catch (e) {
       console.error("Failed to load user data:", e);
       handleNewChat();
@@ -115,10 +104,6 @@ const ChatView: React.FC<ChatViewProps> = ({
   useEffect(() => {
     localStorage.setItem('ratel_tasks', JSON.stringify(tasks));
   }, [tasks]);
-
-  useEffect(() => {
-    localStorage.setItem('ratel_stories', JSON.stringify(stories));
-  }, [stories]);
 
   useEffect(() => {
     i18n.changeLanguage(settings.language);
@@ -290,18 +275,6 @@ const ChatView: React.FC<ChatViewProps> = ({
           chatSessionsRef.current.delete(currentChatId);
       }
   };
-  
-  const handleEditVideoPrompt = (originalMessage: ChatMessage) => {
-      const videoPart = originalMessage.parts.find(p => p.type === 'video');
-      if (videoPart) {
-          setInitialStudioData({
-              initialPrompt: videoPart.content.prompt,
-              initialDialogue: originalMessage.videoDialogue,
-              initialAmbiance: originalMessage.videoAmbiance,
-          });
-          setShowVideoStudio(true);
-      }
-  };
 
   // --- Studio Handlers ---
 
@@ -387,87 +360,6 @@ const ChatView: React.FC<ChatViewProps> = ({
         }
   };
 
-  const handleGenerateVideo = async (prompt: string, image?: { data: string; mimeType: string }, dialogue?: string, ambiance?: string) => {
-    setShowVideoStudio(false);
-    trackInterest('video');
-    addXp(50);
-
-    const userMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: 'user',
-        parts: [{ type: 'text', content: `Create a video: ${prompt}` }],
-        timestamp: Date.now()
-    };
-    addMessageToChat(userMessage);
-
-    const loadingMessageId = crypto.randomUUID();
-    addMessageToChat({
-        id: loadingMessageId, role: 'model', parts: [{ type: 'loading', content: '' }], timestamp: Date.now()
-    });
-
-    try {
-        const loadingMessages = [
-            t('videoStudio.generating.video'), t('videoStudio.generating.audio'), t('videoStudio.generating.final')
-        ];
-        let msgIndex = 0;
-        const updateLoadingMessage = (message: string) => {
-            updateCurrentChat(chat => ({
-                ...chat,
-                messages: chat.messages.map(msg => msg.id === loadingMessageId ? { ...msg, parts: [{ type: 'loading', content: message }] } : msg)
-            }));
-        };
-        updateLoadingMessage(loadingMessages[msgIndex]);
-        const interval = setInterval(() => {
-            msgIndex = (msgIndex + 1) % loadingMessages.length;
-            updateLoadingMessage(loadingMessages[msgIndex]);
-        }, 4000);
-
-        // Call the new backend function
-        const response = await fetch('/api/video/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                prompt, 
-                image, 
-                dialogue, 
-                ambiance,
-                voiceId: settings.voice.selectedVoice 
-            })
-        });
-        
-        clearInterval(interval);
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.details || errorData.error || 'Video generation failed.');
-        }
-
-        const data = await response.json();
-        
-        const finalMessage: ChatMessage = {
-            id: crypto.randomUUID(),
-            role: 'model',
-            parts: [{ type: 'video', content: { url: data.videoUrl, prompt } }],
-            timestamp: Date.now(),
-            ...(data.dialogueAudioBase64 && { audioUrl: `data:audio/mp3;base64,${data.dialogueAudioBase64}` }),
-            ...(dialogue && { videoDialogue: dialogue }),
-            ...(data.ambianceAudioBase64 && { ambianceUrl: `data:audio/mp3;base64,${data.ambianceAudioBase64}` }),
-            ...(ambiance && { videoAmbiance: ambiance }),
-        };
-
-        updateCurrentChat(chat => ({ ...chat, messages: chat.messages.filter(msg => msg.id !== loadingMessageId).concat(finalMessage) }));
-
-    } catch (e) {
-        console.error(e);
-        updateCurrentChat(chat => ({
-            ...chat,
-            messages: chat.messages.map(msg => msg.id === loadingMessageId ? {
-                id: loadingMessageId, role: 'model', parts: [{ type: 'error', content: e instanceof Error ? e.message : "Video generation failed." }], timestamp: Date.now()
-            } : msg)
-        }));
-    }
-  };
-
   const handleStudioAction = (mode: RatelMode, prompt: string) => {
     trackInterest(mode);
     addXp(10);
@@ -475,11 +367,6 @@ const ChatView: React.FC<ChatViewProps> = ({
     setShowHustleStudio(false);
     setShowLearnStudio(false);
     setShowMarketSquare(false);
-  };
-  
-  const handleStoryGenerated = (story: Story) => {
-      setStories(prev => [story, ...prev]);
-      addXp(25);
   };
   
   const openStudio = (setter: React.Dispatch<React.SetStateAction<boolean>>, initialData = {}) => {
@@ -503,15 +390,12 @@ const ChatView: React.FC<ChatViewProps> = ({
         onRenameChat={onRenameChat}
         onOpenImageStudio={() => openStudio(setShowImageStudio)}
         onOpenAudioStudio={() => openStudio(setShowAudioStudio)}
-        onOpenVideoStudio={() => openStudio(setShowVideoStudio)}
         onOpenHustleStudio={() => openStudio(setShowHustleStudio)}
         onOpenLearnStudio={() => openStudio(setShowLearnStudio)}
         onOpenMarketSquare={() => openStudio(setShowMarketSquare)}
         onOpenMobileWorkersStudio={() => openStudio(setShowMobileWorkersStudio)}
-        onOpenStorytellerStudio={() => openStudio(setShowStorytellerStudio)}
         onOpenProfileStudio={() => openStudio(setShowProfileStudio)}
         onOpenProModal={() => { setProModalMessage(undefined); setShowProModal(true); }}
-        onOpenVideoArStudio={() => openStudio(setShowVideoArStudio)}
         onOpenExamplesStudio={() => openStudio(setShowExamplesStudio)}
         setPage={setPage}
         onLogout={onLogout}
@@ -527,24 +411,20 @@ const ChatView: React.FC<ChatViewProps> = ({
           settings={settings}
           setSettings={setSettings}
           userProfile={userProfile}
-          onEditVideoPrompt={handleEditVideoPrompt}
         />
       </main>
       
       {/* Modals and Studios */}
       {showImageStudio && <ImageStudio onClose={() => setShowImageStudio(false)} onGenerate={handleGenerateImage} onEdit={handleEditImage} isLoading={isLoading} initialPrompt={initialStudioData.initialPrompt} />}
       {showAudioStudio && <AudioStudio onClose={() => setShowAudioStudio(false)} />}
-      {showVideoStudio && <VideoStudio onClose={() => setShowVideoStudio(false)} onGenerate={handleGenerateVideo} isLoading={isLoading} {...initialStudioData} />}
       {showHustleStudio && <HustleStudio onClose={() => setShowHustleStudio(false)} isLoading={isLoading} onAction={(type, data) => handleStudioAction('hustle', `Give me hustle ideas based on: ${data.input}`)} />}
       {showLearnStudio && <LearnStudio onClose={() => setShowLearnStudio(false)} onAction={(skill, isTutor) => handleStudioAction('learn', isTutor ? `I want to learn about ${skill}. Act as an expert tutor.` : `Teach me the basics of ${skill}.`)} />}
       {showMarketSquare && <MarketSquare onClose={() => setShowMarketSquare(false)} isLoading={isLoading} onAiSearch={(item, location) => handleStudioAction('market', `Find a ${item} for sale in ${location}`)} userProfile={userProfile} />}
       {showMobileWorkersStudio && <MobileWorkersStudio onClose={() => setShowMobileWorkersStudio(false)} userProfile={userProfile} />}
-      {showStorytellerStudio && <StorytellerStudio onClose={() => setShowStorytellerStudio(false)} onStoryGenerated={handleStoryGenerated} settings={settings} onOpenProModal={(msg) => { setProModalMessage(msg); setShowProModal(true); }} />}
       {showProfileStudio && <ProfileStudio onClose={() => setShowProfileStudio(false)} userProfile={userProfile} setUserProfile={setUserProfile} />}
       {showProModal && <ProModal onClose={() => setShowProModal(false)} message={proModalMessage} />}
       {showSupportModal && <SupportModal onClose={() => setShowSupportModal(false)} />}
       {showExamplesStudio && <ExamplesStudio onClose={() => setShowExamplesStudio(false)} onSelectExample={prompt => { setShowExamplesStudio(false); handleSendMessage(prompt); }} />}
-      {showVideoArStudio && <VideoArStudio onClose={() => setShowVideoArStudio(false)} />}
     </div>
   );
 };

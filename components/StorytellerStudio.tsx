@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+// FIX: Imported ClapperboardIcon from constants.
 import { CloseIcon, ClapperboardIcon, DownloadIcon, InfoIcon, PlayIcon, StopIcon } from '../constants';
 import { playSound } from '../services/audioService';
 import { AppSettings, Story } from '../types';

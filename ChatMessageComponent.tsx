@@ -10,8 +10,10 @@ import TaskList from './TaskList';
 import { playSound, generateAudioBlob } from '../services/audioService';
 import CvDisplay from './CvDisplay';
 
+// FIX: Added onEditVideoPrompt to the component's props interface.
 interface ChatMessageProps {
   message: ChatMessage;
+  onEditVideoPrompt: (message: ChatMessage) => void;
 }
 
 const CodeBlock = ({ className, children }: { className?: string; children: React.ReactNode }) => {
@@ -89,7 +91,7 @@ const TypingText: React.FC<{ text: string }> = ({ text }) => {
 };
 
 
-const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message }) => {
+const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message, onEditVideoPrompt }) => {
   const { t } = useTranslation();
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
@@ -142,6 +144,8 @@ const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message }) => {
       isModelMessage={!isUser}
       handleTextToSpeech={handleTextToSpeech} 
       isAudioPlaying={isAudioPlaying}
+      // FIX: Passed onEditVideoPrompt down to the part component.
+      onEditVideoPrompt={onEditVideoPrompt}
     />
   ));
 
@@ -173,7 +177,9 @@ const MessagePartComponent: React.FC<{
     handleTextToSpeech: (text:string) => void, 
     isAudioPlaying: boolean,
     fullMessage: ChatMessage,
-}> = ({ part, isModelMessage, handleTextToSpeech, isAudioPlaying, fullMessage }) => {
+    // FIX: Added onEditVideoPrompt to the props interface.
+    onEditVideoPrompt: (message: ChatMessage) => void;
+}> = ({ part, isModelMessage, handleTextToSpeech, isAudioPlaying, fullMessage, onEditVideoPrompt }) => {
 
     switch (part.type) {
         case 'text':
@@ -220,6 +226,25 @@ const MessagePartComponent: React.FC<{
                         alt="Generated"
                         className="rounded-lg max-w-full h-auto"
                     />
+                </div>
+            );
+        // FIX: Added an edit button for video parts.
+        case 'video':
+             return (
+                <div>
+                    <video
+                        src={part.content.url}
+                        controls
+                        playsInline
+                        loop
+                        className="rounded-lg max-w-full h-auto bg-black"
+                    />
+                    {isModelMessage && (
+                         <button onClick={() => onEditVideoPrompt(fullMessage)} className="mt-2 flex items-center gap-1.5 text-sm text-gray-400 hover:text-white">
+                            <EditIcon className="w-4 h-4" />
+                            <span>Edit Prompt</span>
+                        </button>
+                    )}
                 </div>
             );
         case 'tasks':

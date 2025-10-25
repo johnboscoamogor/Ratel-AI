@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import ChatMessageComponent from './ChatMessage';
 import ChatInput from './ChatInput';
 import LanguageSwitcher from './LanguageSwitcher';
-import { ChatSession, AppSettings, ChatMessage } from '../types';
+import { ChatSession, AppSettings, ChatMessage, UserProfile } from '../types';
 import { MenuIcon, CoffeeIcon, RatelLogo } from '../constants';
 
 interface ChatWindowProps {
@@ -15,10 +15,12 @@ interface ChatWindowProps {
   settings: AppSettings;
   setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
   onEditVideoPrompt: (originalMessage: ChatMessage) => void;
+  // FIX: Added userProfile prop to satisfy component requirements.
+  userProfile: UserProfile;
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
-  chatSession, isLoading, onToggleSidebar, onSendMessage, onNewChat, onOpenSupportModal, settings, setSettings, onEditVideoPrompt
+  chatSession, isLoading, onToggleSidebar, onSendMessage, onNewChat, onOpenSupportModal, settings, setSettings, onEditVideoPrompt, userProfile
 }) => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -65,6 +67,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         {chatSession && chatSession.messages.length > 0 ? (
           <div className="space-y-4">
             {chatSession.messages.map((msg) => (
+              // FIX: Passed onEditVideoPrompt prop down to the message component.
               <ChatMessageComponent key={msg.id} message={msg} onEditVideoPrompt={onEditVideoPrompt} />
             ))}
              <div ref={messagesEndRef} />

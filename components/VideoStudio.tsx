@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+// FIX: Changed ClapperboardIcon to VideoIcon as it is now available in constants.
 import { CloseIcon, UploadIcon, VideoIcon } from '../constants';
 import { playSound } from '../services/audioService';
 

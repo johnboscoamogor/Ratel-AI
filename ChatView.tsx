@@ -293,6 +293,7 @@ const ChatView: React.FC<ChatViewProps> = ({
       }
   };
   
+  // FIX: Added function to handle editing video prompts.
   const handleEditVideoPrompt = (originalMessage: ChatMessage) => {
       const videoPart = originalMessage.parts.find(p => p.type === 'video');
       if (videoPart) {

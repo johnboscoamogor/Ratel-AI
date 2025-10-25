@@ -2,9 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ChatMessageComponent from './ChatMessage';
 import ChatInput from './ChatInput';
-// FIX: Added UserProfile to imports to accept the userProfile prop.
 import { ChatSession, AppSettings, UserProfile, ChatMessage } from '../types';
-// FIX: Added UserIcon and ChevronDownIcon for UI updates in the header.
 import { MenuIcon, CoffeeIcon, ChevronDownIcon, UserIcon, RatelLogo } from '../constants';
 import LanguageSwitcher from './LanguageSwitcher';
 import { playSound } from '../services/audioService';
@@ -18,13 +16,11 @@ interface ChatWindowProps {
   onOpenSupportModal: () => void;
   settings: AppSettings;
   setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
-  // FIX: Added userProfile prop to the interface to resolve the type error in ChatView.
   userProfile: UserProfile;
-  onEditVideoPrompt: (originalMessage: ChatMessage) => void;
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
-  chatSession, isLoading, onToggleSidebar, onSendMessage, onNewChat, onOpenSupportModal, settings, setSettings, userProfile, onEditVideoPrompt
+  chatSession, isLoading, onToggleSidebar, onSendMessage, onNewChat, onOpenSupportModal, settings, setSettings, userProfile
 }) => {
   const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -120,7 +116,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         {chatSession && chatSession.messages.length > 0 ? (
           <div className="space-y-4 max-w-4xl mx-auto w-full">
             {chatSession.messages.map((msg) => (
-              <ChatMessageComponent key={msg.id} message={msg} onEditVideoPrompt={onEditVideoPrompt} />
+              <ChatMessageComponent key={msg.id} message={msg} />
             ))}
              <div ref={messagesEndRef} />
           </div>

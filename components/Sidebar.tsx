@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChatSession, UserProfile } from '../types';
-// FIX: Imported missing icons for the new studio buttons.
 import { 
     RatelLogo, EditIcon, TrashIcon, MenuIcon, ChevronLeftIcon, 
     ImageIcon, AudioIcon, BookOpenIcon, BriefcaseIcon, 
     StorefrontIcon, UsersIcon, SettingsIcon, InfoIcon, UserIcon, LogoutIcon, AdminIcon,
-    SparklesIcon, WrenchIcon, VideoIcon, ClapperboardIcon
+    SparklesIcon, WrenchIcon
 } from '../constants';
 import { playSound } from '../services/audioService';
 import ConfirmationDialog from './ConfirmationDialog';
@@ -25,10 +24,6 @@ interface SidebarProps {
   onRenameChat: (id: string, newTitle: string) => void;
   onOpenImageStudio: () => void;
   onOpenAudioStudio: () => void;
-  // FIX: Added missing props to the interface to match what's passed from ChatView, resolving the type error.
-  onOpenVideoStudio: () => void;
-  onOpenStorytellerStudio: () => void;
-  onOpenVideoArStudio: () => void;
   onOpenHustleStudio: () => void;
   onOpenLearnStudio: () => void;
   onOpenMarketSquare: () => void;
@@ -43,8 +38,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({
   history, currentChatId, userProfile, isCurrentChatEmpty, isOpenOnMobile, onCloseMobile,
   onNewChat, onSelectChat, onClearChat, onDeleteChat, onRenameChat,
-  // FIX: Destructured the new props so they can be used in the component.
-  onOpenImageStudio, onOpenAudioStudio, onOpenVideoStudio, onOpenStorytellerStudio, onOpenVideoArStudio, onOpenHustleStudio, onOpenLearnStudio, onOpenMarketSquare, onOpenMobileWorkersStudio, onOpenProfileStudio, onOpenProModal, onOpenExamplesStudio,
+  onOpenImageStudio, onOpenAudioStudio, onOpenHustleStudio, onOpenLearnStudio, onOpenMarketSquare, onOpenMobileWorkersStudio, onOpenProfileStudio, onOpenProModal, onOpenExamplesStudio,
   setPage, onLogout
 }) => {
   const { t } = useTranslation();
@@ -120,10 +114,6 @@ const Sidebar: React.FC<SidebarProps> = ({
               <StudioButton Icon={UsersIcon} label={t('sidebar.communityStudio')} onClick={() => handlePageChange('community')} />
               <StudioButton Icon={ImageIcon} label={t('sidebar.imageStudio')} onClick={onOpenImageStudio} />
               <StudioButton Icon={AudioIcon} label={t('sidebar.audioStudio')} onClick={onOpenAudioStudio} />
-              {/* FIX: Added the missing studio buttons to the UI. */}
-              <StudioButton Icon={VideoIcon} label={t('sidebar.videoStudio', 'Video')} onClick={onOpenVideoStudio} />
-              <StudioButton Icon={ClapperboardIcon} label={t('sidebar.storyteller', 'Storyteller')} onClick={onOpenStorytellerStudio} />
-              <StudioButton Icon={SparklesIcon} label={t('sidebar.videoArStudio', 'AR Effects')} onClick={onOpenVideoArStudio} />
           </div>
         </div>
 
