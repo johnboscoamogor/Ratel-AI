@@ -110,19 +110,8 @@ export const taskTools: { functionDeclarations: FunctionDeclaration[] }[] = [
 
 // Icon components (SVGs)
 export const RatelLogo: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-    <svg {...props} viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-            <clipPath id="ratelClip">
-                <circle cx="100" cy="100" r="100" />
-            </clipPath>
-        </defs>
-        <g clipPath="url(#ratelClip)">
-            <circle cx="100" cy="100" r="100" fill="currentColor"/>
-            <circle cx="85" cy="100" r="75" fill="#fff"/>
-            <circle cx="100" cy="100" r="65" fill="currentColor"/>
-            <circle cx="85" cy="100" r="55" fill="#fff"/>
-            <circle cx="100" cy="100" r="45" fill="currentColor"/>
-        </g>
+    <svg {...props} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+        <path fillRule="evenodd" clipRule="evenodd" d="M12 2L3.33975 7V17L12 22L20.6603 17V7L12 2ZM5.33975 8L12 4L18.6603 8V16L12 20L5.33975 16V8Z" />
     </svg>
 );
 export const EditIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (

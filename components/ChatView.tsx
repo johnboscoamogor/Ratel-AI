@@ -37,7 +37,6 @@ interface ChatViewProps {
 const ChatView: React.FC<ChatViewProps> = ({
   userProfile, setUserProfile, settings, setSettings, setPage, onLogout, addXp, trackInterest, onLevelUp
 }) => {
-  // FIX: Destructured `i18n` from `useTranslation` to make it available in the component scope.
   const { t, i18n } = useTranslation();
   const [history, setHistory] = useState<ChatSession[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
@@ -113,12 +112,10 @@ const ChatView: React.FC<ChatViewProps> = ({
     i18n.changeLanguage(settings.language);
   }, [settings.language, i18n]);
 
-  // FIX: Clear cached chat sessions when the chat tone changes.
-  // This ensures a new session with the updated system instruction is created,
-  // making the mood/tone change take effect on the next message.
+  // FIX: Clear cached chat sessions when settings change to ensure the new system instruction is applied.
   useEffect(() => {
     chatSessionsRef.current.clear();
-  }, [settings.chatTone]);
+  }, [settings.chatTone, settings.customInstructions]);
 
   const currentChat = history.find(c => c.id === currentChatId);
 
@@ -138,41 +135,7 @@ const ChatView: React.FC<ChatViewProps> = ({
     }));
   }, [updateCurrentChat]);
 
-  const getOrCreateChatSession = useCallback(async (chatId: string) => {
-    if (chatSessionsRef.current.has(chatId)) {
-        return chatSessionsRef.current.get(chatId);
-    }
-    
-    const chatSession = history.find(c => c.id === chatId);
-    if(!chatSession) return null;
-    
-    const geminiHistory = chatSession.messages
-        .filter(m => m.role !== 'system' && m.parts[0]?.type !== 'error' && m.parts[0]?.type !== 'loading')
-        .map(m => {
-            const content = m.parts.map(p => {
-                if (p.type === 'image') {
-                    return { inlineData: { mimeType: p.mimeType, data: p.content } };
-                }
-                return { text: p.content };
-            });
-            return { role: m.role, parts: content };
-        });
-
-    const newChatInstance = ai.chats.create({
-        model: 'gemini-2.5-flash',
-        history: geminiHistory,
-        config: {
-            // FIX: Replaced the incorrect constant with a call to the createSystemInstruction function, passing the current settings.
-            systemInstruction: createSystemInstruction(settings)
-        }
-    });
-
-    chatSessionsRef.current.set(chatId, newChatInstance);
-    return newChatInstance;
-
-  // FIX: Added 'settings' to the dependency array to ensure the system instruction is updated when settings change.
-  }, [history, settings]);
-  
+  // FIX: Moved `onRenameChat` before `handleSendMessage` to resolve usage-before-declaration error.
   const onRenameChat = useCallback((id: string, newTitle: string) => {
     setHistory(prev => prev.map(chat => chat.id === id ? { ...chat, title: newTitle } : chat));
   }, []);
@@ -256,6 +219,41 @@ const ChatView: React.FC<ChatViewProps> = ({
         setIsLoading(false);
     }
   }, [currentChatId, addMessageToChat, addXp, getOrCreateChatSession, currentChat, onRenameChat, updateCurrentChat]);
+
+  const getOrCreateChatSession = useCallback(async (chatId: string) => {
+    if (chatSessionsRef.current.has(chatId)) {
+        return chatSessionsRef.current.get(chatId);
+    }
+    
+    const chatSession = history.find(c => c.id === chatId);
+    if(!chatSession) return null;
+    
+    const geminiHistory = chatSession.messages
+        .filter(m => m.role !== 'system' && m.parts[0]?.type !== 'error' && m.parts[0]?.type !== 'loading')
+        .map(m => {
+            const content = m.parts.map(p => {
+                if (p.type === 'image') {
+                    return { inlineData: { mimeType: p.mimeType, data: p.content } };
+                }
+                return { text: p.content };
+            });
+            return { role: m.role, parts: content };
+        });
+
+    const newChatInstance = ai.chats.create({
+        model: 'gemini-2.5-flash',
+        history: geminiHistory,
+        config: {
+            // FIX: Replaced the incorrect constant with a call to the createSystemInstruction function, passing the current settings.
+            systemInstruction: createSystemInstruction(settings)
+        }
+    });
+
+    chatSessionsRef.current.set(chatId, newChatInstance);
+    return newChatInstance;
+
+  // FIX: Added 'settings' to the dependency array to ensure the system instruction is updated when settings change.
+  }, [history, settings]);
 
   const handleNewChat = useCallback(() => {
     playSound('click');

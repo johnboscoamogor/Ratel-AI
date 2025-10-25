@@ -51,9 +51,8 @@ const CodeBlock = ({ className, children }: { className?: string; children: Reac
 
 const markdownComponents = {
     // FIX: The `children` prop from react-markdown can sometimes be undefined for empty
-    // or malformed code blocks, especially during the typing animation. The original
-    // default parameter `children = ''` may not cover all cases. Providing an explicit
-    // fallback `|| ''` ensures that the `CodeBlock` component always receives a valid child.
+    // or malformed code blocks. Providing an explicit fallback `|| ''` ensures
+    // that the `CodeBlock` component always receives a valid child.
     code({ node, className, children, ...props }: any) {
         return <CodeBlock className={className}>{children || ''}</CodeBlock>;
     }
