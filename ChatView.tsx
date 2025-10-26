@@ -182,10 +182,7 @@ const ChatView: React.FC<ChatViewProps> = ({
 
         const reader = await streamChat(chatHistoryForApi, message, image, createSystemInstruction(settings));
         
-        const decoder = new TextDecoder();
-        let fullText = "";
-        let finalChunk: GenerateContentResponse | null = null;
-        
+        // Immediately switch to an empty text part to receive the stream
         updateCurrentChat(chat => ({
             ...chat,
             messages: chat.messages.map(msg => 
@@ -195,6 +192,10 @@ const ChatView: React.FC<ChatViewProps> = ({
             )
         }));
 
+        const decoder = new TextDecoder();
+        let fullText = "";
+        let finalChunk: GenerateContentResponse | null = null;
+        
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
@@ -207,6 +208,7 @@ const ChatView: React.FC<ChatViewProps> = ({
                     const chunk = JSON.parse(line) as GenerateContentResponse;
                     if (chunk.text) {
                        fullText += chunk.text;
+                       // Update UI on every chunk
                        updateCurrentChat(chat => ({
                            ...chat,
                            messages: chat.messages.map(msg => 
@@ -225,6 +227,7 @@ const ChatView: React.FC<ChatViewProps> = ({
 
         const groundingChunks = finalChunk?.candidates?.[0]?.groundingMetadata?.groundingChunks;
         
+        // Final update with all metadata
         updateCurrentChat(chat => ({
             ...chat,
             messages: chat.messages.map(msg => 
