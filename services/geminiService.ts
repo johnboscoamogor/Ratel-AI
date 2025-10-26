@@ -1,11 +1,5 @@
 // This file is now a client for our own backend API routes,
 // which securely handle the Gemini API key on the server.
-// FIX: Import GoogleGenAI and export an `ai` instance for direct client-side usage.
-import { GoogleGenAI, GenerateContentResponse } from '@google/genai';
-
-// This instance is for direct client-side calls as used in ChatView.tsx
-// The API key is expected to be available in the client environment.
-export const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
 /**
  * Sends a chat message to the backend for processing.

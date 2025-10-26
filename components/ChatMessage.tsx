@@ -14,10 +14,11 @@ interface ChatMessageProps {
   message: ChatMessage;
 }
 
-const CodeBlock = ({ className, children }: { className?: string; children: React.ReactNode }) => {
+// FIX: Made children prop optional and handled the undefined case inside the component.
+const CodeBlock = ({ className, children }: { className?: string; children?: React.ReactNode }) => {
     const [copied, setCopied] = useState(false);
     const match = /language-(\w+)/.exec(className || '');
-    const codeText = String(children).replace(/\n$/, '');
+    const codeText = String(children || '').replace(/\n$/, '');
 
     const handleCopy = (code: string) => {
         navigator.clipboard.writeText(code);

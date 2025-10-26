@@ -17,10 +17,13 @@ import ExamplesStudio from './ExamplesStudio';
 import VideoArStudio from './VideoArStudio';
 import { ChatSession, UserProfile, AppSettings, ChatMessage, MessagePart, RatelMode, Task, Story } from '../types';
 import { playSound } from '../services/audioService';
-import { ai } from '../services/geminiService';
-import { GenerateContentResponse } from '@google/genai';
+// FIX: Removed incorrect 'ai' import and added 'GoogleGenAI' to initialize the client directly.
+import { GenerateContentResponse, GoogleGenAI } from '@google/genai';
 // FIX: Replaced the incorrect import of `SYSTEM_INSTRUCTION` with the `createSystemInstruction` function.
 import { createSystemInstruction, taskTools } from './constants.tsx';
+
+// FIX: Initialize the GoogleGenAI client.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
 interface ChatViewProps {
   userProfile: UserProfile;
