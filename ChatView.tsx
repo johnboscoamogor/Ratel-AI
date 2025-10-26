@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import Sidebar from './Sidebar';
 import ChatWindow from './ChatWindow';
@@ -15,15 +15,11 @@ import ProModal from './ProModal';
 import SupportModal from './SupportModal';
 import ExamplesStudio from './ExamplesStudio';
 import VideoArStudio from './VideoArStudio';
-import { ChatSession, UserProfile, AppSettings, ChatMessage, MessagePart, RatelMode, Task, Story } from '../types';
-import { playSound } from '../services/audioService';
-// FIX: Removed incorrect 'ai' import and added 'GoogleGenAI' to initialize the client directly.
-import { GenerateContentResponse, GoogleGenAI } from '@google/genai';
-// FIX: Replaced the incorrect import of `SYSTEM_INSTRUCTION` with the `createSystemInstruction` function.
-import { createSystemInstruction, taskTools } from './constants.tsx';
-
-// FIX: Initialize the GoogleGenAI client.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+import { ChatSession, UserProfile, AppSettings, ChatMessage, MessagePart, RatelMode, Task, Story } from './types';
+import { playSound } from './services/audioService';
+import { streamChat, generateTitle, generateImage, editImage } from './services/geminiService';
+import { GenerateContentResponse } from '@google/genai';
+import { createSystemInstruction } from './constants';
 
 interface ChatViewProps {
   userProfile: UserProfile;
@@ -66,8 +62,6 @@ const ChatView: React.FC<ChatViewProps> = ({
   const [tasks, setTasks] = useState<Task[]>([]);
   const [stories, setStories] = useState<Story[]>([]);
   
-  const chatSessionsRef = useRef<Map<string, any>>(new Map());
-
   const handleNewChat = useCallback(() => {
     playSound('click');
     const newChat: ChatSession = {
@@ -128,11 +122,6 @@ const ChatView: React.FC<ChatViewProps> = ({
     i18n.changeLanguage(settings.language);
   }, [settings.language, i18n]);
 
-  // FIX: Clear cached chat sessions when settings change to ensure the new system instruction is applied.
-  useEffect(() => {
-    chatSessionsRef.current.clear();
-  }, [settings.chatTone, settings.customInstructions]);
-
   const currentChat = history.find(c => c.id === currentChatId);
 
   const updateCurrentChat = useCallback((updater: (chat: ChatSession) => ChatSession) => {
@@ -155,42 +144,8 @@ const ChatView: React.FC<ChatViewProps> = ({
     setHistory(prev => prev.map(chat => chat.id === id ? { ...chat, title: newTitle } : chat));
   }, []);
   
-  const getOrCreateChatSession = useCallback(async (chatId: string) => {
-    if (chatSessionsRef.current.has(chatId)) {
-        return chatSessionsRef.current.get(chatId);
-    }
-    
-    const chatSession = history.find(c => c.id === chatId);
-    if(!chatSession) return null;
-    
-    const geminiHistory = chatSession.messages
-        .filter(m => m.role !== 'system' && m.parts[0]?.type !== 'error' && m.parts[0]?.type !== 'loading')
-        .map(m => {
-            const content = m.parts.map(p => {
-                if (p.type === 'image') {
-                    return { inlineData: { mimeType: p.mimeType, data: p.content } };
-                }
-                return { text: p.content };
-            });
-            return { role: m.role, parts: content };
-        });
-
-    const newChatInstance = ai.chats.create({
-        model: 'gemini-2.5-flash',
-        history: geminiHistory,
-        config: {
-            // FIX: Replaced the incorrect constant with a call to the `createSystemInstruction` function.
-            systemInstruction: createSystemInstruction(settings)
-        }
-    });
-
-    chatSessionsRef.current.set(chatId, newChatInstance);
-    return newChatInstance;
-
-  }, [history, settings]);
-
   const handleSendMessage = useCallback(async (message: string, image?: { data: string; mimeType: string }) => {
-    if (!currentChatId) return;
+    if (!currentChatId || !currentChat) return;
 
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
@@ -207,47 +162,84 @@ const ChatView: React.FC<ChatViewProps> = ({
     const slugMessage: ChatMessage = {
         id: slugMessageId,
         role: 'model',
-        parts: [{ type: 'text', content: 'Alright...' }],
+        parts: [{ type: 'loading', content: 'Thinking...' }],
         timestamp: Date.now()
     };
     addMessageToChat(slugMessage);
 
     try {
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        const chatHistoryForApi = currentChat.messages
+            .filter(m => m.role !== 'system' && m.parts[0]?.type !== 'error' && m.parts[0]?.type !== 'loading')
+            .map(m => {
+                const parts = m.parts.map(p => {
+                    if (p.type === 'image') {
+                        return { inlineData: { mimeType: p.mimeType, data: p.content } };
+                    }
+                    return { text: p.content };
+                });
+                return { role: m.role, parts };
+            });
 
-        const chat = await getOrCreateChatSession(currentChatId);
-        if (!chat) throw new Error("Could not initialize chat session.");
-
-        const parts: any[] = message ? [{ text: message }] : [];
-        if(image) {
-            parts.push({ inlineData: { mimeType: image.mimeType, data: image.data }});
-        }
+        const reader = await streamChat(chatHistoryForApi, message, image, createSystemInstruction(settings));
         
-        const result = await chat.sendMessage({ message: { parts } });
-        const groundingChunks = result.candidates?.[0]?.groundingMetadata?.groundingChunks;
-
-        const modelResponsePart: MessagePart = {
-            type: 'text',
-            content: result.text.trim(),
-            ...(groundingChunks && { groundingChunks })
-        };
-
+        const decoder = new TextDecoder();
+        let fullText = "";
+        let finalChunk: GenerateContentResponse | null = null;
+        
         updateCurrentChat(chat => ({
             ...chat,
             messages: chat.messages.map(msg => 
                 msg.id === slugMessageId 
-                ? { ...msg, parts: [modelResponsePart], timestamp: Date.now() } 
+                ? { ...msg, parts: [{ type: 'text', content: '' }], timestamp: Date.now() } 
+                : msg
+            )
+        }));
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            
+            const chunkStr = decoder.decode(value, { stream: true });
+            const lines = chunkStr.split('\n').filter(line => line.trim() !== '');
+            
+            for (const line of lines) {
+                try {
+                    const chunk = JSON.parse(line) as GenerateContentResponse;
+                    if (chunk.text) {
+                       fullText += chunk.text;
+                       updateCurrentChat(chat => ({
+                           ...chat,
+                           messages: chat.messages.map(msg => 
+                               msg.id === slugMessageId 
+                               ? { ...msg, parts: [{ type: 'text', content: fullText }] } 
+                               : msg
+                           )
+                       }));
+                    }
+                    finalChunk = chunk;
+                } catch (e) {
+                    console.error("Failed to parse stream chunk:", line, e);
+                }
+            }
+        }
+
+        const groundingChunks = finalChunk?.candidates?.[0]?.groundingMetadata?.groundingChunks;
+        
+        updateCurrentChat(chat => ({
+            ...chat,
+            messages: chat.messages.map(msg => 
+                msg.id === slugMessageId 
+                ? { ...msg, parts: [{ type: 'text', content: fullText.trim(), groundingChunks }], timestamp: Date.now() } 
                 : msg
             )
         }));
         
         addXp(5);
         
-        if (currentChat && currentChat.messages.length <= 2) {
+        if (currentChat.messages.length <= 4) { // After user message + slug are added
             const titlePrompt = `Create a very short, concise title (4-5 words max) for this user's first prompt: "${message}"`;
-            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: titlePrompt });
-            const newTitle = response.text.replace(/"/g, '');
-            onRenameChat(currentChatId, newTitle);
+            const newTitle = await generateTitle(titlePrompt);
+            onRenameChat(currentChatId, newTitle.replace(/"/g, ''));
         }
 
     } catch (e) {
@@ -267,7 +259,7 @@ const ChatView: React.FC<ChatViewProps> = ({
     } finally {
         setIsLoading(false);
     }
-  }, [currentChatId, addMessageToChat, addXp, getOrCreateChatSession, currentChat, onRenameChat, updateCurrentChat]);
+  }, [currentChatId, currentChat, addMessageToChat, addXp, onRenameChat, updateCurrentChat, settings]);
 
   const onSelectChat = (id: string) => {
     playSound('click');
@@ -286,17 +278,14 @@ const ChatView: React.FC<ChatViewProps> = ({
              handleNewChat();
         }
     }
-    chatSessionsRef.current.delete(id);
   };
   
   const onClearChat = () => {
       if(currentChatId) {
           updateCurrentChat(chat => ({ ...chat, messages: [] }));
-          chatSessionsRef.current.delete(currentChatId);
       }
   };
-  
-  // FIX: Added function to handle editing video prompts.
+
   const handleEditVideoPrompt = (originalMessage: ChatMessage) => {
       const videoPart = originalMessage.parts.find(p => p.type === 'video');
       if (videoPart) {
@@ -325,12 +314,7 @@ const ChatView: React.FC<ChatViewProps> = ({
     setIsLoading(true);
 
     try {
-        const response = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
-            prompt,
-            config: { numberOfImages: 1, outputMimeType: 'image/png', aspectRatio: aspectRatio as any }
-        });
-        const base64ImageBytes = response.generatedImages[0].image.imageBytes;
+        const base64ImageBytes = await generateImage(prompt, aspectRatio);
         addMessageToChat({
             id: crypto.randomUUID(),
             role: 'model',
@@ -365,18 +349,12 @@ const ChatView: React.FC<ChatViewProps> = ({
       setIsLoading(true);
       
        try {
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-image',
-                contents: { parts: [ { inlineData: { data: image.data, mimeType: image.mimeType } }, { text: prompt } ] },
-                config: { responseModalities: ['IMAGE'] },
-            });
-            const imagePart = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
-
-            if(imagePart?.inlineData) {
+            const editedImage = await editImage(image, prompt);
+            if(editedImage && editedImage.data) {
                  addMessageToChat({
                     id: crypto.randomUUID(),
                     role: 'model',
-                    parts: [{ type: 'image', content: imagePart.inlineData.data, mimeType: imagePart.inlineData.mimeType }],
+                    parts: [{ type: 'image', content: editedImage.data, mimeType: editedImage.mimeType }],
                     timestamp: Date.now()
                 });
             } else { throw new Error("The AI did not return an edited image."); }
@@ -428,7 +406,6 @@ const ChatView: React.FC<ChatViewProps> = ({
             updateLoadingMessage(loadingMessages[msgIndex]);
         }, 4000);
 
-        // Call the new backend function
         const response = await fetch('/api/video/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -494,7 +471,7 @@ const ChatView: React.FC<ChatViewProps> = ({
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-gray-100 overflow-hidden">
       <Sidebar
         history={history}
         currentChatId={currentChatId}
