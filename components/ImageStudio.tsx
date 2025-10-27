@@ -168,7 +168,7 @@ const ImageStudio: React.FC<ImageStudioProps> = ({ onClose, onGenerate, onEdit, 
                                 placeholder={t('imageStudio.editPromptPlaceholder')}
                                 value={editPrompt}
                                 onChange={(e) => setEditPrompt(e.target.value)}
-                                disabled={isLoading || !imageFile}
+                                disabled={isLoading}
                             />
                             <button
                                 onClick={handleEdit}
