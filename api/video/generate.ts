@@ -1,6 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI } from '@google/genai';
-import fetch from 'node-fetch';
 
 const GEMINI_API_KEY = process.env.API_KEY;
 

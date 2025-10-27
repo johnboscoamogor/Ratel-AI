@@ -8,7 +8,6 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI } from '@google/genai';
-import fetch from 'node-fetch';
 
 // --- CONFIGURATION ---
 // Access environment variables set in Vercel project settings
