@@ -49,18 +49,22 @@ const LearnStudio: React.FC<LearnStudioProps> = ({ onClose, onAction }) => {
                 </div>
                 
                 <div className="p-6">
+                    <style>{`
+                        .no-scrollbar::-webkit-scrollbar { display: none; }
+                        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+                    `}</style>
                     <p className="text-sm text-center text-gray-600 mb-6">
                         {t('learnStudio.description')}
                     </p>
 
                     <div>
                         <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">{t('learnStudio.tutorTitle')}</h3>
-                        <div className="grid grid-cols-3 gap-3 mb-6">
+                        <div className="flex flex-row gap-3 mb-6 overflow-x-auto pb-2 snap-x snap-mandatory no-scrollbar">
                             {tutorSubjects.map(({ id, label, Icon, isTutor }) => (
                                 <button
                                     key={id}
                                     onClick={() => handleAction(label, isTutor)}
-                                    className="flex flex-col items-center justify-center gap-2 p-3 border border-gray-200 rounded-lg bg-gray-50 hover:bg-green-50 hover:border-green-300 transition-colors"
+                                    className="flex-shrink-0 snap-start w-32 flex flex-col items-center justify-center gap-2 p-3 border border-gray-200 rounded-lg bg-gray-50 hover:bg-green-50 hover:border-green-300 transition-colors"
                                 >
                                     <Icon className="w-8 h-8 text-green-600" />
                                     <span className="font-semibold text-gray-700 text-center text-xs leading-tight">{label}</span>
@@ -71,12 +75,12 @@ const LearnStudio: React.FC<LearnStudioProps> = ({ onClose, onAction }) => {
                     
                     <div>
                          <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">{t('learnStudio.skillsTitle')}</h3>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="flex flex-row gap-4 overflow-x-auto pb-2 snap-x snap-mandatory no-scrollbar">
                             {generalSkills.map(({ id, label, Icon, isTutor }) => (
                                 <button
                                     key={id}
                                     onClick={() => handleAction(label, isTutor)}
-                                    className="flex flex-col items-center justify-center gap-2 p-4 border border-gray-200 rounded-lg bg-gray-50 hover:bg-green-50 hover:border-green-300 transition-colors"
+                                    className="flex-shrink-0 snap-start w-40 flex flex-col items-center justify-center gap-2 p-4 border border-gray-200 rounded-lg bg-gray-50 hover:bg-green-50 hover:border-green-300 transition-colors"
                                 >
                                     <Icon className="w-8 h-8 text-green-600" />
                                     <span className="font-semibold text-gray-700 text-center">{label}</span>

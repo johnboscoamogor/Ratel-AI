@@ -4,19 +4,21 @@ import Sidebar from './Sidebar';
 import ChatWindow from './ChatWindow';
 import ImageStudio from './ImageStudio';
 import AudioStudio from './AudioStudio';
+import VideoStudio from './VideoStudio';
 import HustleStudio from './HustleStudio';
 import LearnStudio from './LearnStudio';
 import MarketSquare from './MarketStudio';
+import VideoAdsStudio from './VideoAdsStudio';
 import MobileWorkersStudio from './MobileWorkersStudio';
 import ProfileStudio from './ProfileStudio';
 import ProModal from './ProModal';
 import SupportModal from './SupportModal';
 import ExamplesStudio from './ExamplesStudio';
+import VideoArStudio from './VideoArStudio';
 import { ChatSession, UserProfile, AppSettings, ChatMessage, MessagePart, RatelMode, Task } from '../types';
 import { playSound } from '../services/audioService';
-import { streamChat, generateTitle, generateImage, editImage } from '../services/geminiService';
+import { ai } from '../services/geminiService';
 import { createSystemInstruction } from '../constants';
-import { GenerateContentResponse } from '@google/genai';
 
 interface ChatViewProps {
   userProfile: UserProfile;
@@ -41,20 +43,25 @@ const ChatView: React.FC<ChatViewProps> = ({
   
   const [showImageStudio, setShowImageStudio] = useState(false);
   const [showAudioStudio, setShowAudioStudio] = useState(false);
+  const [showVideoStudio, setShowVideoStudio] = useState(false);
   const [showHustleStudio, setShowHustleStudio] = useState(false);
   const [showLearnStudio, setShowLearnStudio] = useState(false);
   const [showMarketSquare, setShowMarketSquare] = useState(false);
   const [showMobileWorkersStudio, setShowMobileWorkersStudio] = useState(false);
+  const [showVideoAdsStudio, setShowVideoAdsStudio] = useState(false);
   const [showProfileStudio, setShowProfileStudio] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
   const [proModalMessage, setProModalMessage] = useState<string | undefined>(undefined);
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [showExamplesStudio, setShowExamplesStudio] = useState(false);
+  const [showVideoArStudio, setShowVideoArStudio] = useState(false);
 
   const [initialStudioData, setInitialStudioData] = useState<any>({});
   
   const [tasks, setTasks] = useState<Task[]>([]);
   
+  const chatSessionsRef = useRef<Map<string, any>>(new Map());
+
   const handleNewChat = useCallback(() => {
     playSound('click');
     const newChat: ChatSession = {
@@ -108,6 +115,11 @@ const ChatView: React.FC<ChatViewProps> = ({
     i18n.changeLanguage(settings.language);
   }, [settings.language, i18n]);
 
+  // FIX: Clear cached chat sessions when settings change to ensure the new system instruction is applied.
+  useEffect(() => {
+    chatSessionsRef.current.clear();
+  }, [settings.chatTone, settings.customInstructions]);
+
   const currentChat = history.find(c => c.id === currentChatId);
 
   const updateCurrentChat = useCallback((updater: (chat: ChatSession) => ChatSession) => {
@@ -130,8 +142,41 @@ const ChatView: React.FC<ChatViewProps> = ({
     setHistory(prev => prev.map(chat => chat.id === id ? { ...chat, title: newTitle } : chat));
   }, []);
   
+  const getOrCreateChatSession = useCallback(async (chatId: string) => {
+    if (chatSessionsRef.current.has(chatId)) {
+        return chatSessionsRef.current.get(chatId);
+    }
+    
+    const chatSession = history.find(c => c.id === chatId);
+    if(!chatSession) return null;
+    
+    const geminiHistory = chatSession.messages
+        .filter(m => m.role !== 'system' && m.parts[0]?.type !== 'error' && m.parts[0]?.type !== 'loading')
+        .map(m => {
+            const content = m.parts.map(p => {
+                if (p.type === 'image') {
+                    return { inlineData: { mimeType: p.mimeType, data: p.content } };
+                }
+                return { text: p.content };
+            });
+            return { role: m.role, parts: content };
+        });
+
+    const newChatInstance = ai.chats.create({
+        model: 'gemini-flash-lite-latest',
+        history: geminiHistory,
+        config: {
+            systemInstruction: createSystemInstruction(settings)
+        }
+    });
+
+    chatSessionsRef.current.set(chatId, newChatInstance);
+    return newChatInstance;
+
+  }, [history, settings]);
+
   const handleSendMessage = useCallback(async (message: string, image?: { data: string; mimeType: string }) => {
-    if (!currentChatId || !currentChat) return;
+    if (!currentChatId) return;
 
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
@@ -154,52 +199,25 @@ const ChatView: React.FC<ChatViewProps> = ({
     addMessageToChat(slugMessage);
 
     try {
-        const chatHistoryForApi = currentChat.messages
-            .filter(m => m.role !== 'system' && m.parts[0]?.type !== 'error' && m.parts[0]?.type !== 'loading')
-            .map(m => {
-                const content = m.parts.map(p => {
-                    if (p.type === 'image') {
-                        return { inlineData: { mimeType: p.mimeType, data: p.content } };
-                    }
-                    return { text: p.content };
-                });
-                return { role: m.role, parts: content };
-            });
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-        const reader = await streamChat(chatHistoryForApi, message, image, createSystemInstruction(settings));
-        
-        const decoder = new TextDecoder();
-        let fullText = "";
-        let finalChunk: GenerateContentResponse | null = null;
-        
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            
-            const chunkStr = decoder.decode(value);
-            const lines = chunkStr.split('\n').filter(line => line.trim() !== '');
-            
-            for (const line of lines) {
-                try {
-                    const chunk = JSON.parse(line) as GenerateContentResponse;
-                    if (chunk.text) {
-                       fullText += chunk.text;
-                    }
-                    finalChunk = chunk;
-                } catch (e) {
-                    console.error("Failed to parse stream chunk:", line, e);
-                }
-            }
+        const chat = await getOrCreateChatSession(currentChatId);
+        if (!chat) throw new Error("Could not initialize chat session.");
+
+        const parts: any[] = message ? [{ text: message }] : [];
+        if(image) {
+            parts.push({ inlineData: { mimeType: image.mimeType, data: image.data }});
         }
-
-        const groundingChunks = finalChunk?.candidates?.[0]?.groundingMetadata?.groundingChunks;
         
+        const result = await chat.sendMessage({ message: { parts } });
+        const groundingChunks = result.candidates?.[0]?.groundingMetadata?.groundingChunks;
+
         const modelResponsePart: MessagePart = {
             type: 'text',
-            content: fullText.trim(),
+            content: result.text.trim(),
             ...(groundingChunks && { groundingChunks })
         };
-        
+
         updateCurrentChat(chat => ({
             ...chat,
             messages: chat.messages.map(msg => 
@@ -211,10 +229,11 @@ const ChatView: React.FC<ChatViewProps> = ({
         
         addXp(5);
         
-        if (currentChat.messages.length <= 2) {
+        if (currentChat && currentChat.messages.length <= 2) {
             const titlePrompt = `Create a very short, concise title (4-5 words max) for this user's first prompt: "${message}"`;
-            const newTitle = await generateTitle(titlePrompt);
-            onRenameChat(currentChatId, newTitle.replace(/"/g, ''));
+            const response = await ai.models.generateContent({ model: 'gemini-flash-lite-latest', contents: titlePrompt });
+            const newTitle = response.text.replace(/"/g, '');
+            onRenameChat(currentChatId, newTitle);
         }
 
     } catch (e) {
@@ -234,7 +253,7 @@ const ChatView: React.FC<ChatViewProps> = ({
     } finally {
         setIsLoading(false);
     }
-  }, [currentChatId, currentChat, addMessageToChat, addXp, onRenameChat, updateCurrentChat, settings]);
+  }, [currentChatId, addMessageToChat, addXp, getOrCreateChatSession, currentChat, onRenameChat, updateCurrentChat]);
 
   const onSelectChat = (id: string) => {
     playSound('click');
@@ -253,11 +272,25 @@ const ChatView: React.FC<ChatViewProps> = ({
              handleNewChat();
         }
     }
+    chatSessionsRef.current.delete(id);
   };
   
   const onClearChat = () => {
       if(currentChatId) {
           updateCurrentChat(chat => ({ ...chat, messages: [] }));
+          chatSessionsRef.current.delete(currentChatId);
+      }
+  };
+  
+  const handleEditVideoPrompt = (originalMessage: ChatMessage) => {
+      const videoPart = originalMessage.parts.find(p => p.type === 'video');
+      if (videoPart) {
+          setInitialStudioData({
+              initialPrompt: videoPart.content.prompt,
+              initialDialogue: originalMessage.videoDialogue,
+              initialAmbiance: originalMessage.videoAmbiance,
+          });
+          setShowVideoStudio(true);
       }
   };
 
@@ -277,7 +310,12 @@ const ChatView: React.FC<ChatViewProps> = ({
     setIsLoading(true);
 
     try {
-        const base64ImageBytes = await generateImage(prompt, aspectRatio);
+        const response = await ai.models.generateImages({
+            model: 'imagen-4.0-generate-001',
+            prompt,
+            config: { numberOfImages: 1, outputMimeType: 'image/png', aspectRatio: aspectRatio as any }
+        });
+        const base64ImageBytes = response.generatedImages[0].image.imageBytes;
         addMessageToChat({
             id: crypto.randomUUID(),
             role: 'model',
@@ -312,12 +350,18 @@ const ChatView: React.FC<ChatViewProps> = ({
       setIsLoading(true);
       
        try {
-            const editedImage = await editImage(image, prompt);
-            if(editedImage && editedImage.data) {
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash-image',
+                contents: { parts: [ { inlineData: { data: image.data, mimeType: image.mimeType } }, { text: prompt } ] },
+                config: { responseModalities: ['IMAGE'] },
+            });
+            const imagePart = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
+
+            if(imagePart?.inlineData) {
                  addMessageToChat({
                     id: crypto.randomUUID(),
                     role: 'model',
-                    parts: [{ type: 'image', content: editedImage.data, mimeType: editedImage.mimeType }],
+                    parts: [{ type: 'image', content: imagePart.inlineData.data, mimeType: imagePart.inlineData.mimeType }],
                     timestamp: Date.now()
                 });
             } else { throw new Error("The AI did not return an edited image."); }
@@ -332,6 +376,88 @@ const ChatView: React.FC<ChatViewProps> = ({
         } finally {
             setIsLoading(false);
         }
+  };
+
+  const handleGenerateVideo = async (prompt: string, image?: { data: string; mimeType: string }, dialogue?: string, ambiance?: string) => {
+    setShowVideoStudio(false);
+    setShowVideoAdsStudio(false);
+    trackInterest('video');
+    addXp(50);
+
+    const userMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'user',
+        parts: [{ type: 'text', content: `Create a video: ${prompt}` }],
+        timestamp: Date.now()
+    };
+    addMessageToChat(userMessage);
+
+    const loadingMessageId = crypto.randomUUID();
+    addMessageToChat({
+        id: loadingMessageId, role: 'model', parts: [{ type: 'loading', content: '' }], timestamp: Date.now()
+    });
+
+    try {
+        const loadingMessages = [
+            t('videoStudio.generating.video'), t('videoStudio.generating.audio'), t('videoStudio.generating.final')
+        ];
+        let msgIndex = 0;
+        const updateLoadingMessage = (message: string) => {
+            updateCurrentChat(chat => ({
+                ...chat,
+                messages: chat.messages.map(msg => msg.id === loadingMessageId ? { ...msg, parts: [{ type: 'loading', content: message }] } : msg)
+            }));
+        };
+        updateLoadingMessage(loadingMessages[msgIndex]);
+        const interval = setInterval(() => {
+            msgIndex = (msgIndex + 1) % loadingMessages.length;
+            updateLoadingMessage(loadingMessages[msgIndex]);
+        }, 4000);
+
+        // Call the new backend function
+        const response = await fetch('/api/video/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                prompt, 
+                image, 
+                dialogue, 
+                ambiance,
+                voiceId: settings.voice.selectedVoice 
+            })
+        });
+        
+        clearInterval(interval);
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.details || errorData.error || 'Video generation failed.');
+        }
+
+        const data = await response.json();
+        
+        const finalMessage: ChatMessage = {
+            id: crypto.randomUUID(),
+            role: 'model',
+            parts: [{ type: 'video', content: { url: data.videoUrl, prompt } }],
+            timestamp: Date.now(),
+            ...(data.dialogueAudioBase64 && { audioUrl: `data:audio/mp3;base64,${data.dialogueAudioBase64}` }),
+            ...(dialogue && { videoDialogue: dialogue }),
+            ...(data.ambianceAudioBase64 && { ambianceUrl: `data:audio/mp3;base64,${data.ambianceAudioBase64}` }),
+            ...(ambiance && { videoAmbiance: ambiance }),
+        };
+
+        updateCurrentChat(chat => ({ ...chat, messages: chat.messages.filter(msg => msg.id !== loadingMessageId).concat(finalMessage) }));
+
+    } catch (e) {
+        console.error(e);
+        updateCurrentChat(chat => ({
+            ...chat,
+            messages: chat.messages.map(msg => msg.id === loadingMessageId ? {
+                id: loadingMessageId, role: 'model', parts: [{ type: 'error', content: e instanceof Error ? e.message : "Video generation failed." }], timestamp: Date.now()
+            } : msg)
+        }));
+    }
   };
 
   const handleStudioAction = (mode: RatelMode, prompt: string) => {
@@ -349,56 +475,74 @@ const ChatView: React.FC<ChatViewProps> = ({
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      <Sidebar
-        history={history}
-        currentChatId={currentChatId}
-        userProfile={userProfile}
-        isCurrentChatEmpty={!currentChat || currentChat.messages.length === 0}
-        isOpenOnMobile={isSidebarOpen}
-        onCloseMobile={() => setIsSidebarOpen(false)}
-        onNewChat={handleNewChat}
-        onSelectChat={onSelectChat}
-        onClearChat={onClearChat}
-        onDeleteChat={onDeleteChat}
-        onRenameChat={onRenameChat}
-        onOpenImageStudio={() => openStudio(setShowImageStudio)}
-        onOpenAudioStudio={() => openStudio(setShowAudioStudio)}
-        onOpenHustleStudio={() => openStudio(setShowHustleStudio)}
-        onOpenLearnStudio={() => openStudio(setShowLearnStudio)}
-        onOpenMarketSquare={() => openStudio(setShowMarketSquare)}
-        onOpenMobileWorkersStudio={() => openStudio(setShowMobileWorkersStudio)}
-        onOpenProfileStudio={() => openStudio(setShowProfileStudio)}
-        onOpenProModal={() => { setProModalMessage(undefined); setShowProModal(true); }}
-        onOpenExamplesStudio={() => openStudio(setShowExamplesStudio)}
-        setPage={setPage}
-        onLogout={onLogout}
-      />
-      <main className="flex-1 flex flex-col min-w-0">
-        <ChatWindow
-          chatSession={currentChat}
-          isLoading={isLoading}
-          onToggleSidebar={() => setIsSidebarOpen(p => !p)}
-          onSendMessage={handleSendMessage}
-          onNewChat={handleNewChat}
-          onOpenSupportModal={() => setShowSupportModal(true)}
-          settings={settings}
-          setSettings={setSettings}
-          userProfile={userProfile}
-        />
-      </main>
+    <div className="relative h-screen w-screen bg-gray-800">
+        {settings.appearance.backgroundImage && (
+            <div 
+                className="absolute inset-0 z-0 bg-cover bg-center"
+                style={{ backgroundImage: `url(${settings.appearance.backgroundImage})` }}
+            >
+                <div className="absolute inset-0 bg-black/50" />
+            </div>
+        )}
+        <div className="relative z-10 flex h-full bg-transparent overflow-hidden">
+            <Sidebar
+                history={history}
+                currentChatId={currentChatId}
+                userProfile={userProfile}
+                isCurrentChatEmpty={!currentChat || currentChat.messages.length === 0}
+                isOpenOnMobile={isSidebarOpen}
+                onCloseMobile={() => setIsSidebarOpen(false)}
+                onNewChat={handleNewChat}
+                onSelectChat={onSelectChat}
+                onClearChat={onClearChat}
+                onDeleteChat={onDeleteChat}
+                onRenameChat={onRenameChat}
+                onOpenImageStudio={() => openStudio(setShowImageStudio)}
+                onOpenAudioStudio={() => openStudio(setShowAudioStudio)}
+                onOpenVideoStudio={() => openStudio(setShowVideoStudio)}
+                onOpenHustleStudio={() => openStudio(setShowHustleStudio)}
+                onOpenLearnStudio={() => openStudio(setShowLearnStudio)}
+                onOpenMarketSquare={() => openStudio(setShowMarketSquare)}
+                onOpenMobileWorkersStudio={() => openStudio(setShowMobileWorkersStudio)}
+                onOpenVideoAdsStudio={() => openStudio(setShowVideoAdsStudio)}
+                onOpenProfileStudio={() => openStudio(setShowProfileStudio)}
+                onOpenProModal={() => { setProModalMessage(undefined); setShowProModal(true); }}
+                onOpenVideoArStudio={() => openStudio(setShowVideoArStudio)}
+                onOpenExamplesStudio={() => openStudio(setShowExamplesStudio)}
+                setPage={setPage}
+                onLogout={onLogout}
+            />
+            <main className="flex-1 flex flex-col min-w-0">
+                <ChatWindow
+                chatSession={currentChat}
+                isLoading={isLoading}
+                onToggleSidebar={() => setIsSidebarOpen(p => !p)}
+                onSendMessage={handleSendMessage}
+                onNewChat={handleNewChat}
+                onOpenSupportModal={() => setShowSupportModal(true)}
+                settings={settings}
+                setSettings={setSettings}
+                userProfile={userProfile}
+                onEditVideoPrompt={handleEditVideoPrompt}
+                onOpenProfileStudio={() => openStudio(setShowProfileStudio)}
+                />
+            </main>
+        </div>
       
       {/* Modals and Studios */}
       {showImageStudio && <ImageStudio onClose={() => setShowImageStudio(false)} onGenerate={handleGenerateImage} onEdit={handleEditImage} isLoading={isLoading} initialPrompt={initialStudioData.initialPrompt} />}
       {showAudioStudio && <AudioStudio onClose={() => setShowAudioStudio(false)} />}
+      {showVideoStudio && <VideoStudio onClose={() => setShowVideoStudio(false)} onGenerate={handleGenerateVideo} isLoading={isLoading} {...initialStudioData} />}
       {showHustleStudio && <HustleStudio onClose={() => setShowHustleStudio(false)} isLoading={isLoading} onAction={(type, data) => handleStudioAction('hustle', `Give me hustle ideas based on: ${data.input}`)} />}
       {showLearnStudio && <LearnStudio onClose={() => setShowLearnStudio(false)} onAction={(skill, isTutor) => handleStudioAction('learn', isTutor ? `I want to learn about ${skill}. Act as an expert tutor.` : `Teach me the basics of ${skill}.`)} />}
       {showMarketSquare && <MarketSquare onClose={() => setShowMarketSquare(false)} isLoading={isLoading} onAiSearch={(item, location) => handleStudioAction('market', `Find a ${item} for sale in ${location}`)} userProfile={userProfile} />}
       {showMobileWorkersStudio && <MobileWorkersStudio onClose={() => setShowMobileWorkersStudio(false)} userProfile={userProfile} />}
+      {showVideoAdsStudio && <VideoAdsStudio onClose={() => setShowVideoAdsStudio(false)} onGenerate={(prompt, image) => handleGenerateVideo(prompt, image)} isLoading={isLoading} />}
       {showProfileStudio && <ProfileStudio onClose={() => setShowProfileStudio(false)} userProfile={userProfile} setUserProfile={setUserProfile} />}
       {showProModal && <ProModal onClose={() => setShowProModal(false)} message={proModalMessage} />}
       {showSupportModal && <SupportModal onClose={() => setShowSupportModal(false)} />}
       {showExamplesStudio && <ExamplesStudio onClose={() => setShowExamplesStudio(false)} onSelectExample={prompt => { setShowExamplesStudio(false); handleSendMessage(prompt); }} />}
+      {showVideoArStudio && <VideoArStudio onClose={() => setShowVideoArStudio(false)} />}
     </div>
   );
 };

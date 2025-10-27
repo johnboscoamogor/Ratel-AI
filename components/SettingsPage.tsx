@@ -13,7 +13,7 @@ interface SettingsPageProps {
 }
 
 const SettingsSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-  <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 mb-6">
+  <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg p-6 mb-6">
     <h2 className="text-xl font-bold text-white mb-4">{title}</h2>
     <div className="space-y-4">
       {children}
@@ -22,10 +22,10 @@ const SettingsSection: React.FC<{ title: string; children: React.ReactNode }> = 
 );
 
 const predefinedBackgrounds = [
-    { id: 'abstract', url: 'https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=800&auto=format&fit=crop' },
-    { id: 'mountain', url: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=800&auto=format&fit=crop' },
-    { id: 'floral', url: 'https://images.unsplash.com/photo-1488330890490-c291ecf62571?q=80&w=800&auto=format&fit=crop' },
-    { id: 'beach', url: 'https://images.unsplash.com/photo-1507525428034-b723a996f6ea?q=80&w=800&auto=format&fit=crop' },
+    { id: 'stars', url: 'https://images.pexels.com/photos/1252890/pexels-photo-1252890.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2' },
+    { id: 'mountain', url: 'https://images.pexels.com/photos/371633/pexels-photo-371633.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2' },
+    { id: 'forest', url: 'https://images.pexels.com/photos/38136/pexels-photo-38136.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2' },
+    { id: 'beach', url: 'https://images.pexels.com/photos/1032650/pexels-photo-1032650.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2' },
 ];
 
 

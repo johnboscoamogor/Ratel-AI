@@ -12,13 +12,13 @@ import CvDisplay from './CvDisplay';
 
 interface ChatMessageProps {
   message: ChatMessage;
+  onEditVideoPrompt: (message: ChatMessage) => void;
 }
 
-// FIX: Made children prop optional and handled the undefined case inside the component.
-const CodeBlock = ({ className, children }: { className?: string; children?: React.ReactNode }) => {
+const CodeBlock = ({ className, children }: { className?: string; children: React.ReactNode }) => {
     const [copied, setCopied] = useState(false);
     const match = /language-(\w+)/.exec(className || '');
-    const codeText = String(children || '').replace(/\n$/, '');
+    const codeText = String(children).replace(/\n$/, '');
 
     const handleCopy = (code: string) => {
         navigator.clipboard.writeText(code);
@@ -51,7 +51,8 @@ const CodeBlock = ({ className, children }: { className?: string; children?: Rea
 
 const markdownComponents = {
     code({ node, className, children, ...props }: any) {
-        return <CodeBlock className={className}>{children || ''}</CodeBlock>;
+        // FIX: Explicitly pass `children` as a prop to resolve potential JSX type inference issues.
+        return <CodeBlock className={className} children={children || ''} />;
     }
 };
 
@@ -90,7 +91,7 @@ const TypingText: React.FC<{ text: string }> = ({ text }) => {
 };
 
 
-const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message }) => {
+const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message, onEditVideoPrompt }) => {
   const { t } = useTranslation();
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
@@ -143,6 +144,7 @@ const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message }) => {
       isModelMessage={!isUser}
       handleTextToSpeech={handleTextToSpeech} 
       isAudioPlaying={isAudioPlaying}
+      onEditVideoPrompt={onEditVideoPrompt}
     />
   ));
 
@@ -174,7 +176,8 @@ const MessagePartComponent: React.FC<{
     handleTextToSpeech: (text:string) => void, 
     isAudioPlaying: boolean,
     fullMessage: ChatMessage,
-}> = ({ part, isModelMessage, handleTextToSpeech, isAudioPlaying, fullMessage }) => {
+    onEditVideoPrompt: (message: ChatMessage) => void;
+}> = ({ part, isModelMessage, handleTextToSpeech, isAudioPlaying, fullMessage, onEditVideoPrompt }) => {
 
     switch (part.type) {
         case 'text':
@@ -221,6 +224,24 @@ const MessagePartComponent: React.FC<{
                         alt="Generated"
                         className="rounded-lg max-w-full h-auto"
                     />
+                </div>
+            );
+        case 'video':
+             return (
+                <div>
+                    <video
+                        src={part.content.url}
+                        controls
+                        playsInline
+                        loop
+                        className="rounded-lg max-w-full h-auto bg-black"
+                    />
+                    {isModelMessage && (
+                         <button onClick={() => onEditVideoPrompt(fullMessage)} className="mt-2 flex items-center gap-1.5 text-sm text-gray-400 hover:text-white">
+                            <EditIcon className="w-4 h-4" />
+                            <span>Edit Prompt</span>
+                        </button>
+                    )}
                 </div>
             );
         case 'tasks':

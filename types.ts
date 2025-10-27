@@ -86,6 +86,30 @@ export interface MessagePart {
   groundingChunks?: any[]; // For search grounding results
 }
 
+// FIX: Added Scene and Story interfaces to support the Storyteller feature.
+// This resolves the error where 'Story' was not an exported member of the module.
+// Represents a single scene within a generated story
+export interface Scene {
+  scene_index: number;
+  narration_text: string;
+  visual_prompt: string;
+}
+
+// Represents a complete generated story
+export interface Story {
+  id: string;
+  prompt: string;
+  title: string;
+  script: {
+    title: string;
+    scenes: Scene[];
+    lesson: string;
+  };
+  videoUrl: string;
+  audioUrl: string;
+  timestamp: number;
+}
+
 
 // Represents an item listed in the Market Square
 export interface MarketItem {
@@ -182,20 +206,4 @@ export interface MobileWorker {
     profile_photo_url: string;
     verified: boolean;
     created_at: string;
-}
-
-// FIX: Added Story interface for the Storyteller Studio feature.
-// Represents a generated story
-export interface Story {
-  id: string;
-  prompt: string;
-  title: string;
-  script: {
-    title: string;
-    scenes: { scene_index: number; narration_text: string; visual_prompt: string; }[];
-    lesson: string;
-  };
-  videoUrl: string;
-  audioUrl: string;
-  timestamp: number;
 }

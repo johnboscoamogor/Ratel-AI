@@ -5,7 +5,7 @@ import {
     RatelLogo, EditIcon, TrashIcon, MenuIcon, ChevronLeftIcon, 
     ImageIcon, AudioIcon, BookOpenIcon, BriefcaseIcon, 
     StorefrontIcon, UsersIcon, SettingsIcon, InfoIcon, UserIcon, LogoutIcon, AdminIcon,
-    SparklesIcon, WrenchIcon
+    SparklesIcon, WrenchIcon, VideoIcon, ClapperboardIcon
 } from '../constants';
 import { playSound } from '../services/audioService';
 import ConfirmationDialog from './ConfirmationDialog';
@@ -24,10 +24,12 @@ interface SidebarProps {
   onRenameChat: (id: string, newTitle: string) => void;
   onOpenImageStudio: () => void;
   onOpenAudioStudio: () => void;
+  onOpenVideoStudio: () => void;
   onOpenHustleStudio: () => void;
   onOpenLearnStudio: () => void;
   onOpenMarketSquare: () => void;
   onOpenMobileWorkersStudio: () => void;
+  onOpenVideoAdsStudio: () => void;
   onOpenProfileStudio: () => void;
   onOpenProModal: () => void;
   onOpenExamplesStudio: () => void;
@@ -38,7 +40,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({
   history, currentChatId, userProfile, isCurrentChatEmpty, isOpenOnMobile, onCloseMobile,
   onNewChat, onSelectChat, onClearChat, onDeleteChat, onRenameChat,
-  onOpenImageStudio, onOpenAudioStudio, onOpenHustleStudio, onOpenLearnStudio, onOpenMarketSquare, onOpenMobileWorkersStudio, onOpenProfileStudio, onOpenProModal, onOpenExamplesStudio,
+  onOpenImageStudio, onOpenAudioStudio, onOpenVideoStudio, onOpenHustleStudio, onOpenLearnStudio, onOpenMarketSquare, onOpenMobileWorkersStudio, onOpenVideoAdsStudio, onOpenProfileStudio, onOpenProModal, onOpenExamplesStudio,
   setPage, onLogout
 }) => {
   const { t } = useTranslation();
@@ -85,7 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   );
   
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-gray-800 text-gray-200">
+    <div className="flex flex-col h-full bg-gray-800/90 backdrop-blur-sm text-gray-200">
       {/* Header */}
       <div className="p-4 flex justify-between items-center border-b border-gray-700">
           <div className="flex items-center gap-2">
@@ -114,17 +116,20 @@ const Sidebar: React.FC<SidebarProps> = ({
               <StudioButton Icon={UsersIcon} label={t('sidebar.communityStudio')} onClick={() => handlePageChange('community')} />
               <StudioButton Icon={ImageIcon} label={t('sidebar.imageStudio')} onClick={onOpenImageStudio} />
               <StudioButton Icon={AudioIcon} label={t('sidebar.audioStudio')} onClick={onOpenAudioStudio} />
+              <StudioButton Icon={VideoIcon} label={t('sidebar.videoStudio')} onClick={onOpenVideoStudio} />
+              <StudioButton Icon={ClapperboardIcon} label={t('sidebar.videoAds')} onClick={onOpenVideoAdsStudio} />
           </div>
+        </div>
+
+        {/* New Chat Button */}
+        <div className="pt-2">
+          <button onClick={onNewChat} className="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+            {t('sidebar.newChat')}
+          </button>
         </div>
 
         {/* Chat History */}
         <div>
-           {/* New Chat Button */}
-          <div className="mb-4">
-            <button onClick={onNewChat} className="w-full bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
-              {t('sidebar.newChat')}
-            </button>
-          </div>
           <h3 className="text-xs font-semibold uppercase text-gray-400 mb-2">{t('sidebar.history')}</h3>
           <input
               type="text"
@@ -162,6 +167,29 @@ const Sidebar: React.FC<SidebarProps> = ({
           ) : (
             <p className="text-sm text-gray-400 px-2">{t('sidebar.noHistory')}</p>
           )}
+        </div>
+      </div>
+
+       {/* --- FIXED BOTTOM SECTION --- */}
+      <div className="p-3 border-t border-gray-700">
+        <div className="flex items-center gap-3">
+          <button onClick={onOpenProfileStudio} className="flex items-center gap-2 flex-grow min-w-0 p-1 rounded-md hover:bg-gray-700">
+            <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center flex-shrink-0">
+              <UserIcon className="w-6 h-6 text-gray-300" />
+            </div>
+            <div className="flex-grow min-w-0 text-left">
+              <p className="font-semibold text-sm truncate text-white">{userProfile.name}</p>
+              <p className="text-xs text-gray-400">{t('sidebar.level', { level: userProfile.level })}</p>
+            </div>
+          </button>
+          <div className="flex-shrink-0 flex items-center gap-1">
+            <button title="Settings" onClick={() => handlePageChange('settings')} className="p-2 rounded-full text-gray-400 hover:bg-gray-700 hover:text-white">
+              <SettingsIcon className="w-5 h-5" />
+            </button>
+            <button title="Logout" onClick={onLogout} className="p-2 rounded-full text-gray-400 hover:bg-gray-700 hover:text-white">
+              <LogoutIcon className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

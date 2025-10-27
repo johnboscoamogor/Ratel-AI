@@ -11,10 +11,11 @@ interface ErrorBoundaryState {
   hasError: boolean;
 }
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  // FIX: Switched from constructor to class property for state initialization.
-  // This is a more modern and concise syntax for React class components and resolves TypeScript errors
-  // where `state` and `props` were not being found on the component type.
-  state: ErrorBoundaryState = { hasError: false };
+  // FIX: Reverted to using a constructor to initialize state. This resolves an issue in some build environments where `this.props` is not recognized on the component instance when using class property syntax.
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
 
   static getDerivedStateFromError(_: Error): ErrorBoundaryState {
     return { hasError: true };
@@ -30,6 +31,12 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
         <div style={{ padding: '2rem', textAlign: 'center', color: 'white', backgroundColor: '#1f2937', height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
           <h1 style={{ fontSize: '2rem', marginBottom: '1rem' }}>⚙️ Ratel AI is refreshing</h1>
           <p>Please reload the page or check your connection.</p>
+           <button
+              onClick={() => window.location.reload()}
+              style={{ marginTop: '1.5rem', padding: '0.5rem 1.5rem', border: '1px solid white', borderRadius: '0.25rem', cursor: 'pointer', background: 'transparent', color: 'white', fontSize: '0.875rem', fontWeight: 600 }}
+            >
+              Reload Page
+            </button>
         </div>
       );
     }

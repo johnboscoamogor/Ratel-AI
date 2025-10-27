@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI } from '@google/genai';
+import fetch from 'node-fetch';
 
 const GEMINI_API_KEY = process.env.API_KEY;
 
@@ -10,7 +11,7 @@ if (!GEMINI_API_KEY) {
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
 // Helper to generate audio using Gemini TTS
-const generateAudio = async (text: string, voiceId: string): Promise<string | null> => {
+const generateAudio = async (text: string | undefined, voiceId: string): Promise<string | null> => {
     if (!text) return null;
     try {
         const voiceNameMap: { [key: string]: string } = {
@@ -45,45 +46,61 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
         const { prompt, image, dialogue, ambiance, voiceId } = req.body;
 
-        if (!prompt) {
-            return res.status(400).json({ error: 'Prompt is required' });
+        if (!prompt || !image) {
+            return res.status(400).json({ error: 'Prompt and image are required for video ad generation.' });
         }
+        
+        console.log(`Received video ad request with prompt: "${prompt}"`);
 
-        // Asynchronously generate video and audio tracks
-        const videoPromise = ai.models.generateVideos({
-            // FIX: Updated model name to a recommended one from the guidelines.
-            model: 'veo-3.1-fast-generate-preview',
-            prompt,
-            ...(image && { image: { imageBytes: image.data, mimeType: image.mimeType } }),
-            config: { numberOfVideos: 1 }
-        });
-
+        // Asynchronously generate audio tracks while generating video
         const dialogueAudioPromise = generateAudio(dialogue, voiceId);
         const ambianceAudioPromise = generateAudio(`[Sound effect of ${ambiance}]`, 'en-US-Studio-O');
 
-        // Await all promises concurrently
-        let [videoOperation, dialogueAudio, ambianceAudio] = await Promise.all([
-            videoPromise,
-            dialogueAudioPromise,
-            ambianceAudioPromise
-        ]);
-
+        // Start video generation
+        let videoOperation = await ai.models.generateVideos({
+            model: 'veo-3.1-fast-generate-preview',
+            prompt: prompt,
+            image: {
+                imageBytes: image.data, // base64 string
+                mimeType: image.mimeType,
+            },
+            config: {
+                numberOfVideos: 1,
+                resolution: '720p',
+                aspectRatio: '1:1' // Good for product/portrait animations
+            }
+        });
+        
         // Poll for video completion
         while (!videoOperation.done) {
             await new Promise(resolve => setTimeout(resolve, 10000)); // Poll every 10 seconds
             videoOperation = await ai.operations.getVideosOperation({ operation: videoOperation });
         }
-        
+
         const downloadLink = videoOperation.response?.generatedVideos?.[0]?.video?.uri;
         if (!downloadLink) {
             throw new Error("Video generation succeeded but no download link was returned.");
         }
-        
-        // The API key is required to access the temporary video URL
-        const videoUrl = `${downloadLink}&key=${GEMINI_API_KEY}`;
+
+        // Fetch video bytes on the server to keep the API key secure
+        const videoResponse = await fetch(`${downloadLink}&key=${GEMINI_API_KEY}`);
+        if (!videoResponse.ok) {
+            throw new Error(`Failed to download generated video: ${videoResponse.statusText}`);
+        }
+        // @ts-ignore - buffer() is available in node-fetch
+        const videoBuffer = await videoResponse.buffer();
+        const videoBase64 = videoBuffer.toString('base64');
+        const videoDataUrl = `data:video/mp4;base64,${videoBase64}`;
+
+
+        // Await audio generation
+        const [dialogueAudio, ambianceAudio] = await Promise.all([
+            dialogueAudioPromise,
+            ambianceAudioPromise
+        ]);
 
         res.status(200).json({
-            videoUrl,
+            videoUrl: videoDataUrl,
             dialogueAudioBase64: dialogueAudio,
             ambianceAudioBase64: ambianceAudio,
         });

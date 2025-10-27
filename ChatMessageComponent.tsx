@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -10,15 +10,16 @@ import TaskList from './TaskList';
 import { playSound, generateAudioBlob } from '../services/audioService';
 import CvDisplay from './CvDisplay';
 
+// FIX: Added onEditVideoPrompt to the component's props interface.
 interface ChatMessageProps {
   message: ChatMessage;
   onEditVideoPrompt: (message: ChatMessage) => void;
 }
 
-const CodeBlock = ({ className, children }: { className?: string; children?: React.ReactNode }) => {
+const CodeBlock = ({ className, children }: { className?: string; children: React.ReactNode }) => {
     const [copied, setCopied] = useState(false);
     const match = /language-(\w+)/.exec(className || '');
-    const codeText = String(children || '').replace(/\n$/, '');
+    const codeText = String(children).replace(/\n$/, '');
 
     const handleCopy = (code: string) => {
         navigator.clipboard.writeText(code);
@@ -51,9 +52,45 @@ const CodeBlock = ({ className, children }: { className?: string; children?: Rea
 
 const markdownComponents = {
     code({ node, className, children, ...props }: any) {
-        return <CodeBlock className={className}>{children || ''}</CodeBlock>;
+        // FIX: Explicitly pass `children` as a prop to resolve potential JSX type inference issues.
+        return <CodeBlock className={className} children={children || ''} />;
     }
 };
+
+const TypingText: React.FC<{ text: string }> = ({ text }) => {
+    const [displayedText, setDisplayedText] = useState('');
+    const words = useMemo(() => text.split(/(\s+)/), [text]);
+
+    useEffect(() => {
+        if (text === 'Alright...') {
+            setDisplayedText(text);
+            return;
+        }
+
+        setDisplayedText('');
+        let isCancelled = false;
+        let builtText = '';
+        let i = 0;
+
+        const typeWord = () => {
+            if (isCancelled || i >= words.length) {
+                if (!isCancelled) setDisplayedText(text);
+                return;
+            }
+            builtText += words[i];
+            setDisplayedText(builtText);
+            i++;
+            setTimeout(typeWord, 35);
+        };
+        
+        typeWord();
+
+        return () => { isCancelled = true; };
+    }, [text, words]);
+    
+    return <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{displayedText}</Markdown>;
+};
+
 
 const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message, onEditVideoPrompt }) => {
   const { t } = useTranslation();
@@ -108,6 +145,7 @@ const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message, onEditVideo
       isModelMessage={!isUser}
       handleTextToSpeech={handleTextToSpeech} 
       isAudioPlaying={isAudioPlaying}
+      // FIX: Passed onEditVideoPrompt down to the part component.
       onEditVideoPrompt={onEditVideoPrompt}
     />
   ));
@@ -115,18 +153,18 @@ const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message, onEditVideo
   return (
     <div className={`flex items-start gap-3 ${isUser ? 'justify-end' : ''}`}>
       {!isUser && (
-        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 ring-4 ring-white">
-          <RatelLogo className="w-5 h-5 text-green-600" />
+        <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0 ring-4 ring-gray-800">
+          <RatelLogo className="w-5 h-5 text-green-500" />
         </div>
       )}
       <div className={`${isUser ? 'order-1 items-end' : 'order-2 items-start'} flex flex-col`}>
-        <div className={`p-3 rounded-xl ${isUser ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-800'}`}>
+        <div className={`p-3 rounded-xl ${isUser ? 'bg-green-600 text-white' : 'bg-gray-700 text-gray-200'}`}>
           {messageParts}
         </div>
       </div>
       {isUser && (
-        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 order-2 ring-4 ring-white">
-          <UserIcon className="w-5 h-5 text-gray-600" />
+        <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center flex-shrink-0 order-2 ring-4 ring-gray-800">
+          <UserIcon className="w-5 h-5 text-gray-300" />
         </div>
       )}
     </div>
@@ -140,6 +178,7 @@ const MessagePartComponent: React.FC<{
     handleTextToSpeech: (text:string) => void, 
     isAudioPlaying: boolean,
     fullMessage: ChatMessage,
+    // FIX: Added onEditVideoPrompt to the props interface.
     onEditVideoPrompt: (message: ChatMessage) => void;
 }> = ({ part, isModelMessage, handleTextToSpeech, isAudioPlaying, fullMessage, onEditVideoPrompt }) => {
 
@@ -147,21 +186,25 @@ const MessagePartComponent: React.FC<{
         case 'text':
             return (
                 <div>
-                  <div className="prose prose-sm max-w-none prose-p:my-2 prose-headings:my-2 prose-ul:my-2 prose-li:my-0">
-                    <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                        {part.content}
-                    </Markdown>
+                  <div className="prose prose-sm max-w-none prose-invert prose-p:my-2 prose-headings:my-2 prose-ul:my-2 prose-li:my-0">
+                    {isModelMessage ? (
+                        <TypingText text={part.content} />
+                    ) : (
+                        <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                            {part.content}
+                        </Markdown>
+                    )}
                   </div>
                    {part.groundingChunks && part.groundingChunks.length > 0 && (
-                      <div className="mt-3 pt-2 border-t border-gray-200">
-                          <h4 className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1.5">
+                      <div className="mt-3 pt-2 border-t border-gray-500/50">
+                          <h4 className="text-xs font-semibold text-gray-400 mb-1 flex items-center gap-1.5">
                               <GlobeIcon className="w-3.5 h-3.5" />
                               Sources
                           </h4>
                           <ul className="text-xs space-y-1">
                               {part.groundingChunks.map((chunk, i) => (
                                 <li key={i}>
-                                    <a href={chunk.web?.uri} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate block">
+                                    <a href={chunk.web?.uri} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline truncate block">
                                       {chunk.web?.title}
                                     </a>
                                 </li>
@@ -169,8 +212,8 @@ const MessagePartComponent: React.FC<{
                           </ul>
                       </div>
                   )}
-                  {isModelMessage && part.content && (
-                    <button onClick={() => handleTextToSpeech(part.content)} className="mt-2 p-1 text-gray-500 hover:text-gray-900">
+                  {isModelMessage && part.content !== 'Alright...' && (
+                    <button onClick={() => handleTextToSpeech(part.content)} className="mt-2 p-1 text-gray-400 hover:text-white">
                       {isAudioPlaying ? <StopIcon className="w-4 h-4" /> : <SpeakerIcon className="w-4 h-4" />}
                     </button>
                   )}
@@ -186,6 +229,7 @@ const MessagePartComponent: React.FC<{
                     />
                 </div>
             );
+        // FIX: Added an edit button for video parts.
         case 'video':
              return (
                 <div>
@@ -197,7 +241,7 @@ const MessagePartComponent: React.FC<{
                         className="rounded-lg max-w-full h-auto bg-black"
                     />
                     {isModelMessage && (
-                         <button onClick={() => onEditVideoPrompt(fullMessage)} className="mt-2 flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900">
+                         <button onClick={() => onEditVideoPrompt(fullMessage)} className="mt-2 flex items-center gap-1.5 text-sm text-gray-400 hover:text-white">
                             <EditIcon className="w-4 h-4" />
                             <span>Edit Prompt</span>
                         </button>
@@ -210,15 +254,15 @@ const MessagePartComponent: React.FC<{
             return <CvDisplay cvData={part.content.cvData} isLoading={part.content.isLoading} />;
         case 'loading':
             return (
-                <div className="flex items-center gap-2 text-gray-500">
+                <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse [animation-delay:0.2s]"></div>
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse [animation-delay:0.4s]"></div>
-                    {part.content && <span className="text-sm">{part.content}</span>}
+                    {part.content && <span className="text-sm text-gray-400">{part.content}</span>}
                 </div>
             );
         case 'error':
-            return <p className="text-red-600 font-medium">{part.content}</p>;
+            return <p className="text-red-400 font-medium">{part.content}</p>;
         default:
             return null;
     }

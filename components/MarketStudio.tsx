@@ -143,6 +143,10 @@ const BrowseMarketTab: React.FC<{ currentUser: UserProfile }> = ({ currentUser }
     return (
         <div>
             <div className="p-4">
+                <style>{`
+                    .no-scrollbar::-webkit-scrollbar { display: none; }
+                    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+                `}</style>
                 <h2 className="text-2xl font-bold text-gray-800 text-center mb-4">{t('marketSquare.browse.welcome')}</h2>
                 <input
                     type="text"
@@ -163,9 +167,9 @@ const BrowseMarketTab: React.FC<{ currentUser: UserProfile }> = ({ currentUser }
                         <p>{t('marketSquare.browse.noItems')}</p>
                     </div>
                 )}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="flex flex-row gap-4 overflow-x-auto pb-4 snap-x snap-mandatory no-scrollbar">
                     {filteredItems.map(item => (
-                        <div key={item.id} className={`bg-white border rounded-lg shadow-sm overflow-hidden transition-opacity ${deletingId === item.id ? 'opacity-50 pointer-events-none' : ''}`}>
+                        <div key={item.id} className={`flex-shrink-0 snap-start w-72 bg-white border rounded-lg shadow-sm overflow-hidden transition-opacity ${deletingId === item.id ? 'opacity-50 pointer-events-none' : ''}`}>
                             <div className="relative">
                                 <img src={item.imageUrl} alt={item.itemName} className="h-48 w-full object-cover"/>
                                  {item.isSold && (

@@ -76,9 +76,13 @@ const ExamplesStudio: React.FC<ExamplesStudioProps> = ({ onClose, onSelectExampl
                 </nav>
 
                 <main className="flex-grow overflow-y-auto p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <style>{`
+                        .no-scrollbar::-webkit-scrollbar { display: none; }
+                        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+                    `}</style>
+                    <div className="flex flex-row gap-3 overflow-x-auto pb-2 snap-x snap-mandatory no-scrollbar">
                         {examples[activeTab].prompts.map((prompt, index) => (
-                            <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex flex-col justify-between">
+                            <div key={index} className="flex-shrink-0 snap-start w-72 h-full bg-gray-50 border border-gray-200 rounded-lg p-3 flex flex-col justify-between">
                                 <p className="text-sm text-gray-700 mb-2">"{prompt}"</p>
                                 <button
                                     onClick={() => handleTryIt(prompt)}

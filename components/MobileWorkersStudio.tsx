@@ -120,6 +120,10 @@ const FindWorkerTab: React.FC = () => {
 
     return (
         <div className="p-4 space-y-4">
+            <style>{`
+                .no-scrollbar::-webkit-scrollbar { display: none; }
+                .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+            `}</style>
             <div className="flex gap-2">
                 <input
                     type="text"
@@ -154,7 +158,7 @@ const FindWorkerTab: React.FC = () => {
                 <p className="text-center text-gray-500 py-6">{t('mobileWorkersStudio.find.noResults')}</p>
             )}
 
-            <div className="space-y-3">
+            <div className="flex flex-row gap-3 overflow-x-auto pb-4 snap-x snap-mandatory no-scrollbar">
                 {workers.map(worker => <WorkerCard key={worker.id} worker={worker} />)}
             </div>
             <AdBanner/>
@@ -166,7 +170,7 @@ const FindWorkerTab: React.FC = () => {
 const WorkerCard: React.FC<{ worker: MobileWorker }> = ({ worker }) => {
     const { t } = useTranslation();
     return (
-        <div className="flex items-start gap-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div className="flex-shrink-0 snap-start w-80 flex items-start gap-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
             <img src={worker.profile_photo_url} alt={worker.full_name} className="w-20 h-20 rounded-full object-cover border-2 border-gray-100"/>
             <div className="flex-grow">
                 <div className="flex items-center gap-2 mb-1">

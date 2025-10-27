@@ -247,10 +247,14 @@ const StorytellerStudio: React.FC<StorytellerStudioProps> = ({ onClose, onStoryG
                                  onChange={(e) => setPrompt(e.target.value)}
                              />
                             <div className="flex-grow mt-4 pt-4 border-t border-gray-200">
+                                <style>{`
+                                    .no-scrollbar::-webkit-scrollbar { display: none; }
+                                    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+                                `}</style>
                                 <h4 className="text-sm font-semibold text-gray-600 text-center mb-3">{t('storytellerStudio.tryExample')}</h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                <div className="flex flex-row gap-2 overflow-x-auto pb-2 snap-x snap-mandatory no-scrollbar">
                                     {storyExamples.map((example, index) => (
-                                        <div key={index} className="bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm text-gray-700 flex justify-between items-center">
+                                        <div key={index} className="flex-shrink-0 snap-start w-72 bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm text-gray-700 flex justify-between items-center">
                                             <span className="italic pr-2">"{example}"</span>
                                             <button
                                                 onClick={() => handleTryExample(example)}

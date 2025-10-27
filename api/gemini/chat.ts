@@ -24,7 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const contents = [...(history || []), { role: 'user', parts: userParts }];
 
         const resultStream = await ai.models.generateContentStream({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-flash-lite-latest',
             contents: contents,
             config: {
                 systemInstruction: systemInstruction,
