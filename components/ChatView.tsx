@@ -15,6 +15,7 @@ import ProModal from './ProModal';
 import SupportModal from './SupportModal';
 import ExamplesStudio from './ExamplesStudio';
 import VideoArStudio from './VideoArStudio';
+import ApiKeyModal from './ApiKeyModal';
 import { ChatSession, UserProfile, AppSettings, ChatMessage, MessagePart, RatelMode, Task } from '../types';
 import { playSound } from '../services/audioService';
 import { ai } from '../services/geminiService';
@@ -55,12 +56,43 @@ const ChatView: React.FC<ChatViewProps> = ({
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [showExamplesStudio, setShowExamplesStudio] = useState(false);
   const [showVideoArStudio, setShowVideoArStudio] = useState(false);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
 
   const [initialStudioData, setInitialStudioData] = useState<any>({});
   
   const [tasks, setTasks] = useState<Task[]>([]);
   
   const chatSessionsRef = useRef<Map<string, any>>(new Map());
+  const postKeySelectionAction = useRef<(() => void) | null>(null);
+  const [isApiKeyKnownValid, setIsApiKeyKnownValid] = useState(true);
+
+  const ensureApiKey = async (action: () => void) => {
+    // @ts-ignore
+    if (!window.aistudio || typeof window.aistudio.hasSelectedApiKey !== 'function') {
+      // Fallback for environments where the aistudio helper isn't available
+      action();
+      return;
+    }
+    // @ts-ignore
+    const hasKey = await window.aistudio.hasSelectedApiKey();
+    if (hasKey && isApiKeyKnownValid) {
+        action();
+    } else {
+        postKeySelectionAction.current = action;
+        setShowApiKeyModal(true);
+    }
+  };
+
+  const handleSelectKey = async () => {
+    // @ts-ignore
+    await window.aistudio.openSelectKey();
+    setShowApiKeyModal(false);
+    setIsApiKeyKnownValid(true); // Assume the new key is valid
+    if (postKeySelectionAction.current) {
+        postKeySelectionAction.current();
+        postKeySelectionAction.current = null;
+    }
+  };
 
   const handleNewChat = useCallback(() => {
     playSound('click');
@@ -451,10 +483,16 @@ const ChatView: React.FC<ChatViewProps> = ({
 
     } catch (e) {
         console.error(e);
+        let errorMessage = e instanceof Error ? e.message : "Video generation failed.";
+        if (e instanceof Error && e.message.includes("Requested entity was not found.")) {
+             setIsApiKeyKnownValid(false);
+             errorMessage = "Your API key may be invalid or lack the necessary permissions. Please try selecting a new key when prompted and try again."
+        }
+        
         updateCurrentChat(chat => ({
             ...chat,
             messages: chat.messages.map(msg => msg.id === loadingMessageId ? {
-                id: loadingMessageId, role: 'model', parts: [{ type: 'error', content: e instanceof Error ? e.message : "Video generation failed." }], timestamp: Date.now()
+                id: loadingMessageId, role: 'model', parts: [{ type: 'error', content: errorMessage }], timestamp: Date.now()
             } : msg)
         }));
     }
@@ -504,7 +542,7 @@ const ChatView: React.FC<ChatViewProps> = ({
                 onOpenLearnStudio={() => openStudio(setShowLearnStudio)}
                 onOpenMarketSquare={() => openStudio(setShowMarketSquare)}
                 onOpenMobileWorkersStudio={() => openStudio(setShowMobileWorkersStudio)}
-                onOpenVideoAdsStudio={() => openStudio(setShowVideoAdsStudio)}
+                onOpenVideoAdsStudio={() => ensureApiKey(() => openStudio(setShowVideoAdsStudio))}
                 onOpenProfileStudio={() => openStudio(setShowProfileStudio)}
                 onOpenProModal={() => { setProModalMessage(undefined); setShowProModal(true); }}
                 onOpenVideoArStudio={() => openStudio(setShowVideoArStudio)}
@@ -518,6 +556,7 @@ const ChatView: React.FC<ChatViewProps> = ({
                 isLoading={isLoading}
                 onToggleSidebar={() => setIsSidebarOpen(p => !p)}
                 onSendMessage={handleSendMessage}
+                // FIX: Changed onNewChat to handleNewChat to pass the correct function prop.
                 onNewChat={handleNewChat}
                 onOpenSupportModal={() => setShowSupportModal(true)}
                 settings={settings}
@@ -543,6 +582,7 @@ const ChatView: React.FC<ChatViewProps> = ({
       {showSupportModal && <SupportModal onClose={() => setShowSupportModal(false)} />}
       {showExamplesStudio && <ExamplesStudio onClose={() => setShowExamplesStudio(false)} onSelectExample={prompt => { setShowExamplesStudio(false); handleSendMessage(prompt); }} />}
       {showVideoArStudio && <VideoArStudio onClose={() => setShowVideoArStudio(false)} />}
+      {showApiKeyModal && <ApiKeyModal onClose={() => setShowApiKeyModal(false)} onSelectKey={handleSelectKey} />}
     </div>
   );
 };

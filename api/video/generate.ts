@@ -4,14 +4,16 @@ import fetch from 'node-fetch';
 
 const GEMINI_API_KEY = process.env.API_KEY;
 
-if (!GEMINI_API_KEY) {
-    throw new Error("The API_KEY environment variable is not set.");
+// This function is defined here, but not exported, so it's private to this module.
+const initializeAi = () => {
+    if (!GEMINI_API_KEY) {
+        throw new Error("The API_KEY environment variable is not set.");
+    }
+    return new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 }
 
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-
 // Helper to generate audio using Gemini TTS
-const generateAudio = async (text: string | undefined, voiceId: string): Promise<string | null> => {
+const generateAudio = async (ai: GoogleGenAI, text: string | undefined, voiceId: string): Promise<string | null> => {
     if (!text) return null;
     try {
         const voiceNameMap: { [key: string]: string } = {
@@ -52,13 +54,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         
         console.log(`Received video ad request with prompt: "${prompt}"`);
 
+        // Initialize the AI client for this request
+        const ai = initializeAi();
+
         // Asynchronously generate audio tracks while generating video
-        const dialogueAudioPromise = generateAudio(dialogue, voiceId);
-        const ambianceAudioPromise = generateAudio(`[Sound effect of ${ambiance}]`, 'en-US-Studio-O');
+        const dialogueAudioPromise = generateAudio(ai, dialogue, voiceId);
+        const ambianceAudioPromise = generateAudio(ai, `[Sound effect of ${ambiance}]`, 'en-US-Studio-O');
 
         // Start video generation
         let videoOperation = await ai.models.generateVideos({
-            model: 'veo-3.1-fast-generate-preview',
+            model: 'veo-3.1-generate-preview',
             prompt: prompt,
             image: {
                 imageBytes: image.data, // base64 string
@@ -85,6 +90,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Fetch video bytes on the server to keep the API key secure
         const videoResponse = await fetch(`${downloadLink}&key=${GEMINI_API_KEY}`);
         if (!videoResponse.ok) {
+            // Forward the error from Google's server if fetching fails
+            const errorBody = await videoResponse.text();
+            console.error(`Failed to download generated video. Status: ${videoResponse.status}. Body: ${errorBody}`);
             throw new Error(`Failed to download generated video: ${videoResponse.statusText}`);
         }
         // @ts-ignore - buffer() is available in node-fetch
