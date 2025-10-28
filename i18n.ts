@@ -1,4 +1,4 @@
-import i18n from 'i18next';
+import i1n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
@@ -28,15 +28,15 @@ const resources = {
             "pidgin": "Pidgin"
         },
         "examples": {
-            "hustle_title": "Get hustle ideas",
-            "hustle_desc": "...for a student in Lagos",
-            "hustle_prompt": "Give me 5 side hustle ideas for a student in Lagos",
-            "image_title": "Create an image",
-            "image_desc": "...of a futuristic matatu flying over Nairobi",
-            "image_prompt": "Create a photorealistic image of a futuristic matatu flying over Nairobi",
-            "explain_title": "Explain a concept",
-            "explain_desc": "...like 'inflation' using Nigerian examples",
-            "explain_prompt": "Explain 'inflation' to me like I'm 10, using Nigerian examples",
+            "hustle_title": "Make Money with AI",
+            "hustle_desc": "Discover tools and strategies",
+            "hustle_prompt": "How can I make money using AI tools?",
+            "image_title": "Learn African History",
+            "image_desc": "Explore the rich history of the continent",
+            "image_prompt": "Teach me about the history of the Mali Empire.",
+            "explain_title": "Get Financial Advice",
+            "explain_desc": "Tips for saving and investing in Africa",
+            "explain_prompt": "Give me some financial advice for a young professional living in Nigeria.",
             "story_title": "Tell a story",
             "story_desc": "...about Anansi the Spider",
             "story_prompt": "Tell me a short story about Anansi the Spider"
@@ -97,8 +97,7 @@ const resources = {
         "communityStudio": "Community",
         "imageStudio": "Image",
         "audioStudio": "Audio",
-        "videoStudio": "Video",
-        "videoAds": "Video Ads",
+        "videoStudio": "Veo Studio",
         "settings": "Settings",
         "contactUs": "Contact Us",
         "logout": "Logout",
@@ -164,14 +163,6 @@ const resources = {
           "final": "Finalizing your video..."
         }
       },
-      "videoAdsStudio": {
-          "title": "Animate Images with Veo",
-          "description": "Bring images to life with Veo 3. Let users upload a product photo and turn it into a dynamic video ad, or animate a character's portrait.",
-          "imageLabel": "Upload your product photo or portrait",
-          "promptLabel": "Describe the animation",
-          "promptPlaceholder": "e.g., zoom in slowly, make the lights twinkle, pan from left to right",
-          "generateButton": "Animate Image"
-      },
       "videoArStudio": {
         "title": "Video AR Studio",
         "promptPlaceholder": "e.g., add sunglasses, turn my hair blue, make it snow",
@@ -189,8 +180,7 @@ const resources = {
           "tabs": {
               "hustle": "Hustle",
               "learn": "Learn",
-              "image": "Image",
-              "story": "Story"
+              "image": "Image"
           },
           "hustlePrompts": [
               "Give me 5 side hustle ideas I can start with ₦20,000 in Nigeria.",
@@ -209,12 +199,6 @@ const resources = {
               "A photorealistic image of a futuristic matatu flying over Nairobi.",
               "A logo for a coffee shop called 'Addis Sunrise', with Ethiopian cultural elements.",
               "A beautiful woman wearing traditional Yoruba Aso-Oke, standing in a field of sunflowers."
-          ],
-          "storyPrompts": [
-              "Tell me a short bedtime story about Anansi the Spider.",
-              "Create a folk tale about why the cheetah has spots.",
-              "Write a modern story about a young tech entrepreneur in Kigali.",
-              "A funny story about a goat that thinks it's a dog."
           ]
       },
        // ... other translations
@@ -368,7 +352,7 @@ const resources = {
               "ai": "Using AI"
           },
           "subjects": {
-              "finance": "Personal Finance",
+              "finance": "GehGeh financial advice",
               "marketing": "Digital Marketing",
               "agribusiness": "Agribusiness"
           },
@@ -581,7 +565,8 @@ const resources = {
   }
 };
 
-i18n
+// FIX: Changed 'i18n' to 'i1n' to match the variable name defined in the import statement.
+i1n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
@@ -598,4 +583,5 @@ i18n
     },
   });
 
-export default i18n;
+// FIX: Changed 'i18n' to 'i1n' to match the variable name defined in the import statement.
+export default i1n;

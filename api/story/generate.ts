@@ -121,8 +121,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         res.status(200).json({
             id: crypto.randomUUID(),
             title: scriptData.title,
-            script: scriptData.script,
             scenes: scriptData.scenes,
+            lesson: scriptData.lesson,
             sceneVideoUrls,
             audioBase64,
         });

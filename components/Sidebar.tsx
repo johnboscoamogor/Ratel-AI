@@ -5,7 +5,7 @@ import {
     RatelLogo, EditIcon, TrashIcon, MenuIcon, ChevronLeftIcon, 
     ImageIcon, AudioIcon, BookOpenIcon, BriefcaseIcon, 
     StorefrontIcon, UsersIcon, SettingsIcon, InfoIcon, UserIcon, LogoutIcon, AdminIcon,
-    SparklesIcon, WrenchIcon, VideoIcon, ClapperboardIcon
+    SparklesIcon, WrenchIcon, VideoIcon
 } from '../constants';
 import { playSound } from '../services/audioService';
 import ConfirmationDialog from './ConfirmationDialog';
@@ -24,12 +24,11 @@ interface SidebarProps {
   onRenameChat: (id: string, newTitle: string) => void;
   onOpenImageStudio: () => void;
   onOpenAudioStudio: () => void;
-  onOpenVideoStudio: () => void;
+  onOpenVeoStudio: () => void;
   onOpenHustleStudio: () => void;
   onOpenLearnStudio: () => void;
   onOpenMarketSquare: () => void;
   onOpenMobileWorkersStudio: () => void;
-  onOpenVideoAdsStudio: () => void;
   onOpenProfileStudio: () => void;
   onOpenProModal: () => void;
   onOpenExamplesStudio: () => void;
@@ -40,7 +39,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({
   history, currentChatId, userProfile, isCurrentChatEmpty, isOpenOnMobile, onCloseMobile,
   onNewChat, onSelectChat, onClearChat, onDeleteChat, onRenameChat,
-  onOpenImageStudio, onOpenAudioStudio, onOpenVideoStudio, onOpenHustleStudio, onOpenLearnStudio, onOpenMarketSquare, onOpenMobileWorkersStudio, onOpenVideoAdsStudio, onOpenProfileStudio, onOpenProModal, onOpenExamplesStudio,
+  onOpenImageStudio, onOpenAudioStudio, onOpenVeoStudio, onOpenHustleStudio, onOpenLearnStudio, onOpenMarketSquare, onOpenMobileWorkersStudio, onOpenProfileStudio, onOpenProModal, onOpenExamplesStudio,
   setPage, onLogout
 }) => {
   const { t } = useTranslation();
@@ -116,8 +115,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <StudioButton Icon={UsersIcon} label={t('sidebar.communityStudio')} onClick={() => handlePageChange('community')} />
               <StudioButton Icon={ImageIcon} label={t('sidebar.imageStudio')} onClick={onOpenImageStudio} />
               <StudioButton Icon={AudioIcon} label={t('sidebar.audioStudio')} onClick={onOpenAudioStudio} />
-              <StudioButton Icon={VideoIcon} label={t('sidebar.videoStudio')} onClick={onOpenVideoStudio} />
-              <StudioButton Icon={ClapperboardIcon} label={t('sidebar.videoAds')} onClick={onOpenVideoAdsStudio} />
+              <StudioButton Icon={VideoIcon} label={t('sidebar.videoStudio')} onClick={onOpenVeoStudio} />
           </div>
         </div>
 

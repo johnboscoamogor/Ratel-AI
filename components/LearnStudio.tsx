@@ -6,7 +6,7 @@ import { playSound } from '../services/audioService';
 
 interface LearnStudioProps {
   onClose: () => void;
-  onAction: (skill: string, isTutorSubject: boolean) => void;
+  onAction: (subjectId: string, skill: string, isTutorSubject: boolean) => void;
 }
 
 const LearnStudio: React.FC<LearnStudioProps> = ({ onClose, onAction }) => {
@@ -25,9 +25,9 @@ const LearnStudio: React.FC<LearnStudioProps> = ({ onClose, onAction }) => {
         { id: 'agribusiness', label: t('learnStudio.subjects.agribusiness'), Icon: GraduationCapIcon, isTutor: true },
     ];
 
-    const handleAction = (skillLabel: string, isTutor: boolean) => {
+    const handleAction = (subjectId: string, skillLabel: string, isTutor: boolean) => {
         playSound('click');
-        onAction(skillLabel, isTutor);
+        onAction(subjectId, skillLabel, isTutor);
     };
     
     const handleClose = () => {
@@ -63,7 +63,7 @@ const LearnStudio: React.FC<LearnStudioProps> = ({ onClose, onAction }) => {
                             {tutorSubjects.map(({ id, label, Icon, isTutor }) => (
                                 <button
                                     key={id}
-                                    onClick={() => handleAction(label, isTutor)}
+                                    onClick={() => handleAction(id, label, isTutor)}
                                     className="flex-shrink-0 snap-start w-32 flex flex-col items-center justify-center gap-2 p-3 border border-gray-200 rounded-lg bg-gray-50 hover:bg-green-50 hover:border-green-300 transition-colors"
                                 >
                                     <Icon className="w-8 h-8 text-green-600" />
@@ -75,15 +75,15 @@ const LearnStudio: React.FC<LearnStudioProps> = ({ onClose, onAction }) => {
                     
                     <div>
                          <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">{t('learnStudio.skillsTitle')}</h3>
-                        <div className="flex flex-row gap-4 overflow-x-auto pb-2 snap-x snap-mandatory no-scrollbar">
+                        <div className="flex flex-row gap-3 overflow-x-auto pb-2 snap-x snap-mandatory no-scrollbar">
                             {generalSkills.map(({ id, label, Icon, isTutor }) => (
                                 <button
                                     key={id}
-                                    onClick={() => handleAction(label, isTutor)}
-                                    className="flex-shrink-0 snap-start w-40 flex flex-col items-center justify-center gap-2 p-4 border border-gray-200 rounded-lg bg-gray-50 hover:bg-green-50 hover:border-green-300 transition-colors"
+                                    onClick={() => handleAction(id, label, isTutor)}
+                                    className="flex-shrink-0 snap-start w-32 flex flex-col items-center justify-center gap-2 p-3 border border-gray-200 rounded-lg bg-gray-50 hover:bg-green-50 hover:border-green-300 transition-colors"
                                 >
                                     <Icon className="w-8 h-8 text-green-600" />
-                                    <span className="font-semibold text-gray-700 text-center">{label}</span>
+                                    <span className="font-semibold text-gray-700 text-center text-xs leading-tight">{label}</span>
                                 </button>
                             ))}
                         </div>

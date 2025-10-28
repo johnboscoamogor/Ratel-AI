@@ -16,8 +16,8 @@ interface StorytellerStudioProps {
 interface StoryApiResponse {
     id: string;
     title: string;
-    script: string;
     scenes: any[];
+    lesson: string;
     sceneVideoUrls: (string | null)[];
     audioBase64: string;
 }
@@ -150,7 +150,7 @@ const StorytellerStudio: React.FC<StorytellerStudioProps> = ({ onClose, onStoryG
                 id: data.id,
                 prompt,
                 title: data.title,
-                script: { title: data.title, scenes: data.scenes, lesson: '' }, // Reconstruct from available data
+                script: { title: data.title, scenes: data.scenes, lesson: data.lesson }, // Reconstruct from available data
                 videoUrl: data.sceneVideoUrls[0] || '', // Use first scene as representative
                 audioUrl: `data:audio/mp3;base64,${data.audioBase64}`,
                 timestamp: Date.now(),

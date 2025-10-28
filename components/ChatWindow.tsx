@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ChatMessageComponent from './ChatMessage';
 import ChatInput from './ChatInput';
-import { ChatSession, AppSettings, UserProfile, ChatMessage } from '../types';
+import { ChatSession, AppSettings, UserProfile } from '../types';
 import { MenuIcon, CoffeeIcon, ChevronDownIcon, UserIcon, RatelLogo } from '../constants';
 import { playSound } from '../services/audioService';
 
@@ -16,12 +16,11 @@ interface ChatWindowProps {
   settings: AppSettings;
   setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
   userProfile: UserProfile;
-  onEditVideoPrompt: (originalMessage: ChatMessage) => void;
   onOpenProfileStudio: () => void;
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
-  chatSession, isLoading, onToggleSidebar, onSendMessage, onNewChat, onOpenSupportModal, settings, setSettings, userProfile, onEditVideoPrompt, onOpenProfileStudio
+  chatSession, isLoading, onToggleSidebar, onSendMessage, onNewChat, onOpenSupportModal, settings, setSettings, userProfile, onOpenProfileStudio
 }) => {
   const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -120,7 +119,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         {chatSession && chatSession.messages.length > 0 ? (
           <div className="space-y-4 w-full">
             {chatSession.messages.map((msg) => (
-              <ChatMessageComponent key={msg.id} message={msg} onEditVideoPrompt={onEditVideoPrompt} />
+              <ChatMessageComponent key={msg.id} message={msg} />
             ))}
              <div ref={messagesEndRef} />
           </div>

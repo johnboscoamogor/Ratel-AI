@@ -56,6 +56,29 @@ export interface Task {
   reminderFired?: boolean;
 }
 
+// FIX: Added Story and StoryScene types to resolve import errors.
+// Represents a single scene in a generated story
+export interface StoryScene {
+  scene_index: number;
+  narration_text: string;
+  visual_prompt: string;
+}
+
+// Represents a generated story from the Storyteller Studio
+export interface Story {
+  id: string;
+  prompt: string;
+  title: string;
+  script: {
+    title: string;
+    scenes: StoryScene[];
+    lesson: string;
+  };
+  videoUrl: string;
+  audioUrl: string;
+  timestamp: number;
+}
+
 // Represents a single chat session in the history
 export interface ChatSession {
   id: string;
@@ -85,31 +108,6 @@ export interface MessagePart {
   mimeType?: string; // For images/videos
   groundingChunks?: any[]; // For search grounding results
 }
-
-// FIX: Added Scene and Story interfaces to support the Storyteller feature.
-// This resolves the error where 'Story' was not an exported member of the module.
-// Represents a single scene within a generated story
-export interface Scene {
-  scene_index: number;
-  narration_text: string;
-  visual_prompt: string;
-}
-
-// Represents a complete generated story
-export interface Story {
-  id: string;
-  prompt: string;
-  title: string;
-  script: {
-    title: string;
-    scenes: Scene[];
-    lesson: string;
-  };
-  videoUrl: string;
-  audioUrl: string;
-  timestamp: number;
-}
-
 
 // Represents an item listed in the Market Square
 export interface MarketItem {

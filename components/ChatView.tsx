@@ -4,17 +4,15 @@ import Sidebar from './Sidebar';
 import ChatWindow from './ChatWindow';
 import ImageStudio from './ImageStudio';
 import AudioStudio from './AudioStudio';
-import VideoStudio from './VideoStudio';
+import VeoStudio from './VeoStudio';
 import HustleStudio from './HustleStudio';
 import LearnStudio from './LearnStudio';
 import MarketSquare from './MarketStudio';
-import VideoAdsStudio from './VideoAdsStudio';
 import MobileWorkersStudio from './MobileWorkersStudio';
 import ProfileStudio from './ProfileStudio';
 import ProModal from './ProModal';
 import SupportModal from './SupportModal';
 import ExamplesStudio from './ExamplesStudio';
-import VideoArStudio from './VideoArStudio';
 import ApiKeyModal from './ApiKeyModal';
 import { ChatSession, UserProfile, AppSettings, ChatMessage, MessagePart, RatelMode, Task } from '../types';
 import { playSound } from '../services/audioService';
@@ -44,18 +42,16 @@ const ChatView: React.FC<ChatViewProps> = ({
   
   const [showImageStudio, setShowImageStudio] = useState(false);
   const [showAudioStudio, setShowAudioStudio] = useState(false);
-  const [showVideoStudio, setShowVideoStudio] = useState(false);
+  const [showVeoStudio, setShowVeoStudio] = useState(false);
   const [showHustleStudio, setShowHustleStudio] = useState(false);
   const [showLearnStudio, setShowLearnStudio] = useState(false);
   const [showMarketSquare, setShowMarketSquare] = useState(false);
   const [showMobileWorkersStudio, setShowMobileWorkersStudio] = useState(false);
-  const [showVideoAdsStudio, setShowVideoAdsStudio] = useState(false);
   const [showProfileStudio, setShowProfileStudio] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
   const [proModalMessage, setProModalMessage] = useState<string | undefined>(undefined);
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [showExamplesStudio, setShowExamplesStudio] = useState(false);
-  const [showVideoArStudio, setShowVideoArStudio] = useState(false);
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
 
   const [initialStudioData, setInitialStudioData] = useState<any>({});
@@ -92,6 +88,11 @@ const ChatView: React.FC<ChatViewProps> = ({
         postKeySelectionAction.current();
         postKeySelectionAction.current = null;
     }
+  };
+
+  const handleApiKeyInvalid = () => {
+    setIsApiKeyKnownValid(false);
+    setShowVeoStudio(false);
   };
 
   const handleNewChat = useCallback(() => {
@@ -313,18 +314,6 @@ const ChatView: React.FC<ChatViewProps> = ({
           chatSessionsRef.current.delete(currentChatId);
       }
   };
-  
-  const handleEditVideoPrompt = (originalMessage: ChatMessage) => {
-      const videoPart = originalMessage.parts.find(p => p.type === 'video');
-      if (videoPart) {
-          setInitialStudioData({
-              initialPrompt: videoPart.content.prompt,
-              initialDialogue: originalMessage.videoDialogue,
-              initialAmbiance: originalMessage.videoAmbiance,
-          });
-          setShowVideoStudio(true);
-      }
-  };
 
   // --- Studio Handlers ---
 
@@ -410,94 +399,6 @@ const ChatView: React.FC<ChatViewProps> = ({
         }
   };
 
-  const handleGenerateVideo = async (prompt: string, image?: { data: string; mimeType: string }, dialogue?: string, ambiance?: string) => {
-    setShowVideoStudio(false);
-    setShowVideoAdsStudio(false);
-    trackInterest('video');
-    addXp(50);
-
-    const userMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: 'user',
-        parts: [{ type: 'text', content: `Create a video: ${prompt}` }],
-        timestamp: Date.now()
-    };
-    addMessageToChat(userMessage);
-
-    const loadingMessageId = crypto.randomUUID();
-    addMessageToChat({
-        id: loadingMessageId, role: 'model', parts: [{ type: 'loading', content: '' }], timestamp: Date.now()
-    });
-
-    try {
-        const loadingMessages = [
-            t('videoStudio.generating.video'), t('videoStudio.generating.audio'), t('videoStudio.generating.final')
-        ];
-        let msgIndex = 0;
-        const updateLoadingMessage = (message: string) => {
-            updateCurrentChat(chat => ({
-                ...chat,
-                messages: chat.messages.map(msg => msg.id === loadingMessageId ? { ...msg, parts: [{ type: 'loading', content: message }] } : msg)
-            }));
-        };
-        updateLoadingMessage(loadingMessages[msgIndex]);
-        const interval = setInterval(() => {
-            msgIndex = (msgIndex + 1) % loadingMessages.length;
-            updateLoadingMessage(loadingMessages[msgIndex]);
-        }, 4000);
-
-        // Call the new backend function
-        const response = await fetch('/api/video/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                prompt, 
-                image, 
-                dialogue, 
-                ambiance,
-                voiceId: settings.voice.selectedVoice 
-            })
-        });
-        
-        clearInterval(interval);
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.details || errorData.error || 'Video generation failed.');
-        }
-
-        const data = await response.json();
-        
-        const finalMessage: ChatMessage = {
-            id: crypto.randomUUID(),
-            role: 'model',
-            parts: [{ type: 'video', content: { url: data.videoUrl, prompt } }],
-            timestamp: Date.now(),
-            ...(data.dialogueAudioBase64 && { audioUrl: `data:audio/mp3;base64,${data.dialogueAudioBase64}` }),
-            ...(dialogue && { videoDialogue: dialogue }),
-            ...(data.ambianceAudioBase64 && { ambianceUrl: `data:audio/mp3;base64,${data.ambianceAudioBase64}` }),
-            ...(ambiance && { videoAmbiance: ambiance }),
-        };
-
-        updateCurrentChat(chat => ({ ...chat, messages: chat.messages.filter(msg => msg.id !== loadingMessageId).concat(finalMessage) }));
-
-    } catch (e) {
-        console.error(e);
-        let errorMessage = e instanceof Error ? e.message : "Video generation failed.";
-        if (e instanceof Error && e.message.includes("Requested entity was not found.")) {
-             setIsApiKeyKnownValid(false);
-             errorMessage = "Your API key may be invalid or lack the necessary permissions. Please try selecting a new key when prompted and try again."
-        }
-        
-        updateCurrentChat(chat => ({
-            ...chat,
-            messages: chat.messages.map(msg => msg.id === loadingMessageId ? {
-                id: loadingMessageId, role: 'model', parts: [{ type: 'error', content: errorMessage }], timestamp: Date.now()
-            } : msg)
-        }));
-    }
-  };
-
   const handleStudioAction = (mode: RatelMode, prompt: string) => {
     trackInterest(mode);
     addXp(10);
@@ -537,15 +438,13 @@ const ChatView: React.FC<ChatViewProps> = ({
                 onRenameChat={onRenameChat}
                 onOpenImageStudio={() => openStudio(setShowImageStudio)}
                 onOpenAudioStudio={() => openStudio(setShowAudioStudio)}
-                onOpenVideoStudio={() => openStudio(setShowVideoStudio)}
+                onOpenVeoStudio={() => ensureApiKey(() => { trackInterest('video'); openStudio(setShowVeoStudio); })}
                 onOpenHustleStudio={() => openStudio(setShowHustleStudio)}
                 onOpenLearnStudio={() => openStudio(setShowLearnStudio)}
                 onOpenMarketSquare={() => openStudio(setShowMarketSquare)}
                 onOpenMobileWorkersStudio={() => openStudio(setShowMobileWorkersStudio)}
-                onOpenVideoAdsStudio={() => ensureApiKey(() => openStudio(setShowVideoAdsStudio))}
                 onOpenProfileStudio={() => openStudio(setShowProfileStudio)}
                 onOpenProModal={() => { setProModalMessage(undefined); setShowProModal(true); }}
-                onOpenVideoArStudio={() => openStudio(setShowVideoArStudio)}
                 onOpenExamplesStudio={() => openStudio(setShowExamplesStudio)}
                 setPage={setPage}
                 onLogout={onLogout}
@@ -556,13 +455,11 @@ const ChatView: React.FC<ChatViewProps> = ({
                 isLoading={isLoading}
                 onToggleSidebar={() => setIsSidebarOpen(p => !p)}
                 onSendMessage={handleSendMessage}
-                // FIX: Changed onNewChat to handleNewChat to pass the correct function prop.
                 onNewChat={handleNewChat}
                 onOpenSupportModal={() => setShowSupportModal(true)}
                 settings={settings}
                 setSettings={setSettings}
                 userProfile={userProfile}
-                onEditVideoPrompt={handleEditVideoPrompt}
                 onOpenProfileStudio={() => openStudio(setShowProfileStudio)}
                 />
             </main>
@@ -571,17 +468,26 @@ const ChatView: React.FC<ChatViewProps> = ({
       {/* Modals and Studios */}
       {showImageStudio && <ImageStudio onClose={() => setShowImageStudio(false)} onGenerate={handleGenerateImage} onEdit={handleEditImage} isLoading={isLoading} initialPrompt={initialStudioData.initialPrompt} />}
       {showAudioStudio && <AudioStudio onClose={() => setShowAudioStudio(false)} />}
-      {showVideoStudio && <VideoStudio onClose={() => setShowVideoStudio(false)} onGenerate={handleGenerateVideo} isLoading={isLoading} {...initialStudioData} />}
+      {showVeoStudio && <VeoStudio onClose={() => setShowVeoStudio(false)} onApiKeyInvalid={handleApiKeyInvalid} />}
       {showHustleStudio && <HustleStudio onClose={() => setShowHustleStudio(false)} isLoading={isLoading} onAction={(type, data) => handleStudioAction('hustle', `Give me hustle ideas based on: ${data.input}`)} />}
-      {showLearnStudio && <LearnStudio onClose={() => setShowLearnStudio(false)} onAction={(skill, isTutor) => handleStudioAction('learn', isTutor ? `I want to learn about ${skill}. Act as an expert tutor.` : `Teach me the basics of ${skill}.`)} />}
+      {showLearnStudio && <LearnStudio 
+          onClose={() => setShowLearnStudio(false)} 
+          onAction={(subjectId, skill, isTutor) => {
+              let prompt;
+              if (subjectId === 'finance') {
+                  prompt = "I need financial advice for a young African. Your persona for this response should be inspired by GehGeh, a popular Nigerian content creator known for his engaging and practical financial literacy content for young Africans. Start your response with a friendly, pidgin-style greeting like 'Wetin dey happen! Just like my guy GehGeh always says, securing your financial future is key...' and then proceed to give actionable financial advice relevant to young people across Africa. Keep the tone encouraging and easy to understand.";
+              } else {
+                  prompt = isTutor ? `I want to learn about ${skill}. Act as an expert tutor.` : `Teach me the basics of ${skill}.`;
+              }
+              handleStudioAction('learn', prompt);
+          }} 
+      />}
       {showMarketSquare && <MarketSquare onClose={() => setShowMarketSquare(false)} isLoading={isLoading} onAiSearch={(item, location) => handleStudioAction('market', `Find a ${item} for sale in ${location}`)} userProfile={userProfile} />}
       {showMobileWorkersStudio && <MobileWorkersStudio onClose={() => setShowMobileWorkersStudio(false)} userProfile={userProfile} />}
-      {showVideoAdsStudio && <VideoAdsStudio onClose={() => setShowVideoAdsStudio(false)} onGenerate={(prompt, image) => handleGenerateVideo(prompt, image)} isLoading={isLoading} />}
       {showProfileStudio && <ProfileStudio onClose={() => setShowProfileStudio(false)} userProfile={userProfile} setUserProfile={setUserProfile} />}
       {showProModal && <ProModal onClose={() => setShowProModal(false)} message={proModalMessage} />}
       {showSupportModal && <SupportModal onClose={() => setShowSupportModal(false)} />}
       {showExamplesStudio && <ExamplesStudio onClose={() => setShowExamplesStudio(false)} onSelectExample={prompt => { setShowExamplesStudio(false); handleSendMessage(prompt); }} />}
-      {showVideoArStudio && <VideoArStudio onClose={() => setShowVideoArStudio(false)} />}
       {showApiKeyModal && <ApiKeyModal onClose={() => setShowApiKeyModal(false)} onSelectKey={handleSelectKey} />}
     </div>
   );
