@@ -1,7 +1,7 @@
 import React, { ErrorInfo, ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
-import './i18n'; // Import the i18n configuration
+import App from '../App';
+import '../i18n'; // Import the i18n configuration
 
 // Error Boundary Component to catch crashes and display a fallback UI
 interface ErrorBoundaryProps {
