@@ -1,3 +1,4 @@
+
 import React, { ErrorInfo, ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from '../App';
@@ -11,11 +12,8 @@ interface ErrorBoundaryState {
   hasError: boolean;
 }
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  // FIX: Replaced the state class property with a constructor to explicitly call `super(props)` and initialize state. This ensures `this.props` is correctly set on the component instance, resolving the TypeScript error about 'props' not existing on the type, which can happen with certain build configurations.
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false };
-  }
+  // FIX: Refactored state initialization to use a class property instead of a constructor. This is a more modern approach and resolves potential linter/TypeScript configuration issues that were incorrectly flagging `this.state` assignments.
+  state: ErrorBoundaryState = { hasError: false };
 
   static getDerivedStateFromError(_: Error): ErrorBoundaryState {
     return { hasError: true };

@@ -8,13 +8,15 @@ import VeoStudio from './VeoStudio';
 import HustleStudio from './HustleStudio';
 import LearnStudio from './LearnStudio';
 import MarketSquare from './MarketStudio';
+import StorytellerStudio from './StorytellerStudio';
 import MobileWorkersStudio from './MobileWorkersStudio';
 import ProfileStudio from './ProfileStudio';
 import ProModal from './ProModal';
 import SupportModal from './SupportModal';
 import ExamplesStudio from './ExamplesStudio';
+import VideoArStudio from './VideoArStudio';
 import ApiKeyModal from './ApiKeyModal';
-import { ChatSession, UserProfile, AppSettings, ChatMessage, MessagePart, RatelMode, Task } from '../types';
+import { ChatSession, UserProfile, AppSettings, ChatMessage, MessagePart, RatelMode, Task, Story } from '../types';
 import { playSound } from '../services/audioService';
 import { ai } from '../services/geminiService';
 import { createSystemInstruction } from '../constants';
@@ -47,16 +49,19 @@ const ChatView: React.FC<ChatViewProps> = ({
   const [showLearnStudio, setShowLearnStudio] = useState(false);
   const [showMarketSquare, setShowMarketSquare] = useState(false);
   const [showMobileWorkersStudio, setShowMobileWorkersStudio] = useState(false);
+  const [showStorytellerStudio, setShowStorytellerStudio] = useState(false);
   const [showProfileStudio, setShowProfileStudio] = useState(false);
   const [showProModal, setShowProModal] = useState(false);
   const [proModalMessage, setProModalMessage] = useState<string | undefined>(undefined);
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [showExamplesStudio, setShowExamplesStudio] = useState(false);
+  const [showVideoArStudio, setShowVideoArStudio] = useState(false);
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
 
   const [initialStudioData, setInitialStudioData] = useState<any>({});
   
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [stories, setStories] = useState<Story[]>([]);
   
   const chatSessionsRef = useRef<Map<string, any>>(new Map());
   const postKeySelectionAction = useRef<(() => void) | null>(null);
@@ -128,6 +133,9 @@ const ChatView: React.FC<ChatViewProps> = ({
       const savedTasks = localStorage.getItem('ratel_tasks');
       if(savedTasks) setTasks(JSON.parse(savedTasks));
 
+      const savedStories = localStorage.getItem('ratel_stories');
+      if(savedStories) setStories(JSON.parse(savedStories));
+
     } catch (e) {
       console.error("Failed to load user data:", e);
       handleNewChat();
@@ -145,10 +153,13 @@ const ChatView: React.FC<ChatViewProps> = ({
   }, [tasks]);
 
   useEffect(() => {
+    localStorage.setItem('ratel_stories', JSON.stringify(stories));
+  }, [stories]);
+
+  useEffect(() => {
     i18n.changeLanguage(settings.language);
   }, [settings.language, i18n]);
 
-  // FIX: Clear cached chat sessions when settings change to ensure the new system instruction is applied.
   useEffect(() => {
     chatSessionsRef.current.clear();
   }, [settings.chatTone, settings.customInstructions]);
@@ -196,7 +207,7 @@ const ChatView: React.FC<ChatViewProps> = ({
         });
 
     const newChatInstance = ai.chats.create({
-        model: 'gemini-flash-lite-latest',
+        model: 'gemini-2.5-flash',
         history: geminiHistory,
         config: {
             systemInstruction: createSystemInstruction(settings)
@@ -264,7 +275,7 @@ const ChatView: React.FC<ChatViewProps> = ({
         
         if (currentChat && currentChat.messages.length <= 2) {
             const titlePrompt = `Create a very short, concise title (4-5 words max) for this user's first prompt: "${message}"`;
-            const response = await ai.models.generateContent({ model: 'gemini-flash-lite-latest', contents: titlePrompt });
+            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: titlePrompt });
             const newTitle = response.text.replace(/"/g, '');
             onRenameChat(currentChatId, newTitle);
         }
@@ -312,6 +323,19 @@ const ChatView: React.FC<ChatViewProps> = ({
       if(currentChatId) {
           updateCurrentChat(chat => ({ ...chat, messages: [] }));
           chatSessionsRef.current.delete(currentChatId);
+      }
+  };
+  
+  const handleEditVideoPrompt = (originalMessage: ChatMessage) => {
+      const videoPart = originalMessage.parts.find(p => p.type === 'video');
+      if (videoPart) {
+          setInitialStudioData({
+              initialPrompt: videoPart.content.prompt,
+              initialDialogue: originalMessage.videoDialogue,
+              initialAmbiance: originalMessage.videoAmbiance,
+          });
+          // FIX: Changed setShowVideoStudio to setShowVeoStudio to match the available state setter.
+          setShowVeoStudio(true);
       }
   };
 
@@ -408,6 +432,11 @@ const ChatView: React.FC<ChatViewProps> = ({
     setShowMarketSquare(false);
   };
   
+  const handleStoryGenerated = (story: Story) => {
+      setStories(prev => [story, ...prev]);
+      addXp(25);
+  };
+  
   const openStudio = (setter: React.Dispatch<React.SetStateAction<boolean>>, initialData = {}) => {
       setInitialStudioData(initialData);
       setter(true);
@@ -438,13 +467,15 @@ const ChatView: React.FC<ChatViewProps> = ({
                 onRenameChat={onRenameChat}
                 onOpenImageStudio={() => openStudio(setShowImageStudio)}
                 onOpenAudioStudio={() => openStudio(setShowAudioStudio)}
-                onOpenVeoStudio={() => ensureApiKey(() => { trackInterest('video'); openStudio(setShowVeoStudio); })}
+                onOpenVideoStudio={() => ensureApiKey(() => { trackInterest('video'); openStudio(setShowVeoStudio); })}
                 onOpenHustleStudio={() => openStudio(setShowHustleStudio)}
                 onOpenLearnStudio={() => openStudio(setShowLearnStudio)}
                 onOpenMarketSquare={() => openStudio(setShowMarketSquare)}
                 onOpenMobileWorkersStudio={() => openStudio(setShowMobileWorkersStudio)}
+                onOpenStorytellerStudio={() => openStudio(setShowStorytellerStudio)}
                 onOpenProfileStudio={() => openStudio(setShowProfileStudio)}
                 onOpenProModal={() => { setProModalMessage(undefined); setShowProModal(true); }}
+                onOpenVideoArStudio={() => openStudio(setShowVideoArStudio)}
                 onOpenExamplesStudio={() => openStudio(setShowExamplesStudio)}
                 setPage={setPage}
                 onLogout={onLogout}
@@ -461,6 +492,7 @@ const ChatView: React.FC<ChatViewProps> = ({
                 setSettings={setSettings}
                 userProfile={userProfile}
                 onOpenProfileStudio={() => openStudio(setShowProfileStudio)}
+                onEditVideoPrompt={handleEditVideoPrompt}
                 />
             </main>
         </div>
@@ -484,10 +516,12 @@ const ChatView: React.FC<ChatViewProps> = ({
       />}
       {showMarketSquare && <MarketSquare onClose={() => setShowMarketSquare(false)} isLoading={isLoading} onAiSearch={(item, location) => handleStudioAction('market', `Find a ${item} for sale in ${location}`)} userProfile={userProfile} />}
       {showMobileWorkersStudio && <MobileWorkersStudio onClose={() => setShowMobileWorkersStudio(false)} userProfile={userProfile} />}
+      {showStorytellerStudio && <StorytellerStudio onClose={() => setShowStorytellerStudio(false)} onStoryGenerated={handleStoryGenerated} settings={settings} onOpenProModal={(msg) => { setProModalMessage(msg); setShowProModal(true); }} />}
       {showProfileStudio && <ProfileStudio onClose={() => setShowProfileStudio(false)} userProfile={userProfile} setUserProfile={setUserProfile} />}
       {showProModal && <ProModal onClose={() => setShowProModal(false)} message={proModalMessage} />}
       {showSupportModal && <SupportModal onClose={() => setShowSupportModal(false)} />}
       {showExamplesStudio && <ExamplesStudio onClose={() => setShowExamplesStudio(false)} onSelectExample={prompt => { setShowExamplesStudio(false); handleSendMessage(prompt); }} />}
+      {showVideoArStudio && <VideoArStudio onClose={() => setShowVideoArStudio(false)} />}
       {showApiKeyModal && <ApiKeyModal onClose={() => setShowApiKeyModal(false)} onSelectKey={handleSelectKey} />}
     </div>
   );

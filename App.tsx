@@ -1,3 +1,5 @@
+// This is the root component of the Ratel AI application.
+// It manages user authentication, page routing, and global state like user profile and settings.
 import React, { useState, useEffect } from 'react';
 import LandingPage from './components/LandingPage';
 import ChatView from './components/ChatView';
