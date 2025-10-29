@@ -118,11 +118,12 @@ const App: React.FC = () => {
   // FIX: Updated handleLoginSuccess to accept a full UserProfile object.
   // This simplifies the logic by making the AuthModal responsible for creating/loading the profile,
   // resolving the type error at the call sites in AuthModal.tsx.
-  const handleLoginSuccess = (profile: UserProfile) => {
+  const handleLoginSuccess = (profile: UserProfile, isNewUser: boolean) => {
     playSound('receive');
     setUserProfile(profile);
     setShowAuthModal(false);
     setPage('chat');
+    alert(isNewUser ? "Account created successfully!" : `Welcome back, ${profile.name}!`);
   };
 
   const handleLogout = () => {
