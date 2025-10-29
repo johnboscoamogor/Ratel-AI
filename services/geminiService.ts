@@ -20,7 +20,7 @@ export async function streamChat(
     const response = await fetch('/api/gemini/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ history, message, image, systemInstruction }),
+        body: JSON.stringify({ action: 'chat', history, message, image, systemInstruction }),
     });
 
     if (!response.ok) {
@@ -39,10 +39,10 @@ export async function streamChat(
  * Generates a title for a chat by calling the backend.
  */
 export async function generateTitle(prompt: string): Promise<string> {
-     const response = await fetch('/api/gemini/generate_text', {
+     const response = await fetch('/api/gemini/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ action: 'generate_text', prompt }),
     });
     if (!response.ok) {
         const error = await response.json();
@@ -56,10 +56,10 @@ export async function generateTitle(prompt: string): Promise<string> {
  * Generates an image by calling the backend.
  */
 export async function generateImage(prompt: string, aspectRatio: string): Promise<string> {
-    const response = await fetch('/api/gemini/generate_image', {
+    const response = await fetch('/api/gemini/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, aspectRatio }),
+        body: JSON.stringify({ action: 'generate_image', prompt, aspectRatio }),
     });
     if (!response.ok) {
         const error = await response.json();
@@ -73,10 +73,10 @@ export async function generateImage(prompt: string, aspectRatio: string): Promis
  * Edits an image by calling the backend.
  */
 export async function editImage(image: { data: string; mimeType: string }, prompt: string): Promise<{ data: string; mimeType: string }> {
-    const response = await fetch('/api/gemini/edit_image', {
+    const response = await fetch('/api/gemini/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image, prompt }),
+        body: JSON.stringify({ action: 'edit_image', image, prompt }),
     });
     if (!response.ok) {
         const error = await response.json();
@@ -89,10 +89,10 @@ export async function editImage(image: { data: string; mimeType: string }, promp
  * Uses AI to find skilled workers via a backend function call.
  */
 export async function findWorkersWithAi(searchTerm: string): Promise<{ skill: string; location: string } | null> {
-    const response = await fetch('/api/gemini/find_workers', {
+    const response = await fetch('/api/gemini/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ searchTerm }),
+        body: JSON.stringify({ action: 'find_workers', searchTerm }),
     });
     if (!response.ok) {
         const error = await response.json();
@@ -106,10 +106,10 @@ export async function findWorkersWithAi(searchTerm: string): Promise<{ skill: st
  * Generates an AR effect for a video frame via the backend.
  */
 export async function generateArEffect(frame: { data: string; mimeType: string }, prompt: string): Promise<{ data: string; mimeType: string }> {
-    const response = await fetch('/api/gemini/ar_effect', {
+    const response = await fetch('/api/gemini/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ frame, prompt }),
+        body: JSON.stringify({ action: 'ar_effect', frame, prompt }),
     });
      if (!response.ok) {
         const error = await response.json();
