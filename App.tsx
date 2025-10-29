@@ -204,10 +204,10 @@ const App: React.FC = () => {
   };
 
   return (
-    <>
+    <div className="bg-gray-900">
       {renderPage()}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onLoginSuccess={handleLoginSuccess} />}
-    </>
+    </div>
   );
 };
 

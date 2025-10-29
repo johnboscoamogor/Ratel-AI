@@ -102,18 +102,20 @@ export async function findWorkersWithAi(searchTerm: string): Promise<{ skill: st
     return data.args || null;
 }
 
+// FIX: Added missing generateArEffect function for the Video AR Studio.
 /**
- * Generates an AR effect for a video frame via the backend.
+ * Applies an AR effect to an image frame by calling the backend.
  */
 export async function generateArEffect(frame: { data: string; mimeType: string }, prompt: string): Promise<{ data: string; mimeType: string }> {
-    const response = await fetch('/api/gemini/chat', {
+    const response = await fetch('/api/gemini/ar-effect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'ar_effect', frame, prompt }),
+        body: JSON.stringify({ frame, prompt }),
     });
-     if (!response.ok) {
+
+    if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to generate AR effect.");
+        throw new Error(error.error || "Failed to apply AR effect");
     }
     return await response.json();
 }

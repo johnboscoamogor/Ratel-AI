@@ -56,22 +56,18 @@ export interface Task {
   reminderFired?: boolean;
 }
 
-// FIX: Added Story and StoryScene types to resolve import errors.
-// Represents a single scene in a generated story
-export interface StoryScene {
-  scene_index: number;
-  narration_text: string;
-  visual_prompt: string;
-}
-
-// Represents a generated story from the Storyteller Studio
+// FIX: Added the missing 'Story' type definition, required by the StorytellerStudio and ChatView components.
 export interface Story {
   id: string;
   prompt: string;
   title: string;
   script: {
     title: string;
-    scenes: StoryScene[];
+    scenes: {
+      scene_index: number;
+      narration_text: string;
+      visual_prompt: string;
+    }[];
     lesson: string;
   };
   videoUrl: string;

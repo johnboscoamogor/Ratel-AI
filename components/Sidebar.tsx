@@ -5,11 +5,10 @@ import {
     RatelLogo, EditIcon, TrashIcon, MenuIcon, ChevronLeftIcon, 
     ImageIcon, AudioIcon, VideoIcon, BookOpenIcon, BriefcaseIcon, 
     StorefrontIcon, UsersIcon, SettingsIcon, InfoIcon, UserIcon, LogoutIcon, AdminIcon,
-    ClapperboardIcon, SparklesIcon, WrenchIcon
+    SparklesIcon, WrenchIcon
 } from '../constants';
 import { playSound } from '../services/audioService';
 import ConfirmationDialog from './ConfirmationDialog';
-import AdBanner from './AdBanner';
 
 interface SidebarProps {
   history: ChatSession[];
@@ -30,10 +29,8 @@ interface SidebarProps {
   onOpenLearnStudio: () => void;
   onOpenMarketSquare: () => void;
   onOpenMobileWorkersStudio: () => void;
-  onOpenStorytellerStudio: () => void;
   onOpenProfileStudio: () => void;
   onOpenProModal: () => void;
-  onOpenVideoArStudio: () => void;
   onOpenExamplesStudio: () => void;
   setPage: (page: 'chat' | 'settings' | 'contact' | 'community' | 'admin' | 'examples') => void;
   onLogout: () => void;
@@ -42,7 +39,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({
   history, currentChatId, userProfile, isCurrentChatEmpty, isOpenOnMobile, onCloseMobile,
   onNewChat, onSelectChat, onClearChat, onDeleteChat, onRenameChat,
-  onOpenImageStudio, onOpenAudioStudio, onOpenVideoStudio, onOpenHustleStudio, onOpenLearnStudio, onOpenMarketSquare, onOpenMobileWorkersStudio, onOpenStorytellerStudio, onOpenProfileStudio, onOpenProModal, onOpenVideoArStudio, onOpenExamplesStudio,
+  onOpenImageStudio, onOpenAudioStudio, onOpenVideoStudio, onOpenHustleStudio, onOpenLearnStudio, onOpenMarketSquare, onOpenMobileWorkersStudio, onOpenProfileStudio, onOpenProModal, onOpenExamplesStudio,
   setPage, onLogout
 }) => {
   const { t } = useTranslation();
@@ -118,11 +115,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <StudioButton Icon={UsersIcon} label={t('sidebar.communityStudio')} onClick={() => handlePageChange('community')} />
               <StudioButton Icon={ImageIcon} label={t('sidebar.imageStudio')} onClick={onOpenImageStudio} />
               <StudioButton Icon={AudioIcon} label={t('sidebar.audioStudio')} onClick={onOpenAudioStudio} />
-              {/* FIX: Changed onClick to call onOpenVideoStudio, which is the correct prop name. */}
               <StudioButton Icon={VideoIcon} label={t('sidebar.videoStudio')} onClick={onOpenVideoStudio} />
-              <StudioButton Icon={ClapperboardIcon} label="Storyteller" onClick={onOpenStorytellerStudio} />
-              <StudioButton Icon={SparklesIcon} label="AR Studio" onClick={onOpenVideoArStudio} />
-
           </div>
         </div>
 
@@ -173,7 +166,6 @@ const Sidebar: React.FC<SidebarProps> = ({
             <p className="text-sm text-gray-400 px-2">{t('sidebar.noHistory')}</p>
           )}
         </div>
-         <AdBanner />
       </div>
 
        {/* --- FIXED BOTTOM SECTION --- */}

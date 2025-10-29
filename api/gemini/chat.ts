@@ -101,31 +101,6 @@ async function handleFindWorkers(req: VercelRequest, res: VercelResponse) {
     }
 }
 
-// --- HANDLER FOR AR EFFECT ---
-async function handleArEffect(req: VercelRequest, res: VercelResponse) {
-    const { frame, prompt } = req.body;
-    if (!frame || !prompt) return res.status(400).json({ error: "Frame and prompt are required." });
-
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: { parts: [ { inlineData: { data: frame.data, mimeType: frame.mimeType } }, { text: prompt } ] },
-        config: { responseModalities: [Modality.IMAGE] },
-    });
-
-    const blockReason = response.promptFeedback?.blockReason;
-    if (blockReason) throw new Error(`Request blocked due to ${blockReason}. Please modify your prompt.`);
-
-    const imagePart = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
-
-    if (imagePart?.inlineData) {
-        res.status(200).json({ data: imagePart.inlineData.data, mimeType: imagePart.inlineData.mimeType });
-    } else {
-        const textPart = response.candidates?.[0]?.content?.parts.find(p => p.text);
-        if (textPart?.text) throw new Error(`AI response: ${textPart.text}`);
-        throw new Error("The AI did not return an image. Please try rephrasing your prompt.");
-    }
-}
-
 // --- MAIN ROUTER ---
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (req.method !== 'POST') {
@@ -145,8 +120,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 return await handleEditImage(req, res);
             case 'find_workers':
                 return await handleFindWorkers(req, res);
-            case 'ar_effect':
-                return await handleArEffect(req, res);
             default:
                 return res.status(400).json({ error: 'Invalid action specified.' });
         }

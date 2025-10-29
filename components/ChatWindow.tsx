@@ -116,78 +116,68 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         </div>
       </header>
       
-      <div className={`flex-1 overflow-y-auto ${chatSession && chatSession.messages.length > 0 ? 'p-4' : 'p-0'}`}>
+      <div className="flex-1 overflow-y-auto">
         {chatSession && chatSession.messages.length > 0 ? (
-          <div className="space-y-4 w-full">
+          <div className="p-4 space-y-4 w-full">
             {chatSession.messages.map((msg) => (
               <ChatMessageComponent key={msg.id} message={msg} onEditVideoPrompt={onEditVideoPrompt} />
             ))}
              <div ref={messagesEndRef} />
           </div>
         ) : (
-          <div className="relative h-full w-full overflow-hidden flex items-center justify-center">
-             {!settings.appearance.backgroundImage && (
-                <video
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    className="absolute top-0 left-0 w-full h-full object-cover z-0"
-                    style={{ pointerEvents: 'none' }}
-                    src="https://videos.pexels.com/video-files/6833663/6833663-hd_1280_720_25fps.mp4"
-                    poster="https://images.pexels.com/videos/6833663/pexels-photo-6833663.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500"
-                >
-                    Your browser does not support the video tag.
-                </video>
-             )}
-            <div className={`absolute top-0 left-0 w-full h-full bg-black z-10 ${settings.appearance.backgroundImage ? 'bg-opacity-0' : 'bg-opacity-60'}`} />
-
-            <div className="relative z-20 flex flex-col items-center text-center text-white w-full p-4 h-full overflow-y-auto justify-center">
-                <div className="w-full pt-8 sm:pt-12">
-                    <RatelLogo className="w-16 h-16 text-white mx-auto mb-4" />
-                    <h1 className="text-5xl font-bold">Ratel AI</h1>
-                    <p className="mt-2 mb-6 max-w-md mx-auto text-gray-300">Your friendly AI companion for Africa.</p>
-                </div>
-                
-                <div className="w-full max-w-2xl mx-auto space-y-6 pb-8">
-                    <ChatInput onSendMessage={onSendMessage} isLoading={isLoading} onNewChat={onNewChat} isTransparent={true} />
-
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-400 mb-2 text-center">Examples</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
-                          <ExamplePromptButton 
-                              title={t('chatWindow.examples.hustle_title')}
-                              description={t('chatWindow.examples.hustle_desc')}
-                              prompt={t('chatWindow.examples.hustle_prompt')}
-                          />
-                          <ExamplePromptButton 
-                              title={t('chatWindow.examples.image_title')}
-                              description={t('chatWindow.examples.image_desc')}
-                              prompt={t('chatWindow.examples.image_prompt')}
-                          />
-                          <ExamplePromptButton 
-                              title={t('chatWindow.examples.explain_title')}
-                              description={t('chatWindow.examples.explain_desc')}
-                              prompt={t('chatWindow.examples.explain_prompt')}
-                          />
-                          <ExamplePromptButton 
-                              title={t('chatWindow.examples.story_title')}
-                              description={t('chatWindow.examples.story_desc')}
-                              prompt={t('chatWindow.examples.story_prompt')}
-                          />
-                      </div>
-                    </div>
+          <div className="flex flex-col items-center justify-start h-full text-center p-4 pt-16 text-white">
+            <div className="mb-8">
+                <RatelLogo className="w-16 h-16 text-white mx-auto mb-4" />
+                <h1 className="text-5xl font-bold">Ratel AI</h1>
+                <p className="mt-2 max-w-md mx-auto text-gray-300">Your friendly AI companion for Africa.</p>
+            </div>
+            <div className="w-full max-w-lg">
+                <h3 className="text-sm font-semibold text-gray-400 mb-2 text-center">Examples</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
+                    <ExamplePromptButton 
+                        title={t('chatWindow.examples.hustle_title')}
+                        description={t('chatWindow.examples.hustle_desc')}
+                        prompt={t('chatWindow.examples.hustle_prompt')}
+                    />
+                    <ExamplePromptButton 
+                        title={t('chatWindow.examples.image_title')}
+                        description={t('chatWindow.examples.image_desc')}
+                        prompt={t('chatWindow.examples.image_prompt')}
+                    />
+                    <ExamplePromptButton 
+                        title={t('chatWindow.examples.explain_title')}
+                        description={t('chatWindow.examples.explain_desc')}
+                        prompt={t('chatWindow.examples.explain_prompt')}
+                    />
+                    <ExamplePromptButton 
+                        title={t('chatWindow.examples.story_title')}
+                        description={t('chatWindow.examples.story_desc')}
+                        prompt={t('chatWindow.examples.story_prompt')}
+                    />
                 </div>
             </div>
           </div>
         )}
       </div>
       
-      {chatSession && chatSession.messages.length > 0 && (
-          <div className="flex-shrink-0 p-4 border-t border-gray-700/50 bg-gray-800/80 backdrop-blur-sm">
-            <ChatInput onSendMessage={onSendMessage} isLoading={isLoading} onNewChat={onNewChat} />
-          </div>
-      )}
+      <div className={`flex-shrink-0 p-4 ${chatSession && chatSession.messages.length > 0 ? 'bg-gray-800/80 backdrop-blur-sm' : 'bg-transparent'}`}>
+        <ChatInput 
+            onSendMessage={onSendMessage} 
+            isLoading={isLoading} 
+            onNewChat={onNewChat} 
+            isTransparent={!chatSession || chatSession.messages.length === 0} 
+        />
+      </div>
+
+      {/* Ad Banner Area */}
+      <div className={`flex-shrink-0 w-full flex justify-center items-center py-1 ${chatSession && chatSession.messages.length > 0 ? 'bg-gray-800/80 backdrop-blur-sm' : 'bg-transparent'}`}>
+        <div id="ad-banner" className="w-full max-w-[728px] h-[50px] sm:h-[60px] lg:h-[90px] flex items-center justify-center">
+            {/* This is a visual placeholder. The actual ad will be injected here. */}
+            <div className="w-full h-full bg-gray-700/50 text-gray-500 text-xs sm:text-sm flex items-center justify-center rounded-md">
+                Ad Banner Placeholder (e.g., 728x90 / 468x60 / 320x50)
+            </div>
+        </div>
+      </div>
     </div>
   );
 };
