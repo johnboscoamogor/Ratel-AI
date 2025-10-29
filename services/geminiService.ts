@@ -39,7 +39,7 @@ export async function streamChat(
  * Generates a title for a chat by calling the backend.
  */
 export async function generateTitle(prompt: string): Promise<string> {
-     const response = await fetch('/api/gemini/generate-text', {
+     const response = await fetch('/api/gemini/generate_text', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt }),
@@ -56,7 +56,7 @@ export async function generateTitle(prompt: string): Promise<string> {
  * Generates an image by calling the backend.
  */
 export async function generateImage(prompt: string, aspectRatio: string): Promise<string> {
-    const response = await fetch('/api/gemini/generate-image', {
+    const response = await fetch('/api/gemini/generate_image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt, aspectRatio }),
@@ -73,7 +73,7 @@ export async function generateImage(prompt: string, aspectRatio: string): Promis
  * Edits an image by calling the backend.
  */
 export async function editImage(image: { data: string; mimeType: string }, prompt: string): Promise<{ data: string; mimeType: string }> {
-    const response = await fetch('/api/gemini/edit-image', {
+    const response = await fetch('/api/gemini/edit_image', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image, prompt }),
@@ -89,7 +89,7 @@ export async function editImage(image: { data: string; mimeType: string }, promp
  * Uses AI to find skilled workers via a backend function call.
  */
 export async function findWorkersWithAi(searchTerm: string): Promise<{ skill: string; location: string } | null> {
-    const response = await fetch('/api/gemini/find-workers', {
+    const response = await fetch('/api/gemini/find_workers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ searchTerm }),
@@ -106,7 +106,7 @@ export async function findWorkersWithAi(searchTerm: string): Promise<{ skill: st
  * Generates an AR effect for a video frame via the backend.
  */
 export async function generateArEffect(frame: { data: string; mimeType: string }, prompt: string): Promise<{ data: string; mimeType: string }> {
-    const response = await fetch('/api/gemini/ar-effect', {
+    const response = await fetch('/api/gemini/ar_effect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ frame, prompt }),

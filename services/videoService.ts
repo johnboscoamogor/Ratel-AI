@@ -8,7 +8,7 @@ export const generateVideoFromExternalApi = async (prompt: string): Promise<stri
     console.log(`Sending prompt to our backend video generation service...`);
 
     try {
-        const response = await fetch('/api/generate-video', {
+        const response = await fetch('/api/generate_video', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
