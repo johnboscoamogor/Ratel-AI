@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { RatelLogo } from '../constants';
@@ -21,7 +20,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartChatting, settings, se
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen text-white p-4" style={{ backgroundColor: '#0d1117' }}>
       <div className="absolute top-6 right-6">
         <LanguageSwitcher
           currentLang={settings.language}
@@ -29,9 +28,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartChatting, settings, se
         />
       </div>
       <div className="text-center">
-        <RatelLogo className="w-24 h-24 text-green-500 mx-auto mb-6" />
+        <RatelLogo className="w-32 h-auto mx-auto mb-4 text-green-600" />
+
         <h1 className="text-6xl md:text-7xl font-bold mb-4">{t('landing.title')}</h1>
-        <p className="text-lg md:text-xl text-gray-300 mb-8 max-w-lg mx-auto">
+        <p className="text-lg md:text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
           {t('landing.subtitle')}
         </p>
         <button

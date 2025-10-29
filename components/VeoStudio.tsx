@@ -76,8 +76,9 @@ const VeoStudio: React.FC<VeoStudioProps> = ({ onClose, onApiKeyInvalid }) => {
     }
   };
 
-  // FIX: Correctly access the 'resolution' property from the nested 'video' object.
-  const canExtend = generatedVideo?.video?.resolution === '720p';
+  // FIX: Use the resolution from the last generation parameters to determine if the video can be extended,
+  // as the 'resolution' property is not available on the 'GeneratedVideo' response object.
+  const canExtend = lastParams?.resolution === Resolution.P720;
 
   const handleClose = (e: React.MouseEvent) => {
     e.stopPropagation();

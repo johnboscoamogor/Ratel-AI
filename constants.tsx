@@ -156,20 +156,38 @@ export const PaperclipIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) =>
 export const PauseIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (<svg {...props} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 002 0V8a1 1 0 00-1-1zm4 0a1 1 0 00-1 1v4a1 1 0 002 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>);
 export const PlayIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (<svg {...props} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" /></svg>);
 export const RatelLogo: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-    <svg {...props} viewBox="0 0 120 120">
-      <text
-        x="50%"
-        y="50%"
-        dominantBaseline="middle"
-        textAnchor="middle"
-        fontFamily="Inter, sans-serif"
-        fontSize="30"
-        fontWeight="bold"
-        fill="currentColor"
-      >
-        <tspan x="50%" dy="-0.6em">Ratel</tspan>
-        <tspan x="50%" dy="1.2em">AI</tspan>
-      </text>
+    <svg viewBox="0 0 100 100" {...props}>
+        <title>Ratel AI Logo</title>
+        <defs>
+            <mask id="ratel-logo-mask">
+                <rect x="0" y="0" width="100" height="100" fill="white" />
+                {/* Outer crescent cutout */}
+                <circle cx="42" cy="50" r="45" fill="black" />
+                <circle cx="42" cy="50" r="38" fill="white" />
+                {/* Inner crescent cutout */}
+                <circle cx="42" cy="50" r="31" fill="black" />
+            </mask>
+        </defs>
+
+        {/* The main circular shape with crescents cut out */}
+        <circle cx="50" cy="50" r="50" fill="currentColor" mask="url(#ratel-logo-mask)" />
+        
+        {/* The inner circle that holds the text */}
+        <circle cx="50" cy="50" r="24" fill="currentColor" />
+        
+        {/* The text itself */}
+        <text 
+            x="50" 
+            y="51" 
+            dy=".3em"
+            fontFamily="Inter, sans-serif" 
+            fontSize="10" 
+            fontWeight="700" 
+            fill="white" 
+            textAnchor="middle"
+        >
+            Ratel Ai
+        </text>
     </svg>
 );
 export const RefreshIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (<svg {...props} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M4 4l1.5 1.5A9 9 0 0120.5 15M20 20l-1.5-1.5A9 9 0 003.5 9" /></svg>);
