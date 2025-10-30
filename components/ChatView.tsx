@@ -65,19 +65,34 @@ const ChatView: React.FC<ChatViewProps> = ({
   const [isApiKeyKnownValid, setIsApiKeyKnownValid] = useState(true);
 
   const ensureApiKey = async (action: () => void) => {
-    // @ts-ignore
-    if (!window.aistudio || typeof window.aistudio.hasSelectedApiKey !== 'function') {
-      // Fallback for environments where the aistudio helper isn't available
-      action();
-      return;
-    }
-    // @ts-ignore
-    const hasKey = await window.aistudio.hasSelectedApiKey();
-    if (hasKey && isApiKeyKnownValid) {
-        action();
-    } else {
-        postKeySelectionAction.current = action;
-        setShowApiKeyModal(true);
+    try {
+        // @ts-ignore
+        if (!window.aistudio || typeof window.aistudio.hasSelectedApiKey !== 'function') {
+          // Fallback for environments where the aistudio helper isn't available
+          action();
+          return;
+        }
+
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error("API key check timed out after 3 seconds.")), 3000)
+        );
+
+        // @ts-ignore
+        const hasKey = await Promise.race([
+            window.aistudio.hasSelectedApiKey(),
+            timeoutPromise
+        ]);
+
+        if (hasKey && isApiKeyKnownValid) {
+            action();
+        } else {
+            postKeySelectionAction.current = action;
+            setShowApiKeyModal(true);
+        }
+    } catch (e: any) {
+        console.error("Error checking for API key:", e);
+        // Show a user-friendly error and don't proceed.
+        alert(`Could not verify API key status: ${e.message}. Please try again or refresh the page.`);
     }
   };
 
@@ -504,6 +519,7 @@ const ChatView: React.FC<ChatViewProps> = ({
       {showProModal && <ProModal onClose={() => setShowProModal(false)} message={proModalMessage} />}
       {showSupportModal && <SupportModal onClose={() => setShowSupportModal(false)} />}
       {showExamplesStudio && <ExamplesStudio onClose={() => setShowExamplesStudio(false)} onSelectExample={prompt => { setShowExamplesStudio(false); handleSendMessage(prompt); }} />}
+      {showApiKeyModal && <ApiKeyModal onClose={() => setShowApiKeyModal(false)} onSelectKey={handleSelectKey} />}
       {showFeedbackModal && <FeedbackModal onClose={() => setShowFeedbackModal(false)} />}
     </div>
   );
