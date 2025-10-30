@@ -95,6 +95,7 @@ const resources = {
         "marketSquare": "Market",
         "mobileWorkers": "Workers",
         "communityStudio": "Community",
+        "feedback": "Feedback",
         "imageStudio": "Image",
         "audioStudio": "Audio",
         "videoStudio": "Veo Studio",

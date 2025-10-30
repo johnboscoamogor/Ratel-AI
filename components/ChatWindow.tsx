@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import ChatMessageComponent from './ChatMessage';
 import ChatInput from './ChatInput';
 import { ChatSession, AppSettings, UserProfile, ChatMessage } from '../types';
-import { MenuIcon, CoffeeIcon, ChevronDownIcon, UserIcon, RatelLogo } from '../constants';
+import { MenuIcon, CoffeeIcon, ChevronDownIcon, UserIcon, RatelLogo, DocumentTextIcon } from '../constants';
 import { playSound } from '../services/audioService';
 
 interface ChatWindowProps {
@@ -13,6 +13,7 @@ interface ChatWindowProps {
   onSendMessage: (message: string, image?: { data: string; mimeType: string }) => void;
   onNewChat: () => void;
   onOpenSupportModal: () => void;
+  onOpenFeedbackModal: () => void;
   settings: AppSettings;
   setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
   userProfile: UserProfile;
@@ -21,7 +22,7 @@ interface ChatWindowProps {
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
-  chatSession, isLoading, onToggleSidebar, onSendMessage, onNewChat, onOpenSupportModal, settings, setSettings, userProfile, onOpenProfileStudio, onEditVideoPrompt
+  chatSession, isLoading, onToggleSidebar, onSendMessage, onNewChat, onOpenSupportModal, onOpenFeedbackModal, settings, setSettings, userProfile, onOpenProfileStudio, onEditVideoPrompt
 }) => {
   const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -101,6 +102,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 </div>
             )}
           </div>
+
+          <button onClick={onOpenFeedbackModal} className="hidden sm:flex items-center gap-1.5 border border-gray-500 text-gray-300 font-semibold py-1.5 px-3 rounded-md text-sm hover:bg-gray-700 transition-colors">
+              <DocumentTextIcon className="w-4 h-4" />
+              <span>Feedback</span>
+          </button>
 
           <button onClick={onOpenSupportModal} className="hidden sm:flex items-center gap-1.5 border border-yellow-400 text-yellow-400 font-semibold py-1.5 px-3 rounded-md text-sm hover:bg-yellow-400/10 transition-colors">
               <CoffeeIcon className="w-4 h-4" />

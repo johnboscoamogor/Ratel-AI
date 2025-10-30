@@ -5,7 +5,7 @@ import {
     RatelLogo, EditIcon, TrashIcon, MenuIcon, ChevronLeftIcon, 
     ImageIcon, AudioIcon, VideoIcon, BookOpenIcon, BriefcaseIcon, 
     StorefrontIcon, UsersIcon, SettingsIcon, InfoIcon, UserIcon, LogoutIcon, AdminIcon,
-    SparklesIcon, WrenchIcon
+    SparklesIcon, WrenchIcon, DocumentTextIcon
 } from '../constants';
 import { playSound } from '../services/audioService';
 import ConfirmationDialog from './ConfirmationDialog';

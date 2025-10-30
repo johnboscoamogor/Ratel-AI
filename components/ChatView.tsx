@@ -14,6 +14,7 @@ import ProModal from './ProModal';
 import SupportModal from './SupportModal';
 import ExamplesStudio from './ExamplesStudio';
 import ApiKeyModal from './ApiKeyModal';
+import FeedbackModal from './FeedbackModal';
 import { ChatSession, UserProfile, AppSettings, ChatMessage, MessagePart, RatelMode, Task } from '../types';
 import { playSound } from '../services/audioService';
 import { ai } from '../services/geminiService';
@@ -53,6 +54,7 @@ const ChatView: React.FC<ChatViewProps> = ({
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [showExamplesStudio, setShowExamplesStudio] = useState(false);
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   const [initialStudioData, setInitialStudioData] = useState<any>({});
   
@@ -466,8 +468,10 @@ const ChatView: React.FC<ChatViewProps> = ({
                 isLoading={isLoading}
                 onToggleSidebar={() => setIsSidebarOpen(p => !p)}
                 onSendMessage={handleSendMessage}
+                // FIX: Pass the `handleNewChat` function to the `onNewChat` prop instead of the undefined `onNewChat` variable.
                 onNewChat={handleNewChat}
                 onOpenSupportModal={() => setShowSupportModal(true)}
+                onOpenFeedbackModal={() => openStudio(setShowFeedbackModal)}
                 settings={settings}
                 setSettings={setSettings}
                 userProfile={userProfile}
@@ -500,6 +504,7 @@ const ChatView: React.FC<ChatViewProps> = ({
       {showProModal && <ProModal onClose={() => setShowProModal(false)} message={proModalMessage} />}
       {showSupportModal && <SupportModal onClose={() => setShowSupportModal(false)} />}
       {showExamplesStudio && <ExamplesStudio onClose={() => setShowExamplesStudio(false)} onSelectExample={prompt => { setShowExamplesStudio(false); handleSendMessage(prompt); }} />}
+      {showFeedbackModal && <FeedbackModal onClose={() => setShowFeedbackModal(false)} />}
     </div>
   );
 };
