@@ -8,6 +8,7 @@ export default defineConfig({
     // Output to a 'dist' folder at the project root.
     outDir: 'dist',
     emptyOutDir: true,
+    chunkSizeWarningLimit: 2000,
   },
   plugins: [
     react(),
