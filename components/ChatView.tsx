@@ -1,24 +1,27 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import Sidebar from './Sidebar';
 import ChatWindow from './ChatWindow';
-import ImageStudio from './ImageStudio';
-import AudioStudio from './AudioStudio';
-import VeoStudio from './VeoStudio';
-import HustleStudio from './HustleStudio';
-import LearnStudio from './LearnStudio';
-import MarketSquare from './MarketStudio';
-import MobileWorkersStudio from './MobileWorkersStudio';
-import ProfileStudio from './ProfileStudio';
-import ProModal from './ProModal';
-import SupportModal from './SupportModal';
-import ExamplesStudio from './ExamplesStudio';
-import ApiKeyModal from './ApiKeyModal';
-import FeedbackModal from './FeedbackModal';
 import { ChatSession, UserProfile, AppSettings, ChatMessage, MessagePart, RatelMode, Task } from '../types';
 import { playSound } from '../services/audioService';
 import { ai } from '../services/geminiService';
 import { createSystemInstruction } from '../constants';
+
+// Dynamically import all studios and modals for code splitting
+const ImageStudio = lazy(() => import('./ImageStudio'));
+const AudioStudio = lazy(() => import('./AudioStudio'));
+const VeoStudio = lazy(() => import('./VeoStudio'));
+const HustleStudio = lazy(() => import('./HustleStudio'));
+const LearnStudio = lazy(() => import('./LearnStudio'));
+const MarketSquare = lazy(() => import('./MarketStudio'));
+const MobileWorkersStudio = lazy(() => import('./MobileWorkersStudio'));
+const ProfileStudio = lazy(() => import('./ProfileStudio'));
+const ProModal = lazy(() => import('./ProModal'));
+const SupportModal = lazy(() => import('./SupportModal'));
+const ExamplesStudio = lazy(() => import('./ExamplesStudio'));
+const ApiKeyModal = lazy(() => import('./ApiKeyModal'));
+const FeedbackModal = lazy(() => import('./FeedbackModal'));
+
 
 interface ChatViewProps {
   userProfile: UserProfile;
@@ -483,7 +486,6 @@ const ChatView: React.FC<ChatViewProps> = ({
                 isLoading={isLoading}
                 onToggleSidebar={() => setIsSidebarOpen(p => !p)}
                 onSendMessage={handleSendMessage}
-                // FIX: Pass the `handleNewChat` function to the `onNewChat` prop instead of the undefined `onNewChat` variable.
                 onNewChat={handleNewChat}
                 onOpenSupportModal={() => setShowSupportModal(true)}
                 onOpenFeedbackModal={() => openStudio(setShowFeedbackModal)}
@@ -497,30 +499,32 @@ const ChatView: React.FC<ChatViewProps> = ({
         </div>
       
       {/* Modals and Studios */}
-      {showImageStudio && <ImageStudio onClose={() => setShowImageStudio(false)} onGenerate={handleGenerateImage} onEdit={handleEditImage} isLoading={isLoading} initialPrompt={initialStudioData.initialPrompt} />}
-      {showAudioStudio && <AudioStudio onClose={() => setShowAudioStudio(false)} />}
-      {showVeoStudio && <VeoStudio onClose={() => setShowVeoStudio(false)} onApiKeyInvalid={handleApiKeyInvalid} />}
-      {showHustleStudio && <HustleStudio onClose={() => setShowHustleStudio(false)} isLoading={isLoading} onAction={(type, data) => handleStudioAction('hustle', `Give me hustle ideas based on: ${data.input}`)} />}
-      {showLearnStudio && <LearnStudio 
-          onClose={() => setShowLearnStudio(false)} 
-          onAction={(subjectId, skill, isTutor) => {
-              let prompt;
-              if (subjectId === 'finance') {
-                  prompt = "I need financial advice for a young African. Your persona for this response should be inspired by GehGeh, a popular Nigerian content creator known for his engaging and practical financial literacy content for young Africans. Start your response with a friendly, pidgin-style greeting like 'Wetin dey happen! Just like my guy GehGeh always says, securing your financial future is key...' and then proceed to give actionable financial advice relevant to young people across Africa. Keep the tone encouraging and easy to understand.";
-              } else {
-                  prompt = isTutor ? `I want to learn about ${skill}. Act as an expert tutor.` : `Teach me the basics of ${skill}.`;
-              }
-              handleStudioAction('learn', prompt);
-          }} 
-      />}
-      {showMarketSquare && <MarketSquare onClose={() => setShowMarketSquare(false)} isLoading={isLoading} onAiSearch={(item, location) => handleStudioAction('market', `Find a ${item} for sale in ${location}`)} userProfile={userProfile} />}
-      {showMobileWorkersStudio && <MobileWorkersStudio onClose={() => setShowMobileWorkersStudio(false)} userProfile={userProfile} />}
-      {showProfileStudio && <ProfileStudio onClose={() => setShowProfileStudio(false)} userProfile={userProfile} setUserProfile={setUserProfile} />}
-      {showProModal && <ProModal onClose={() => setShowProModal(false)} message={proModalMessage} />}
-      {showSupportModal && <SupportModal onClose={() => setShowSupportModal(false)} />}
-      {showExamplesStudio && <ExamplesStudio onClose={() => setShowExamplesStudio(false)} onSelectExample={prompt => { setShowExamplesStudio(false); handleSendMessage(prompt); }} />}
-      {showApiKeyModal && <ApiKeyModal onClose={() => setShowApiKeyModal(false)} onSelectKey={handleSelectKey} />}
-      {showFeedbackModal && <FeedbackModal onClose={() => setShowFeedbackModal(false)} />}
+      <Suspense fallback={<div className="fixed inset-0 bg-black/50 flex items-center justify-center text-white z-50">Loading Studio...</div>}>
+        {showImageStudio && <ImageStudio onClose={() => setShowImageStudio(false)} onGenerate={handleGenerateImage} onEdit={handleEditImage} isLoading={isLoading} initialPrompt={initialStudioData.initialPrompt} />}
+        {showAudioStudio && <AudioStudio onClose={() => setShowAudioStudio(false)} />}
+        {showVeoStudio && <VeoStudio onClose={() => setShowVeoStudio(false)} onApiKeyInvalid={handleApiKeyInvalid} />}
+        {showHustleStudio && <HustleStudio onClose={() => setShowHustleStudio(false)} isLoading={isLoading} onAction={(type, data) => handleStudioAction('hustle', `Give me hustle ideas based on: ${data.input}`)} />}
+        {showLearnStudio && <LearnStudio 
+            onClose={() => setShowLearnStudio(false)} 
+            onAction={(subjectId, skill, isTutor) => {
+                let prompt;
+                if (subjectId === 'finance') {
+                    prompt = "I need financial advice for a young African. Your persona for this response should be inspired by GehGeh, a popular Nigerian content creator known for his engaging and practical financial literacy content for young Africans. Start your response with a friendly, pidgin-style greeting like 'Wetin dey happen! Just like my guy GehGeh always says, securing your financial future is key...' and then proceed to give actionable financial advice relevant to young people across Africa. Keep the tone encouraging and easy to understand.";
+                } else {
+                    prompt = isTutor ? `I want to learn about ${skill}. Act as an expert tutor.` : `Teach me the basics of ${skill}.`;
+                }
+                handleStudioAction('learn', prompt);
+            }} 
+        />}
+        {showMarketSquare && <MarketSquare onClose={() => setShowMarketSquare(false)} isLoading={isLoading} onAiSearch={(item, location) => handleStudioAction('market', `Find a ${item} for sale in ${location}`)} userProfile={userProfile} />}
+        {showMobileWorkersStudio && <MobileWorkersStudio onClose={() => setShowMobileWorkersStudio(false)} userProfile={userProfile} />}
+        {showProfileStudio && <ProfileStudio onClose={() => setShowProfileStudio(false)} userProfile={userProfile} setUserProfile={setUserProfile} />}
+        {showProModal && <ProModal onClose={() => setShowProModal(false)} message={proModalMessage} />}
+        {showSupportModal && <SupportModal onClose={() => setShowSupportModal(false)} />}
+        {showExamplesStudio && <ExamplesStudio onClose={() => setShowExamplesStudio(false)} onSelectExample={prompt => { setShowExamplesStudio(false); handleSendMessage(prompt); }} />}
+        {showApiKeyModal && <ApiKeyModal onClose={() => setShowApiKeyModal(false)} onSelectKey={handleSelectKey} />}
+        {showFeedbackModal && <FeedbackModal onClose={() => setShowFeedbackModal(false)} />}
+      </Suspense>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import i1n from 'i18next';
+import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
@@ -566,8 +566,7 @@ const resources = {
   }
 };
 
-// FIX: Changed 'i18n' to 'i1n' to match the variable name defined in the import statement.
-i1n
+i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
@@ -584,5 +583,4 @@ i1n
     },
   });
 
-// FIX: Changed 'i18n' to 'i1n' to match the variable name defined in the import statement.
-export default i1n;
+export default i18n;
