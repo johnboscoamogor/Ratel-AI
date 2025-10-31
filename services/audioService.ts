@@ -1,4 +1,5 @@
 
+
 let audioContext: AudioContext | null = null;
 
 const getAudioContext = (): AudioContext | null => {
@@ -106,10 +107,10 @@ export const getAvailableVoices = (): VoiceOption[] => {
  */
 export const generateAudioBlob = async (text: string, voiceId: string): Promise<Blob> => {
     try {
-        const response = await fetch('/api/tts/generate', {
+        const response = await fetch('/api/ratelai', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text, voiceId }),
+            body: JSON.stringify({ action: 'tts_generate', text, voiceId }),
         });
 
         if (!response.ok) {

@@ -128,10 +128,11 @@ const StorytellerStudio: React.FC<StorytellerStudioProps> = ({ onClose, onStoryG
         setIsShared(false);
 
         try {
-            const response = await fetch('/api/story/generate', {
+            const response = await fetch('/api/ratelai', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
+                    action: 'story_generate',
                     prompt, 
                     language: settings.language, 
                 })

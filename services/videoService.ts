@@ -8,12 +8,12 @@ export const generateVideoFromExternalApi = async (prompt: string): Promise<stri
     console.log(`Sending prompt to our backend video generation service...`);
 
     try {
-        const response = await fetch('/api/generate_video', {
+        const response = await fetch('/api/ratelai', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ prompt }),
+            body: JSON.stringify({ action: 'generate_video_placeholder', prompt }),
         });
 
         if (!response.ok) {

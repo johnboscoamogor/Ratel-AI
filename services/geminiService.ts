@@ -17,7 +17,7 @@ export async function streamChat(
     image: { data: string, mimeType: string } | undefined,
     systemInstruction: string,
 ): Promise<ReadableStreamDefaultReader<Uint8Array>> {
-    const response = await fetch('/api/gemini/chat', {
+    const response = await fetch('/api/ratelai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'chat', history, message, image, systemInstruction }),
@@ -39,7 +39,7 @@ export async function streamChat(
  * Generates a title for a chat by calling the backend.
  */
 export async function generateTitle(prompt: string): Promise<string> {
-     const response = await fetch('/api/gemini/chat', {
+     const response = await fetch('/api/ratelai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'generate_text', prompt }),
@@ -56,7 +56,7 @@ export async function generateTitle(prompt: string): Promise<string> {
  * Generates an image by calling the backend.
  */
 export async function generateImage(prompt: string, aspectRatio: string): Promise<string> {
-    const response = await fetch('/api/gemini/chat', {
+    const response = await fetch('/api/ratelai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'generate_image', prompt, aspectRatio }),
@@ -73,7 +73,7 @@ export async function generateImage(prompt: string, aspectRatio: string): Promis
  * Edits an image by calling the backend.
  */
 export async function editImage(image: { data: string; mimeType: string }, prompt: string): Promise<{ data: string; mimeType: string }> {
-    const response = await fetch('/api/gemini/chat', {
+    const response = await fetch('/api/ratelai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'edit_image', image, prompt }),
@@ -89,7 +89,7 @@ export async function editImage(image: { data: string; mimeType: string }, promp
  * Uses AI to find skilled workers via a backend function call.
  */
 export async function findWorkersWithAi(searchTerm: string): Promise<{ skill: string; location: string } | null> {
-    const response = await fetch('/api/gemini/chat', {
+    const response = await fetch('/api/ratelai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'find_workers', searchTerm }),
@@ -107,10 +107,10 @@ export async function findWorkersWithAi(searchTerm: string): Promise<{ skill: st
  * Applies an AR effect to an image frame by calling the backend.
  */
 export async function generateArEffect(frame: { data: string; mimeType: string }, prompt: string): Promise<{ data: string; mimeType: string }> {
-    const response = await fetch('/api/gemini/ar-effect', {
+    const response = await fetch('/api/ratelai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ frame, prompt }),
+        body: JSON.stringify({ action: 'ar_effect', frame, prompt }),
     });
 
     if (!response.ok) {

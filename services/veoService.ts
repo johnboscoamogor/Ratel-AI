@@ -8,10 +8,10 @@ export const generateVideo = async (
 ): Promise<{objectUrl: string; blob: Blob; uri: string; generatedVideo: GeneratedVideo}> => {
   console.log('Sending video generation request to backend with params:', params);
 
-  const response = await fetch('/api/veo/generate', {
+  const response = await fetch('/api/ratelai', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params),
+      body: JSON.stringify({ action: 'veo_generate', ...params }),
   });
 
   if (!response.ok) {
