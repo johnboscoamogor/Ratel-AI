@@ -1,8 +1,9 @@
 import { Video } from '@google/genai';
 
-export enum VeoModel {
-  VEO = 'veo-3.1-generate-preview',
-  VEO_FAST = 'veo-3.1-fast-generate-preview',
+// FIX: Added type definitions for video generation parameters.
+export enum Resolution {
+  P1080 = '1080p',
+  P720 = '720p',
 }
 
 export enum AspectRatio {
@@ -10,40 +11,30 @@ export enum AspectRatio {
   PORTRAIT = '9:16',
 }
 
-export enum Resolution {
-  P1080 = '1080p',
-  P720 = '720p',
-}
-
 export enum GenerationMode {
-  TEXT_TO_VIDEO = 'Text-to-Video',
-  IMAGE_ANIMATION = 'Animate Image',
-  FRAMES_TO_VIDEO = 'Frames-to-Video',
-  REFERENCES_TO_VIDEO = 'References-to-Video',
-  EXTEND_VIDEO = 'Extend-Video',
+  TEXT_TO_VIDEO = 'text-to-video',
+  IMAGE_ANIMATION = 'image-animation',
+  FRAMES_TO_VIDEO = 'frames-to-video',
+  REFERENCES_TO_VIDEO = 'references-to-video',
+  EXTEND_VIDEO = 'extend-video',
 }
 
-export interface ImageFile {
-  file: File;
-  base64: string;
-}
-
-export interface VideoFile {
+// Representing a file selected by the user
+export interface Frame {
   file: File;
   base64: string;
 }
 
 export interface GenerateVideoParams {
-  prompt: string;
-  model: VeoModel;
-  aspectRatio: AspectRatio;
-  resolution: Resolution;
   mode: GenerationMode;
-  startFrame?: ImageFile | null;
-  endFrame?: ImageFile | null;
+  model: string;
+  prompt: string;
+  resolution: Resolution;
+  aspectRatio: AspectRatio;
+  startFrame?: Frame;
+  endFrame?: Frame;
   isLooping?: boolean;
-  referenceImages?: ImageFile[];
-  styleImage?: ImageFile | null;
-  inputVideo?: VideoFile | null;
-  inputVideoObject?: Video | null;
+  referenceImages?: Frame[];
+  styleImage?: Frame;
+  inputVideoObject?: Video;
 }

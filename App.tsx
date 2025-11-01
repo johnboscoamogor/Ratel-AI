@@ -22,7 +22,7 @@ const App: React.FC = () => {
     customInstructions: { nickname: '', aboutYou: '', expectations: '' },
     appearance: { theme: 'light', backgroundImage: '' },
     memory: { referenceSavedMemories: true, referenceChatHistory: true },
-    voice: { selectedVoice: 'gemini_Zephyr' },
+    voice: { selectedVoice: 'en-NG-Standard-A' },
     security: { mfaEnabled: false },
     notifications: { pushEnabled: false },
   };

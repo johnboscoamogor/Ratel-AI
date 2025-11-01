@@ -1,7 +1,6 @@
 import React from 'react';
-import { ArrowPathIcon, PlusIcon, SparklesIcon } from './VeoIcons';
 
-interface VideoResultProps {
+interface VeoVideoResultProps {
   videoUrl: string;
   onRetry: () => void;
   onNewVideo: () => void;
@@ -9,7 +8,8 @@ interface VideoResultProps {
   canExtend: boolean;
 }
 
-const VeoVideoResult: React.FC<VideoResultProps> = ({
+// FIX: Provided an implementation for the missing VeoVideoResult component.
+const VeoVideoResult: React.FC<VeoVideoResultProps> = ({
   videoUrl,
   onRetry,
   onNewVideo,
@@ -17,40 +17,35 @@ const VeoVideoResult: React.FC<VideoResultProps> = ({
   canExtend,
 }) => {
   return (
-    <div className="w-full flex flex-col items-center gap-8 p-8 bg-gray-800/50 rounded-lg border border-gray-700 shadow-2xl">
-      <h2 className="text-2xl font-bold text-gray-200">
-        Your Creation is Ready!
-      </h2>
-      <div className="w-full max-w-2xl aspect-video rounded-lg overflow-hidden bg-black shadow-lg">
-        <video
-          src={videoUrl}
-          controls
-          autoPlay
-          loop
-          className="w-full h-full object-contain"
-        />
-      </div>
-
-      <div className="flex flex-wrap justify-center gap-4">
-        <button
-          onClick={onRetry}
-          className="flex items-center gap-2 px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors">
-          <ArrowPathIcon className="w-5 h-5" />
-          Retry
-        </button>
-        {canExtend && (
-          <button
-            onClick={onExtend}
-            className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors">
-            <SparklesIcon className="w-5 h-5" />
-            Extend
-          </button>
-        )}
+    <div className="w-full max-w-3xl space-y-4">
+      <video
+        src={videoUrl}
+        controls
+        autoPlay
+        loop
+        playsInline
+        className="w-full rounded-lg aspect-video bg-black"
+      />
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
         <button
           onClick={onNewVideo}
-          className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors">
-          <PlusIcon className="w-5 h-5" />
+          className="py-2 px-4 bg-gray-700 rounded-lg font-semibold hover:bg-gray-600 transition-colors"
+        >
           New Video
+        </button>
+        <button
+          onClick={onRetry}
+          className="py-2 px-4 bg-gray-700 rounded-lg font-semibold hover:bg-gray-600 transition-colors"
+        >
+          Retry
+        </button>
+        <button
+          onClick={onExtend}
+          disabled={!canExtend}
+          title={canExtend ? 'Extend this video (adds 7s)' : 'Extend is only available for 720p videos.'}
+          className="col-span-2 md:col-span-1 py-2 px-4 bg-indigo-600 rounded-lg font-semibold hover:bg-indigo-700 disabled:bg-indigo-800 disabled:cursor-not-allowed transition-colors"
+        >
+          Extend
         </button>
       </div>
     </div>

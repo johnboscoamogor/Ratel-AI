@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI, Type, Modality, VideoGenerationReferenceImage, VideoGenerationReferenceType } from '@google/genai';
+// FIX: Corrected import path for veoTypes.
 import { taskTools } from '../constants';
-import { GenerateVideoParams, GenerationMode } from '../veoTypes';
+import { GenerateVideoParams, GenerationMode } from '../../veoTypes';
 
 // --- UNIVERSAL CONFIGURATION ---
 const API_KEY = process.env.API_KEY;
@@ -140,7 +141,7 @@ async function handleTtsGenerate(req: VercelRequest, res: VercelResponse) {
     const voiceName = ({
         'en-NG-Standard-A': 'Kore', 'en-NG-Standard-B': 'Charon', 'en-US-Wavenet-A': 'Puck',
         'en-US-Wavenet-F': 'Kore', 'en-GB-Wavenet-C': 'Kore', 'en-KE-Standard-A': 'Kore',
-        'sw-KE-Standard-B': 'Kore', 'en-US-Studio-O': 'Zephyr'
+        'sw-KE-Standard-B': 'Kore', 'en-US-Studio-O': 'Puck'
     })[voiceId || 'en-NG-Standard-A'] || 'Kore';
 
     const response = await ai.models.generateContent({
