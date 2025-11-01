@@ -2,19 +2,16 @@ import { createClient } from '@supabase/supabase-js';
 import { MarketItem, MarketPayment, MobileWorker } from '../types';
 
 // --- IMPORTANT SETUP ---
-// You are almost there!
-// I have filled in your Supabase URL below based on your screenshot.
-// Now, just copy your 'anon' 'public' key from your Supabase dashboard and paste it
-// into the supabaseAnonKey variable to replace the placeholder text.
-
-const supabaseUrl = 'https://hmilzanpttpczbeezdwe.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhtaWx6YW5wdHRwY3piZWV6ZHdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMzg2NzMsImV4cCI6MjA3NTgxNDY3M30.V7NpiSzi5GU9_ywL1BIKNuEL2hiA0slSdRmx5EngQcQ'; // <-- PASTE YOUR KEY HERE
+// These variables should be set in your Vercel Environment Variables.
+// On your local machine, you can create a .env.local file to store them.
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
 
-// This check determines if the placeholder values have been updated.
+// This check determines if the environment variables have been set.
 export const isSupabaseConfigured = 
-    !supabaseUrl.includes('YOUR_SUPABASE_URL_HERE') && 
-    !supabaseAnonKey.includes('PASTE_YOUR_ANON_KEY_HERE');
+    supabaseUrl && supabaseUrl.trim() !== '' && 
+    supabaseAnonKey && supabaseAnonKey.trim() !== '';
 
 // Conditionally create the Supabase client.
 let supabaseClient = null;
@@ -27,7 +24,7 @@ if (isSupabaseConfigured) {
     }>(supabaseUrl, supabaseAnonKey);
 } else {
     // Log a warning to the developer console if Supabase is not configured.
-    console.warn("Supabase is not configured. The Market Studio feature will not work until you update the keys in 'services/supabase.ts'.");
+    console.warn("Supabase is not configured. The Market Studio and Mobile Worker features will not work until you set the VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.");
 }
 
 // Export the client instance (which can be null if not configured).

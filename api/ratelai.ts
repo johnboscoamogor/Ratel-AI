@@ -6,6 +6,9 @@ import { taskTools } from '../constants';
 // --- UNIVERSAL CONFIGURATION ---
 const API_KEY = process.env.API_KEY;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;
+
 
 if (!API_KEY) {
     throw new Error("The API_KEY environment variable is not set.");
@@ -217,10 +220,12 @@ async function handleTelegramWebhook(req: VercelRequest, res: VercelResponse) {
 
 // --- HEARTBEAT HANDLER ---
 async function handleHeartbeat(req: VercelRequest, res: VercelResponse) {
-    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhtaWx6YW5wdHRwY3piZWV6ZHdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMzg2NzMsImV4cCI6MjA3NTgxNDY3M30.V7NpiSzi5GU9_ywL1BIKNuEL2hiA0slSdRmx5EngQcQ';
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+        return res.status(500).json({ status: "error", message: "Supabase environment variables are not set." });
+    }
     try {
-        const ping = await fetch("https://hmilzanpttpczbeezdwe.supabase.co/rest/v1/", { 
-            method: "HEAD", headers: { apikey: supabaseAnonKey }
+        const ping = await fetch(`${SUPABASE_URL}/rest/v1/`, { 
+            method: "HEAD", headers: { apikey: SUPABASE_ANON_KEY }
         });
         res.status(ping.ok ? 200 : 500).json({
             status: ping.ok ? "ok" : "error",
