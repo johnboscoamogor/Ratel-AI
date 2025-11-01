@@ -11,7 +11,6 @@ interface ErrorBoundaryState {
   hasError: boolean;
 }
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  // FIX: The class property for state initialization was causing a TypeScript error where 'this.props' was not recognized. Reverted to using a standard constructor for initializing state, which is a more robust pattern for class components and resolves the type error.
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
