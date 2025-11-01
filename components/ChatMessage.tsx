@@ -12,7 +12,6 @@ import CvDisplay from './CvDisplay';
 
 interface ChatMessageProps {
   message: ChatMessage;
-  onEditVideoPrompt: (message: ChatMessage) => void;
 }
 
 const CodeBlock = ({ className, children }: { className?: string; children: React.ReactNode }) => {
@@ -90,7 +89,7 @@ const TypingText: React.FC<{ text: string }> = ({ text }) => {
 };
 
 
-const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message, onEditVideoPrompt }) => {
+const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message }) => {
   const { t } = useTranslation();
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
@@ -143,7 +142,6 @@ const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message, onEditVideo
       isModelMessage={!isUser}
       handleTextToSpeech={handleTextToSpeech} 
       isAudioPlaying={isAudioPlaying}
-      onEditVideoPrompt={onEditVideoPrompt}
     />
   ));
 
@@ -175,8 +173,7 @@ const MessagePartComponent: React.FC<{
     handleTextToSpeech: (text:string) => void, 
     isAudioPlaying: boolean,
     fullMessage: ChatMessage,
-    onEditVideoPrompt: (message: ChatMessage) => void;
-}> = ({ part, isModelMessage, handleTextToSpeech, isAudioPlaying, fullMessage, onEditVideoPrompt }) => {
+}> = ({ part, isModelMessage, handleTextToSpeech, isAudioPlaying, fullMessage }) => {
 
     switch (part.type) {
         case 'text':
@@ -235,12 +232,6 @@ const MessagePartComponent: React.FC<{
                         loop
                         className="rounded-lg max-w-full h-auto bg-black"
                     />
-                    {isModelMessage && (
-                         <button onClick={() => onEditVideoPrompt(fullMessage)} className="mt-2 flex items-center gap-1.5 text-sm text-gray-400 hover:text-white">
-                            <EditIcon className="w-4 h-4" />
-                            <span>Edit Prompt</span>
-                        </button>
-                    )}
                 </div>
             );
         case 'tasks':

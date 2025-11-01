@@ -18,11 +18,10 @@ interface ChatWindowProps {
   setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
   userProfile: UserProfile;
   onOpenProfileStudio: () => void;
-  onEditVideoPrompt: (originalMessage: ChatMessage) => void;
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
-  chatSession, isLoading, onToggleSidebar, onSendMessage, onNewChat, onOpenSupportModal, onOpenFeedbackModal, settings, setSettings, userProfile, onOpenProfileStudio, onEditVideoPrompt
+  chatSession, isLoading, onToggleSidebar, onSendMessage, onNewChat, onOpenSupportModal, onOpenFeedbackModal, settings, setSettings, userProfile, onOpenProfileStudio
 }) => {
   const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -126,7 +125,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         {chatSession && chatSession.messages.length > 0 ? (
           <div className="p-4 space-y-4 w-full">
             {chatSession.messages.map((msg) => (
-              <ChatMessageComponent key={msg.id} message={msg} onEditVideoPrompt={onEditVideoPrompt} />
+              <ChatMessageComponent key={msg.id} message={msg} />
             ))}
              <div ref={messagesEndRef} />
           </div>

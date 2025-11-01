@@ -10,7 +10,6 @@ import { createSystemInstruction } from '../constants';
 // Dynamically import all studios and modals for code splitting
 const ImageStudio = lazy(() => import('./ImageStudio'));
 const AudioStudio = lazy(() => import('./AudioStudio'));
-const VeoStudio = lazy(() => import('./VeoStudio'));
 const HustleStudio = lazy(() => import('./HustleStudio'));
 const LearnStudio = lazy(() => import('./LearnStudio'));
 const MarketSquare = lazy(() => import('./MarketStudio'));
@@ -19,7 +18,6 @@ const ProfileStudio = lazy(() => import('./ProfileStudio'));
 const ProModal = lazy(() => import('./ProModal'));
 const SupportModal = lazy(() => import('./SupportModal'));
 const ExamplesStudio = lazy(() => import('./ExamplesStudio'));
-const ApiKeyModal = lazy(() => import('./ApiKeyModal'));
 const FeedbackModal = lazy(() => import('./FeedbackModal'));
 
 
@@ -46,7 +44,6 @@ const ChatView: React.FC<ChatViewProps> = ({
   
   const [showImageStudio, setShowImageStudio] = useState(false);
   const [showAudioStudio, setShowAudioStudio] = useState(false);
-  const [showVeoStudio, setShowVeoStudio] = useState(false);
   const [showHustleStudio, setShowHustleStudio] = useState(false);
   const [showLearnStudio, setShowLearnStudio] = useState(false);
   const [showMarketSquare, setShowMarketSquare] = useState(false);
@@ -56,7 +53,6 @@ const ChatView: React.FC<ChatViewProps> = ({
   const [proModalMessage, setProModalMessage] = useState<string | undefined>(undefined);
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [showExamplesStudio, setShowExamplesStudio] = useState(false);
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   const [initialStudioData, setInitialStudioData] = useState<any>({});
@@ -64,56 +60,6 @@ const ChatView: React.FC<ChatViewProps> = ({
   const [tasks, setTasks] = useState<Task[]>([]);
   
   const chatSessionsRef = useRef<Map<string, any>>(new Map());
-  const postKeySelectionAction = useRef<(() => void) | null>(null);
-  const [isApiKeyKnownValid, setIsApiKeyKnownValid] = useState(true);
-
-  const ensureApiKey = async (action: () => void) => {
-    try {
-        // @ts-ignore
-        if (!window.aistudio || typeof window.aistudio.hasSelectedApiKey !== 'function') {
-          // Fallback for environments where the aistudio helper isn't available
-          action();
-          return;
-        }
-
-        const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error("API key check timed out after 3 seconds.")), 3000)
-        );
-
-        // @ts-ignore
-        const hasKey = await Promise.race([
-            window.aistudio.hasSelectedApiKey(),
-            timeoutPromise
-        ]);
-
-        if (hasKey && isApiKeyKnownValid) {
-            action();
-        } else {
-            postKeySelectionAction.current = action;
-            setShowApiKeyModal(true);
-        }
-    } catch (e: any) {
-        console.error("Error checking for API key:", e);
-        // Show a user-friendly error and don't proceed.
-        alert(`Could not verify API key status: ${e.message}. Please try again or refresh the page.`);
-    }
-  };
-
-  const handleSelectKey = async () => {
-    // @ts-ignore
-    await window.aistudio.openSelectKey();
-    setShowApiKeyModal(false);
-    setIsApiKeyKnownValid(true); // Assume the new key is valid
-    if (postKeySelectionAction.current) {
-        postKeySelectionAction.current();
-        postKeySelectionAction.current = null;
-    }
-  };
-
-  const handleApiKeyInvalid = () => {
-    setIsApiKeyKnownValid(false);
-    setShowVeoStudio(false);
-  };
 
   const handleNewChat = useCallback(() => {
     playSound('click');
@@ -333,18 +279,6 @@ const ChatView: React.FC<ChatViewProps> = ({
           chatSessionsRef.current.delete(currentChatId);
       }
   };
-  
-  const handleEditVideoPrompt = (originalMessage: ChatMessage) => {
-      const videoPart = originalMessage.parts.find(p => p.type === 'video');
-      if (videoPart) {
-          setInitialStudioData({
-              initialPrompt: videoPart.content.prompt,
-              initialDialogue: originalMessage.videoDialogue,
-              initialAmbiance: originalMessage.videoAmbiance,
-          });
-          setShowVeoStudio(true);
-      }
-  };
 
   // --- Studio Handlers ---
 
@@ -469,7 +403,6 @@ const ChatView: React.FC<ChatViewProps> = ({
                 onRenameChat={onRenameChat}
                 onOpenImageStudio={() => openStudio(setShowImageStudio)}
                 onOpenAudioStudio={() => openStudio(setShowAudioStudio)}
-                onOpenVideoStudio={() => ensureApiKey(() => { trackInterest('video'); openStudio(setShowVeoStudio); })}
                 onOpenHustleStudio={() => openStudio(setShowHustleStudio)}
                 onOpenLearnStudio={() => openStudio(setShowLearnStudio)}
                 onOpenMarketSquare={() => openStudio(setShowMarketSquare)}
@@ -493,7 +426,6 @@ const ChatView: React.FC<ChatViewProps> = ({
                 setSettings={setSettings}
                 userProfile={userProfile}
                 onOpenProfileStudio={() => openStudio(setShowProfileStudio)}
-                onEditVideoPrompt={handleEditVideoPrompt}
                 />
             </main>
         </div>
@@ -502,7 +434,6 @@ const ChatView: React.FC<ChatViewProps> = ({
       <Suspense fallback={<div className="fixed inset-0 bg-black/50 flex items-center justify-center text-white z-50">Loading Studio...</div>}>
         {showImageStudio && <ImageStudio onClose={() => setShowImageStudio(false)} onGenerate={handleGenerateImage} onEdit={handleEditImage} isLoading={isLoading} initialPrompt={initialStudioData.initialPrompt} />}
         {showAudioStudio && <AudioStudio onClose={() => setShowAudioStudio(false)} />}
-        {showVeoStudio && <VeoStudio onClose={() => setShowVeoStudio(false)} onApiKeyInvalid={handleApiKeyInvalid} />}
         {showHustleStudio && <HustleStudio onClose={() => setShowHustleStudio(false)} isLoading={isLoading} onAction={(type, data) => handleStudioAction('hustle', `Give me hustle ideas based on: ${data.input}`)} />}
         {showLearnStudio && <LearnStudio 
             onClose={() => setShowLearnStudio(false)} 
@@ -522,7 +453,6 @@ const ChatView: React.FC<ChatViewProps> = ({
         {showProModal && <ProModal onClose={() => setShowProModal(false)} message={proModalMessage} />}
         {showSupportModal && <SupportModal onClose={() => setShowSupportModal(false)} />}
         {showExamplesStudio && <ExamplesStudio onClose={() => setShowExamplesStudio(false)} onSelectExample={prompt => { setShowExamplesStudio(false); handleSendMessage(prompt); }} />}
-        {showApiKeyModal && <ApiKeyModal onClose={() => setShowApiKeyModal(false)} onSelectKey={handleSelectKey} />}
         {showFeedbackModal && <FeedbackModal onClose={() => setShowFeedbackModal(false)} />}
       </Suspense>
     </div>

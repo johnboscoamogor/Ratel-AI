@@ -2,7 +2,6 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI, Type, Modality, VideoGenerationReferenceImage, VideoGenerationReferenceType } from '@google/genai';
 // FIX: Corrected import path for veoTypes.
 import { taskTools } from '../constants';
-import { GenerateVideoParams, GenerationMode } from '../../veoTypes';
 
 // --- UNIVERSAL CONFIGURATION ---
 const API_KEY = process.env.API_KEY;
@@ -155,59 +154,6 @@ async function handleTtsGenerate(req: VercelRequest, res: VercelResponse) {
     res.status(200).json({ audioBase64 });
 }
 
-// --- VEO HANDLER ---
-async function handleVeoGenerate(req: VercelRequest, res: VercelResponse) {
-    const params: GenerateVideoParams = req.body;
-
-    const config: any = { numberOfVideos: 1, resolution: params.resolution };
-    if (params.mode !== GenerationMode.EXTEND_VIDEO) {
-        config.aspectRatio = params.aspectRatio;
-    }
-
-    const payload: any = { model: params.model, config };
-    if (params.prompt) payload.prompt = params.prompt;
-
-    if (params.mode === GenerationMode.IMAGE_ANIMATION && params.startFrame) {
-        payload.image = { imageBytes: params.startFrame.base64, mimeType: params.startFrame.file.type };
-    } else if (params.mode === GenerationMode.FRAMES_TO_VIDEO) {
-        if (params.startFrame) payload.image = { imageBytes: params.startFrame.base64, mimeType: params.startFrame.file.type };
-        const end = params.isLooping ? params.startFrame : params.endFrame;
-        if (end) payload.config.lastFrame = { imageBytes: end.base64, mimeType: end.file.type };
-    } else if (params.mode === GenerationMode.REFERENCES_TO_VIDEO) {
-        const refs: VideoGenerationReferenceImage[] = (params.referenceImages || []).map(img => ({
-            image: { imageBytes: img.base64, mimeType: img.file.type },
-            referenceType: VideoGenerationReferenceType.ASSET,
-        }));
-        if (params.styleImage) refs.push({ image: { imageBytes: params.styleImage.base64, mimeType: params.styleImage.file.type }, referenceType: VideoGenerationReferenceType.STYLE });
-        if (refs.length > 0) payload.config.referenceImages = refs;
-    } else if (params.mode === GenerationMode.EXTEND_VIDEO) {
-        if (params.inputVideoObject) payload.video = params.inputVideoObject;
-        else throw new Error('An input video object is required to extend a video.');
-    }
-
-    let operation = await ai.models.generateVideos(payload);
-    while (!operation.done) {
-        await new Promise(resolve => setTimeout(resolve, 10000));
-        operation = await ai.operations.getVideosOperation({ operation });
-    }
-
-    const firstVideo = operation.response?.generatedVideos?.[0];
-    const downloadLink = firstVideo?.video?.uri;
-    if (!downloadLink) throw new Error("Video generation succeeded but no download link was returned.");
-
-    const videoResponse = await fetch(`${downloadLink}&key=${API_KEY}`);
-    if (!videoResponse.ok) throw new Error(`Failed to download generated video: ${videoResponse.statusText}`);
-
-    const videoArrayBuffer = await videoResponse.arrayBuffer();
-    const uint8Array = new Uint8Array(videoArrayBuffer);
-    let binaryString = '';
-    uint8Array.forEach(byte => { binaryString += String.fromCharCode(byte); });
-    const videoBase64 = btoa(binaryString);
-    const videoDataUrl = `data:video/mp4;base64,${videoBase64}`;
-
-    res.status(200).json({ objectUrl: videoDataUrl, generatedVideo: firstVideo });
-}
-
 // --- AVATAR HANDLER ---
 async function handleAvatarGenerate(req: VercelRequest, res: VercelResponse) {
     const { imageBase64, mimeType, stylePrompt, script, voiceId, audioBase64: importedAudioBase64 } = req.body;
@@ -326,7 +272,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             case 'ar_effect': return await handleArEffect(req, res);
             case 'story_generate': return await handleStoryGenerate(req, res);
             case 'tts_generate': return await handleTtsGenerate(req, res);
-            case 'veo_generate': return await handleVeoGenerate(req, res);
             case 'avatar_generate': return await handleAvatarGenerate(req, res);
             case 'generate_video_placeholder':
                 await new Promise(resolve => setTimeout(resolve, 3000));
