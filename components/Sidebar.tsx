@@ -24,6 +24,7 @@ interface SidebarProps {
   onRenameChat: (id: string, newTitle: string) => void;
   onOpenImageStudio: () => void;
   onOpenAudioStudio: () => void;
+  onOpenVeoStudio: () => void;
   onOpenHustleStudio: () => void;
   onOpenLearnStudio: () => void;
   onOpenMarketSquare: () => void;
@@ -38,7 +39,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({
   history, currentChatId, userProfile, isCurrentChatEmpty, isOpenOnMobile, onCloseMobile,
   onNewChat, onSelectChat, onClearChat, onDeleteChat, onRenameChat,
-  onOpenImageStudio, onOpenAudioStudio, onOpenHustleStudio, onOpenLearnStudio, onOpenMarketSquare, onOpenMobileWorkersStudio, onOpenProfileStudio, onOpenProModal, onOpenExamplesStudio,
+  onOpenImageStudio, onOpenAudioStudio, onOpenVeoStudio, onOpenHustleStudio, onOpenLearnStudio, onOpenMarketSquare, onOpenMobileWorkersStudio, onOpenProfileStudio, onOpenProModal, onOpenExamplesStudio,
   setPage, onLogout
 }) => {
   const { t } = useTranslation();
@@ -114,6 +115,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <StudioButton Icon={UsersIcon} label={t('sidebar.communityStudio')} onClick={() => handlePageChange('community')} />
               <StudioButton Icon={ImageIcon} label={t('sidebar.imageStudio')} onClick={onOpenImageStudio} />
               <StudioButton Icon={AudioIcon} label={t('sidebar.audioStudio')} onClick={onOpenAudioStudio} />
+              <StudioButton Icon={VideoIcon} label={t('sidebar.videoStudio')} onClick={onOpenVeoStudio} />
           </div>
         </div>
 

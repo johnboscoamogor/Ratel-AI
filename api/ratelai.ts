@@ -135,6 +135,61 @@ async function handleStoryGenerate(req: VercelRequest, res: VercelResponse) {
     });
 }
 
+// --- VEO VIDEO GENERATION HANDLER ---
+async function handleVeoGenerate(req: VercelRequest, res: VercelResponse) {
+    const {
+        model,
+        prompt,
+        resolution,
+        aspectRatio,
+        startFrame, // Expects { base64: string, mimeType: string }
+        endFrame,
+        inputVideoObject,
+    } = req.body;
+
+    const config: any = {
+        numberOfVideos: 1,
+        resolution,
+        aspectRatio,
+    };
+    
+    const payload: any = { model, prompt, config };
+
+    if (startFrame) {
+        payload.image = { imageBytes: startFrame.base64, mimeType: startFrame.mimeType };
+    }
+    if (endFrame) {
+        config.lastFrame = { imageBytes: endFrame.base64, mimeType: endFrame.mimeType };
+    }
+    if (inputVideoObject) {
+        payload.video = inputVideoObject;
+    }
+    
+    let operation = await ai.models.generateVideos(payload);
+
+    while (!operation.done) {
+        // Poll every 10 seconds. Note: Vercel functions have timeouts.
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        operation = await ai.operations.getVideosOperation({ operation });
+    }
+
+    const generatedVideo = operation.response?.generatedVideos?.[0];
+    if (!generatedVideo?.video?.uri) {
+        if (operation.error) {
+            console.error("Veo generation error:", operation.error);
+            throw new Error(operation.error.message || "Video generation failed in operation.");
+        }
+        throw new Error("Video generation did not return a valid video URI.");
+    }
+    
+    const downloadLink = generatedVideo.video.uri;
+    // The key is appended on the client-side for security, but we'll prepare the URL here.
+    const objectUrl = `${downloadLink}&key=${API_KEY}`;
+    
+    res.status(200).json({ objectUrl, generatedVideo });
+}
+
+
 // --- TTS HANDLER ---
 async function handleTtsGenerate(req: VercelRequest, res: VercelResponse) {
     const { text, voiceId } = req.body;
@@ -278,6 +333,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             case 'story_generate': return await handleStoryGenerate(req, res);
             case 'tts_generate': return await handleTtsGenerate(req, res);
             case 'avatar_generate': return await handleAvatarGenerate(req, res);
+            case 'veo_generate': return await handleVeoGenerate(req, res);
             case 'generate_video_placeholder':
                 await new Promise(resolve => setTimeout(resolve, 3000));
                 return res.status(200).json({ videoUrl: 'https://videos.pexels.com/video-files/3209828/3209828-hd_1280_720_25fps.mp4' });

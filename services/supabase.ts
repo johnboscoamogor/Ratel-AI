@@ -1,5 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
-import { MarketItem, MarketPayment, MobileWorker } from '../types';
+import { MarketItem, MarketPayment, MobileWorker, UserProfile } from '../types';
+
+// --- TYPE DEFINITIONS FOR PROCESS.ENV ---
+// This informs TypeScript about the custom environment variables.
+declare global {
+    namespace NodeJS {
+        interface ProcessEnv {
+            VITE_SUPABASE_URL: string;
+            VITE_SUPABASE_ANON_KEY: string;
+        }
+    }
+}
 
 // --- IMPORTANT SETUP ---
 // These variables should be set in your Vercel Environment Variables.
@@ -13,6 +24,9 @@ export const isSupabaseConfigured =
     supabaseUrl && supabaseUrl.trim() !== '' && 
     supabaseAnonKey && supabaseAnonKey.trim() !== '';
 
+// A profile type that matches the new database table structure
+type Profile = Omit<UserProfile, 'email'> & { id: string };
+
 // Conditionally create the Supabase client.
 let supabaseClient = null;
 if (isSupabaseConfigured) {
@@ -21,6 +35,7 @@ if (isSupabaseConfigured) {
         market_items: MarketItem;
         market_payments: MarketPayment;
         mobile_workers: MobileWorker;
+        profiles: Profile;
     }>(supabaseUrl, supabaseAnonKey);
 } else {
     // Log a warning to the developer console if Supabase is not configured.

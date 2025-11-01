@@ -10,6 +10,8 @@ import { createSystemInstruction } from '../constants';
 // Dynamically import all studios and modals for code splitting
 const ImageStudio = lazy(() => import('./ImageStudio'));
 const AudioStudio = lazy(() => import('./AudioStudio'));
+const VeoStudio = lazy(() => import('./VeoStudio'));
+const ApiKeyModal = lazy(() => import('./ApiKeyModal'));
 const HustleStudio = lazy(() => import('./HustleStudio'));
 const LearnStudio = lazy(() => import('./LearnStudio'));
 const MarketSquare = lazy(() => import('./MarketStudio'));
@@ -44,6 +46,8 @@ const ChatView: React.FC<ChatViewProps> = ({
   
   const [showImageStudio, setShowImageStudio] = useState(false);
   const [showAudioStudio, setShowAudioStudio] = useState(false);
+  const [showVeoStudio, setShowVeoStudio] = useState(false);
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [showHustleStudio, setShowHustleStudio] = useState(false);
   const [showLearnStudio, setShowLearnStudio] = useState(false);
   const [showMarketSquare, setShowMarketSquare] = useState(false);
@@ -282,6 +286,33 @@ const ChatView: React.FC<ChatViewProps> = ({
 
   // --- Studio Handlers ---
 
+  const handleOpenVeoStudio = async () => {
+    playSound('click');
+    // @ts-ignore
+    if (window.aistudio && !(await window.aistudio.hasSelectedApiKey())) {
+        setShowApiKeyModal(true);
+    } else {
+        setShowVeoStudio(true);
+    }
+  };
+
+  const handleSelectApiKey = async () => {
+    // @ts-ignore
+    if (window.aistudio) {
+        // @ts-ignore
+        await window.aistudio.openSelectKey();
+        setShowApiKeyModal(false);
+        // Assume success and open the studio
+        setShowVeoStudio(true);
+    }
+  };
+
+  const handleApiKeyInvalid = () => {
+      setShowVeoStudio(false);
+      setShowApiKeyModal(true);
+      alert("The selected API key appears to be invalid or lacks permissions for Veo. Please select another key.");
+  };
+
   const handleGenerateImage = async (prompt: string, aspectRatio: string) => {
     setShowImageStudio(false);
     trackInterest('image');
@@ -403,6 +434,7 @@ const ChatView: React.FC<ChatViewProps> = ({
                 onRenameChat={onRenameChat}
                 onOpenImageStudio={() => openStudio(setShowImageStudio)}
                 onOpenAudioStudio={() => openStudio(setShowAudioStudio)}
+                onOpenVeoStudio={handleOpenVeoStudio}
                 onOpenHustleStudio={() => openStudio(setShowHustleStudio)}
                 onOpenLearnStudio={() => openStudio(setShowLearnStudio)}
                 onOpenMarketSquare={() => openStudio(setShowMarketSquare)}
@@ -434,6 +466,8 @@ const ChatView: React.FC<ChatViewProps> = ({
       <Suspense fallback={<div className="fixed inset-0 bg-black/50 flex items-center justify-center text-white z-50">Loading Studio...</div>}>
         {showImageStudio && <ImageStudio onClose={() => setShowImageStudio(false)} onGenerate={handleGenerateImage} onEdit={handleEditImage} isLoading={isLoading} initialPrompt={initialStudioData.initialPrompt} />}
         {showAudioStudio && <AudioStudio onClose={() => setShowAudioStudio(false)} />}
+        {showVeoStudio && <VeoStudio onClose={() => setShowVeoStudio(false)} onApiKeyInvalid={handleApiKeyInvalid} />}
+        {showApiKeyModal && <ApiKeyModal onClose={() => setShowApiKeyModal(false)} onSelectKey={handleSelectApiKey} />}
         {showHustleStudio && <HustleStudio onClose={() => setShowHustleStudio(false)} isLoading={isLoading} onAction={(type, data) => handleStudioAction('hustle', `Give me hustle ideas based on: ${data.input}`)} />}
         {showLearnStudio && <LearnStudio 
             onClose={() => setShowLearnStudio(false)} 

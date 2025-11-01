@@ -10,11 +10,15 @@ import CommunityView from './components/CommunityView';
 import AdminDashboard from './components/AdminDashboard';
 import { UserProfile, AppSettings, RatelMode, Task } from './types';
 import { playSound } from './services/audioService';
+import { supabase, isSupabaseConfigured } from './services/supabase';
+// FIX: Import the RatelLogo component to resolve the 'Cannot find name' error.
+import { RatelLogo } from './constants';
 
 const App: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [page, setPage] = useState<'landing' | 'chat' | 'settings' | 'contact' | 'community' | 'admin' | 'examples'>('landing');
+  const [loadingSession, setLoadingSession] = useState(true);
 
   const defaultSettings: AppSettings = {
     language: 'en',
@@ -31,7 +35,6 @@ const App: React.FC = () => {
     try {
       const savedSettings = localStorage.getItem('ratel_settings');
       if (savedSettings) {
-        // Merge saved settings with defaults to ensure new settings are included
         const parsed = JSON.parse(savedSettings);
         return { ...defaultSettings, ...parsed, voice: { ...defaultSettings.voice, ...parsed.voice } };
       }
@@ -41,37 +44,44 @@ const App: React.FC = () => {
     return defaultSettings;
   });
 
-  // Load user profile and settings on initial mount
+  // Manage user session with Supabase
   useEffect(() => {
-    try {
-      const savedProfile = localStorage.getItem('ratel_user_profile');
-      if (savedProfile) {
-        setUserProfile(JSON.parse(savedProfile));
-        setPage('chat');
-      } else {
+    if (!isSupabaseConfigured || !supabase) {
+        console.error("Supabase is not configured. Authentication will not work.");
+        setLoadingSession(false);
         setPage('landing');
-      }
-
-      const savedLanguage = localStorage.getItem('ratel_language');
-      if(savedLanguage) {
-        setSettings(prev => ({...prev, language: savedLanguage as AppSettings['language']}));
-      }
-
-    } catch (e) {
-      console.error("Failed to load user data", e);
-      setPage('landing');
+        return;
     }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        setLoadingSession(true);
+        if (session?.user) {
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+
+            if (error) {
+                console.error('Error fetching profile:', error);
+                setUserProfile(null);
+                setPage('landing');
+            } else if (profile) {
+                setUserProfile({ ...profile, email: session.user.email! });
+                setPage('chat');
+            }
+        } else {
+            setUserProfile(null);
+            setPage('landing');
+        }
+        setLoadingSession(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  // Save user profile and settings whenever they change
-  useEffect(() => {
-    if (userProfile) {
-      localStorage.setItem('ratel_user_profile', JSON.stringify(userProfile));
-    } else {
-      localStorage.removeItem('ratel_user_profile');
-    }
-  }, [userProfile]);
 
+  // Save settings whenever they change
   useEffect(() => {
     localStorage.setItem('ratel_settings', JSON.stringify(settings));
     localStorage.setItem('ratel_language', settings.language);
@@ -92,7 +102,6 @@ const App: React.FC = () => {
                 if (task.reminder && !task.completed && !task.reminderFired) {
                     const reminderTime = new Date(task.reminder);
                     if (now >= reminderTime) {
-                        // Trigger notification
                         alert(`Reminder: ${task.description}`);
                         tasksUpdated = true;
                         return { ...task, reminderFired: true };
@@ -103,7 +112,6 @@ const App: React.FC = () => {
 
             if (tasksUpdated) {
                 localStorage.setItem('ratel_tasks', JSON.stringify(updatedTasks));
-                // Here you might want to trigger a state update if the tasks are managed in App state
             }
         } catch (e) {
             console.error("Failed to check task reminders:", e);
@@ -115,20 +123,17 @@ const App: React.FC = () => {
     return () => clearInterval(intervalId); // Cleanup on component unmount
   }, []);
 
-  // FIX: Updated handleLoginSuccess to accept a full UserProfile object.
-  // This simplifies the logic by making the AuthModal responsible for creating/loading the profile,
-  // resolving the type error at the call sites in AuthModal.tsx.
-  const handleLoginSuccess = (profile: UserProfile, isNewUser: boolean) => {
+  const handleLoginSuccess = () => {
     playSound('receive');
-    setUserProfile(profile);
     setShowAuthModal(false);
-    setPage('chat');
-    alert(isNewUser ? "Account created successfully!" : `Welcome back, ${profile.name}!`);
+    // The onAuthStateChange listener will handle setting the profile and page.
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (!supabase) return;
     playSound('click');
-    setUserProfile(null);
+    await supabase.auth.signOut();
+    // onAuthStateChange will handle cleanup
     localStorage.removeItem('ratel_chat_history'); // Clear chat history on logout
     localStorage.removeItem('ratel_tasks');
     setPage('landing');
@@ -148,7 +153,6 @@ const App: React.FC = () => {
         playSound('receive');
         return { ...prev, level: newLevel, xp: newXp };
     });
-    // The message itself is handled inside ChatView upon detecting level change
   };
 
   const addXp = (points: number) => {
@@ -175,12 +179,18 @@ const App: React.FC = () => {
     });
   };
 
+  if (loadingSession) {
+      return (
+        <div className="flex items-center justify-center h-screen bg-gray-900 text-white">
+            <RatelLogo className="w-16 h-16 text-green-500 animate-pulse" />
+        </div>
+      );
+  }
+
 
   const renderPage = () => {
     if (!userProfile) {
-      return page === 'landing' 
-        ? <LandingPage onStartChatting={handleStartChatting} settings={settings} setSettings={setSettings} />
-        : <LandingPage onStartChatting={handleStartChatting} settings={settings} setSettings={setSettings} />; // Fallback to landing
+        return <LandingPage onStartChatting={handleStartChatting} settings={settings} setSettings={setSettings} />;
     }
 
     switch (page) {
@@ -196,7 +206,6 @@ const App: React.FC = () => {
         if (userProfile.isAdmin) {
           return <AdminDashboard onBack={() => setPage('chat')} />;
         }
-        // If not admin, silently redirect to chat to prevent access
         return <ChatView userProfile={userProfile} setUserProfile={setUserProfile} settings={settings} setSettings={setSettings} setPage={setPage} onLogout={handleLogout} addXp={addXp} trackInterest={trackInterest} onLevelUp={handleLevelUp} />;
       default:
         return <LandingPage onStartChatting={handleStartChatting} settings={settings} setSettings={setSettings} />;
