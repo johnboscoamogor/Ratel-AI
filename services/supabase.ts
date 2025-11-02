@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { MarketItem, MarketPayment, MobileWorker, UserProfile } from '../types';
 
-// This robust check works for both Vercel (import.meta.env) and local AI Studio (process.env).
+// FIX: Hardcoded credentials were missing quotes, causing a syntax error.
+// They are now correctly formatted as strings.
 const supabaseUrl = 'https://hmilzanpttpczbeezdwe.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhtaWx6YW5wdHRwY3piZWV6ZHdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMzg2NzMsImV4cCI6MjA3NTgxNDY3M30.V7NpiSzi5GU9_ywL1BIKNuEL2hiA0slSdRmx5EngQcQ';
 

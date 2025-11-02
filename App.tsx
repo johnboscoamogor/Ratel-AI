@@ -21,24 +21,7 @@ const App: React.FC = () => {
   const [page, setPage] = useState<'landing' | 'chat' | 'settings' | 'contact' | 'community' | 'admin' | 'examples'>('landing');
   const [loadingSession, setLoadingSession] = useState(true);
 
-  // If Supabase is not configured, display a clear error message and stop.
-  if (!isSupabaseConfigured) {
-    return (
-      <div style={{ padding: '2rem', textAlign: 'center', color: 'white', backgroundColor: '#111827', height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', fontFamily: 'Inter, sans-serif' }}>
-        <h1 style={{ fontSize: '2rem', marginBottom: '1rem', color: '#f87171' }}>⚙️ Configuration Error</h1>
-        <p style={{ color: '#d1d5db' }}>The application is missing its database credentials.</p>
-        <div style={{ backgroundColor: '#1f2937', padding: '1.5rem', borderRadius: '0.5rem', marginTop: '1.5rem', border: '1px solid #374151', textAlign: 'left' }}>
-            <p className="font-semibold text-white">To fix this, please set the following environment variables in your deployment platform (e.g., Vercel, AI Studio):</p>
-            <ul style={{ listStyle: 'disc', paddingLeft: '1.5rem', marginTop: '1rem' }}>
-                <li style={{ marginBottom: '0.75rem' }}><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>SUPABASE_URL</code> or <code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>VITE_SUPABASE_URL</code></li>
-                <li><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>SUPABASE_ANON_KEY</code> or <code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>VITE_SUPABASE_ANON_KEY</code></li>
-            </ul>
-        </div>
-        <p style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: '1.5rem' }}>You can find these in your Supabase project dashboard under 'Settings' > 'API'.</p>
-      </div>
-    );
-  }
-
+  // All hooks must be called at the top level, before any conditional returns.
   const defaultSettings: AppSettings = {
     language: 'en',
     chatTone: 'normal',
@@ -171,6 +154,25 @@ const App: React.FC = () => {
 
     return () => clearInterval(intervalId); // Cleanup on component unmount
   }, []);
+
+  // Now that hooks are defined, we can handle the configuration error.
+  if (!isSupabaseConfigured) {
+    return (
+      <div style={{ padding: '2rem', textAlign: 'center', color: 'white', backgroundColor: '#111827', height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', fontFamily: 'Inter, sans-serif' }}>
+        <h1 style={{ fontSize: '2rem', marginBottom: '1rem', color: '#f87171' }}>⚙️ Configuration Error</h1>
+        <p style={{ color: '#d1d5db' }}>The application is missing its database credentials.</p>
+        <div style={{ backgroundColor: '#1f2937', padding: '1.5rem', borderRadius: '0.5rem', marginTop: '1.5rem', border: '1px solid #374151', textAlign: 'left' }}>
+            <p className="font-semibold text-white">To fix this, please set the following environment variables in your deployment platform (e.g., Vercel, AI Studio):</p>
+            <ul style={{ listStyle: 'disc', paddingLeft: '1.5rem', marginTop: '1rem' }}>
+                <li style={{ marginBottom: '0.75rem' }}><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>SUPABASE_URL</code> or <code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>VITE_SUPABASE_URL</code></li>
+                <li><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>SUPABASE_ANON_KEY</code> or <code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>VITE_SUPABASE_ANON_KEY</code></li>
+            </ul>
+        </div>
+        <p style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: '1.5rem' }}>You can find these in your Supabase project dashboard under 'Settings' > 'API'.</p>
+      </div>
+    );
+  }
+
 
   const handleLoginSuccess = () => {
     playSound('receive');
