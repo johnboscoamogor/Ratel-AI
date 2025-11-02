@@ -4,7 +4,7 @@ import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { UserIcon, RatelLogo, CopyIcon, CheckIcon, SpeakerIcon, StopIcon, DownloadIcon, GlobeIcon, EditIcon } from '../constants';
+import { UserIcon, RatelLogo, CopyIcon, CheckIcon, SpeakerIcon, StopIcon, DownloadIcon, GlobeIcon, EditIcon, TrashIcon } from '../constants';
 import { ChatMessage, MessagePart } from '../types';
 import TaskList from './TaskList';
 import { playSound, generateAudioBlob } from '../services/audioService';
@@ -12,6 +12,7 @@ import CvDisplay from './CvDisplay';
 
 interface ChatMessageProps {
   message: ChatMessage;
+  onDeleteMessage: (messageId: string) => void;
 }
 
 const CodeBlock = ({ className, children }: { className?: string; children: React.ReactNode }) => {
@@ -54,42 +55,7 @@ const markdownComponents = {
     }
 };
 
-const TypingText: React.FC<{ text: string }> = ({ text }) => {
-    const [displayedText, setDisplayedText] = useState('');
-    const words = useMemo(() => text.split(/(\s+)/), [text]);
-
-    useEffect(() => {
-        if (text === 'Alright...') {
-            setDisplayedText(text);
-            return;
-        }
-
-        setDisplayedText('');
-        let isCancelled = false;
-        let builtText = '';
-        let i = 0;
-
-        const typeWord = () => {
-            if (isCancelled || i >= words.length) {
-                if (!isCancelled) setDisplayedText(text);
-                return;
-            }
-            builtText += words[i];
-            setDisplayedText(builtText);
-            i++;
-            setTimeout(typeWord, 35);
-        };
-        
-        typeWord();
-
-        return () => { isCancelled = true; };
-    }, [text, words]);
-    
-    return <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{displayedText}</Markdown>;
-};
-
-
-const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message }) => {
+const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message, onDeleteMessage }) => {
   const { t } = useTranslation();
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
@@ -142,6 +108,7 @@ const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message }) => {
       isModelMessage={!isUser}
       handleTextToSpeech={handleTextToSpeech} 
       isAudioPlaying={isAudioPlaying}
+      onDeleteMessage={onDeleteMessage}
     />
   ));
 
@@ -173,20 +140,32 @@ const MessagePartComponent: React.FC<{
     handleTextToSpeech: (text:string) => void, 
     isAudioPlaying: boolean,
     fullMessage: ChatMessage,
-}> = ({ part, isModelMessage, handleTextToSpeech, isAudioPlaying, fullMessage }) => {
+    onDeleteMessage: (messageId: string) => void,
+}> = ({ part, isModelMessage, handleTextToSpeech, isAudioPlaying, fullMessage, onDeleteMessage }) => {
+
+    const handleDownload = (base64Data: string, mimeType: string) => {
+        playSound('click');
+        const link = document.createElement('a');
+        link.href = `data:${mimeType};base64,${base64Data}`;
+        const extension = mimeType.split('/')[1] || 'png';
+        link.download = `ratel-ai-image-${Date.now()}.${extension}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const handleDelete = () => {
+        onDeleteMessage(fullMessage.id);
+    };
 
     switch (part.type) {
         case 'text':
             return (
                 <div>
                   <div className="prose prose-sm max-w-none prose-invert prose-p:my-2 prose-headings:my-2 prose-ul:my-2 prose-li:my-0">
-                    {isModelMessage ? (
-                        <TypingText text={part.content} />
-                    ) : (
-                        <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                            {part.content}
-                        </Markdown>
-                    )}
+                    <Markdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                        {part.content}
+                    </Markdown>
                   </div>
                    {part.groundingChunks && part.groundingChunks.length > 0 && (
                       <div className="mt-3 pt-2 border-t border-gray-500/50">
@@ -205,7 +184,7 @@ const MessagePartComponent: React.FC<{
                           </ul>
                       </div>
                   )}
-                  {isModelMessage && part.content !== 'Alright...' && (
+                  {isModelMessage && part.content && (
                     <button onClick={() => handleTextToSpeech(part.content)} className="mt-2 p-1 text-gray-400 hover:text-white">
                       {isAudioPlaying ? <StopIcon className="w-4 h-4" /> : <SpeakerIcon className="w-4 h-4" />}
                     </button>
@@ -214,12 +193,30 @@ const MessagePartComponent: React.FC<{
             );
         case 'image':
             return (
-                <div>
+                <div className="relative group">
                     <img
                         src={`data:${part.mimeType};base64,${part.content}`}
                         alt="Generated"
                         className="rounded-lg max-w-full h-auto"
                     />
+                    {isModelMessage && (
+                        <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                                onClick={() => handleDownload(part.content, part.mimeType || 'image/png')}
+                                className="p-1.5 bg-gray-800/60 backdrop-blur-sm rounded-md text-white hover:bg-gray-900/80"
+                                title="Download Image"
+                            >
+                                <DownloadIcon className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                className="p-1.5 bg-red-800/60 backdrop-blur-sm rounded-md text-white hover:bg-red-900/80"
+                                title="Delete Message"
+                            >
+                                <TrashIcon className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
                 </div>
             );
         case 'video':

@@ -4,8 +4,9 @@ import Sidebar from './Sidebar';
 import ChatWindow from './ChatWindow';
 import { ChatSession, UserProfile, AppSettings, ChatMessage, MessagePart, RatelMode, Task } from '../types';
 import { playSound } from '../services/audioService';
-import { ai } from '../services/geminiService';
+import { ai, editImage as editImageService } from '../services/geminiService';
 import { createSystemInstruction } from '../constants';
+import { GenerateContentResponse } from '@google/genai';
 
 // Dynamically import all studios and modals for code splitting
 const ImageStudio = lazy(() => import('./ImageStudio'));
@@ -136,6 +137,14 @@ const ChatView: React.FC<ChatViewProps> = ({
     }));
   }, [updateCurrentChat]);
 
+  const deleteMessageFromChat = useCallback((messageId: string) => {
+    playSound('click');
+    updateCurrentChat(chat => ({
+        ...chat,
+        messages: chat.messages.filter(msg => msg.id !== messageId)
+    }));
+  }, [updateCurrentChat]);
+
   const onRenameChat = useCallback((id: string, newTitle: string) => {
     setHistory(prev => prev.map(chat => chat.id === id ? { ...chat, title: newTitle } : chat));
   }, []);
@@ -149,7 +158,7 @@ const ChatView: React.FC<ChatViewProps> = ({
     if(!chatSession) return null;
     
     const geminiHistory = chatSession.messages
-        .filter(m => m.role !== 'system' && m.parts[0]?.type !== 'error' && m.parts[0]?.type !== 'loading')
+        .filter(m => m.role !== 'system' && m.parts[0]?.type !== 'error' && m.parts[0]?.type !== 'loading' && m.parts[0]?.content !== '')
         .map(m => {
             const content = m.parts.map(p => {
                 if (p.type === 'image') {
@@ -161,7 +170,7 @@ const ChatView: React.FC<ChatViewProps> = ({
         });
 
     const newChatInstance = ai.chats.create({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-flash-latest',
         history: geminiHistory,
         config: {
             systemInstruction: createSystemInstruction(settings)
@@ -172,6 +181,17 @@ const ChatView: React.FC<ChatViewProps> = ({
     return newChatInstance;
 
   }, [history, settings]);
+  
+  const generateTitleForChat = async (chatId: string, userPrompt: string) => {
+    try {
+        const titlePrompt = `Create a very short, concise title (4-5 words max) for this user's first prompt: "${userPrompt}"`;
+        const response = await ai.models.generateContent({ model: 'gemini-flash-latest', contents: titlePrompt });
+        const newTitle = response.text.replace(/"/g, '');
+        onRenameChat(chatId, newTitle);
+    } catch (e) {
+        console.error("Failed to generate chat title:", e);
+    }
+  };
 
   const handleSendMessage = useCallback(async (message: string, image?: { data: string; mimeType: string }) => {
     if (!currentChatId) return;
@@ -185,66 +205,73 @@ const ChatView: React.FC<ChatViewProps> = ({
       timestamp: Date.now()
     };
     addMessageToChat(userMessage);
-    setIsLoading(true);
 
-    const slugMessageId = crypto.randomUUID();
-    const slugMessage: ChatMessage = {
-        id: slugMessageId,
+    const modelMessageId = crypto.randomUUID();
+    const modelMessage: ChatMessage = {
+        id: modelMessageId,
         role: 'model',
-        parts: [{ type: 'text', content: 'Alright...' }],
+        parts: [{ type: 'text', content: '' }],
         timestamp: Date.now()
     };
-    addMessageToChat(slugMessage);
+    addMessageToChat(modelMessage);
+
+    setIsLoading(true);
 
     try {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
         const chat = await getOrCreateChatSession(currentChatId);
         if (!chat) throw new Error("Could not initialize chat session.");
 
         const parts: any[] = message ? [{ text: message }] : [];
-        if(image) {
+        if (image) {
             parts.push({ inlineData: { mimeType: image.mimeType, data: image.data }});
         }
         
-        const result = await chat.sendMessage({ message: { parts } });
-        const groundingChunks = result.candidates?.[0]?.groundingMetadata?.groundingChunks;
-
-        const modelResponsePart: MessagePart = {
-            type: 'text',
-            content: result.text.trim(),
-            ...(groundingChunks && { groundingChunks })
-        };
-
-        updateCurrentChat(chat => ({
-            ...chat,
-            messages: chat.messages.map(msg => 
-                msg.id === slugMessageId 
-                ? { ...msg, parts: [modelResponsePart], timestamp: Date.now() } 
-                : msg
-            )
-        }));
+        const stream = await chat.sendMessageStream({ message: { parts } });
         
+        let fullResponseText = "";
+        let finalResponse: GenerateContentResponse | undefined;
+        
+        for await (const chunk of stream) {
+            fullResponseText += chunk.text;
+            finalResponse = chunk; // Keep the last chunk for metadata like grounding
+            
+            updateCurrentChat(chat => ({
+                ...chat,
+                messages: chat.messages.map(msg => 
+                    msg.id === modelMessageId 
+                    ? { ...msg, parts: [{ type: 'text', content: fullResponseText }], timestamp: Date.now() } 
+                    : msg
+                )
+            }));
+        }
+        
+        // After stream, update with grounding chunks if they exist
+        const groundingChunks = finalResponse?.candidates?.[0]?.groundingMetadata?.groundingChunks;
+        if (groundingChunks) {
+            updateCurrentChat(chat => ({
+                ...chat,
+                messages: chat.messages.map(msg => 
+                    msg.id === modelMessageId 
+                    ? { ...msg, parts: [{ type: 'text', content: fullResponseText, groundingChunks }] } 
+                    : msg
+                )
+            }));
+        }
+
         addXp(5);
         
-        if (currentChat && currentChat.messages.length <= 2) {
-            const titlePrompt = `Create a very short, concise title (4-5 words max) for this user's first prompt: "${message}"`;
-            const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: titlePrompt });
-            const newTitle = response.text.replace(/"/g, '');
-            onRenameChat(currentChatId, newTitle);
+        // Non-blocking title generation
+        if (currentChat && currentChat.messages.length <= 3) {
+            generateTitleForChat(currentChatId, message);
         }
 
     } catch (e) {
       console.error("Failed to send message:", e);
-      const errorMessagePart: MessagePart = { 
-          type: 'error', 
-          content: e instanceof Error ? e.message : "An unknown error occurred." 
-      };
       updateCurrentChat(chat => ({
           ...chat,
           messages: chat.messages.map(msg => 
-              msg.id === slugMessageId 
-              ? { ...msg, parts: [errorMessagePart], timestamp: Date.now() } 
+              msg.id === modelMessageId 
+              ? { ...msg, parts: [{ type: 'error', content: e instanceof Error ? e.message : "An unknown error occurred." }], timestamp: Date.now() } 
               : msg
           )
       }));
@@ -336,21 +363,13 @@ const ChatView: React.FC<ChatViewProps> = ({
       setIsLoading(true);
       
        try {
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-image',
-                contents: { parts: [ { inlineData: { data: image.data, mimeType: image.mimeType } }, { text: prompt } ] },
-                config: { responseModalities: ['IMAGE'] },
+            const result = await editImageService(image, prompt);
+            addMessageToChat({
+                id: crypto.randomUUID(),
+                role: 'model',
+                parts: [{ type: 'image', content: result.data, mimeType: result.mimeType }],
+                timestamp: Date.now()
             });
-            const imagePart = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
-
-            if(imagePart?.inlineData) {
-                 addMessageToChat({
-                    id: crypto.randomUUID(),
-                    role: 'model',
-                    parts: [{ type: 'image', content: imagePart.inlineData.data, mimeType: imagePart.inlineData.mimeType }],
-                    timestamp: Date.now()
-                });
-            } else { throw new Error("The AI did not return an edited image."); }
         } catch(e) {
             console.error(e);
             addMessageToChat({
@@ -426,6 +445,7 @@ const ChatView: React.FC<ChatViewProps> = ({
                 setSettings={setSettings}
                 userProfile={userProfile}
                 onOpenProfileStudio={() => openStudio(setShowProfileStudio)}
+                onDeleteMessage={deleteMessageFromChat}
                 />
             </main>
         </div>

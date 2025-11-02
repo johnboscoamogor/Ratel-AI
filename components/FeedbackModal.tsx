@@ -27,9 +27,10 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ onClose }) => {
     setIsSubmitting(true);
     setSubmitStatus('idle');
 
-    const serviceID = 'service_txnnuzj';
-    const templateID = 'template_cwo7o5s';
-    const publicKey = 'g_CgIiJ0gl1LwjgLY';
+    // FIX: Replaced incorrect credentials with the correct ones from ContactPage.tsx
+    const serviceID = 'service_0od2hgd';
+    const templateID = 'template_eok41ps';
+    const publicKey = 'LVQXGJ3F_GjNEfrCh';
 
     emailjs.send(serviceID, templateID, formState, publicKey)
       .then(() => {

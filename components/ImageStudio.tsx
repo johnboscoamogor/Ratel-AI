@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CloseIcon, UploadIcon } from '../constants';
+import { CloseIcon, UploadIcon, DownloadIcon, TrashIcon } from '../constants';
 import { playSound } from '../services/audioService';
 
 interface ImageStudioProps {
@@ -42,10 +42,38 @@ const ImageStudio: React.FC<ImageStudioProps> = ({ onClose, onGenerate, onEdit, 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            if (imagePreview) {
+                URL.revokeObjectURL(imagePreview);
+            }
             setImageFile(file);
             setImagePreview(URL.createObjectURL(file));
         }
     };
+    
+    const handleRemoveImage = useCallback(() => {
+        playSound('click');
+        setImageFile(null);
+        if (imagePreview) {
+            URL.revokeObjectURL(imagePreview);
+        }
+        setImagePreview(null);
+        const fileInput = document.getElementById('edit-image-upload') as HTMLInputElement;
+        if (fileInput) {
+            fileInput.value = "";
+        }
+    }, [imagePreview]);
+
+    const handleDownloadPreview = () => {
+        if (!imagePreview || !imageFile) return;
+        playSound('click');
+        const link = document.createElement('a');
+        link.href = imagePreview;
+        link.download = imageFile.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
 
     const handleGenerate = () => {
         playSound('click');
@@ -144,9 +172,24 @@ const ImageStudio: React.FC<ImageStudioProps> = ({ onClose, onGenerate, onEdit, 
                             <div>
                                 <label htmlFor="edit-image-upload" className="block text-sm font-medium text-gray-700 mb-2">{t('imageStudio.uploadLabel')}</label>
                                 {imagePreview ? (
-                                    <div className="text-center">
+                                    <div className="relative group w-fit mx-auto">
                                         <img src={imagePreview} alt="Preview" className="max-h-48 mx-auto rounded-md border border-gray-200 ring-0 outline-none" />
-                                        <button onClick={() => { playSound('click'); setImageFile(null); setImagePreview(null); }} className="mt-2 text-sm text-red-600 hover:underline">{t('imageStudio.removeImage')}</button>
+                                        <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={handleDownloadPreview}
+                                                className="p-1.5 bg-gray-800/60 backdrop-blur-sm rounded-md text-white hover:bg-gray-900/80"
+                                                title="Download Image"
+                                            >
+                                                <DownloadIcon className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={handleRemoveImage}
+                                                className="p-1.5 bg-red-800/60 backdrop-blur-sm rounded-md text-white hover:bg-red-900/80"
+                                                title={t('imageStudio.removeImage')}
+                                            >
+                                                <TrashIcon className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     </div>
                                 ) : (
                                     <label htmlFor="edit-image-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">

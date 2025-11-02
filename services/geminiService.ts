@@ -28,9 +28,12 @@ export async function generateImage(prompt: string, aspectRatio: string): Promis
  * Edits an image using the client-side SDK.
  */
 export async function editImage(image: { data: string; mimeType: string }, prompt: string): Promise<{ data: string; mimeType: string }> {
+    // Construct a more detailed prompt to guide the AI towards higher quality results.
+    const enhancedPrompt = `You are a professional photo editor. Your task is to apply the following edit to the image provided, ensuring the result is high-quality, photorealistic, and seamlessly integrated. The user's request is: "${prompt}"`;
+
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash-image',
-        contents: { parts: [ { inlineData: { data: image.data, mimeType: image.mimeType } }, { text: prompt } ] },
+        contents: { parts: [ { inlineData: { data: image.data, mimeType: image.mimeType } }, { text: enhancedPrompt } ] },
         config: { responseModalities: [Modality.IMAGE] },
     });
 
@@ -50,7 +53,7 @@ export async function editImage(image: { data: string; mimeType: string }, promp
  * Uses AI to find skilled workers via a client-side function call.
  */
 export async function findWorkersWithAi(searchTerm: string): Promise<{ skill: string; location: string } | null> {
-    const chat = ai.chats.create({ model: 'gemini-flash-lite-latest', config: { tools: taskTools }});
+    const chat = ai.chats.create({ model: 'gemini-flash-latest', config: { tools: taskTools }});
     const result = await chat.sendMessage({ message: searchTerm });
     const fc = result.functionCalls?.[0];
     

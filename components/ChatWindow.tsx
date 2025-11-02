@@ -18,10 +18,11 @@ interface ChatWindowProps {
   setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
   userProfile: UserProfile;
   onOpenProfileStudio: () => void;
+  onDeleteMessage: (messageId: string) => void;
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
-  chatSession, isLoading, onToggleSidebar, onSendMessage, onNewChat, onOpenSupportModal, onOpenFeedbackModal, settings, setSettings, userProfile, onOpenProfileStudio
+  chatSession, isLoading, onToggleSidebar, onSendMessage, onNewChat, onOpenSupportModal, onOpenFeedbackModal, settings, setSettings, userProfile, onOpenProfileStudio, onDeleteMessage
 }) => {
   const { t } = useTranslation();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -125,7 +126,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         {chatSession && chatSession.messages.length > 0 ? (
           <div className="p-4 space-y-4 w-full">
             {chatSession.messages.map((msg) => (
-              <ChatMessageComponent key={msg.id} message={msg} />
+              <ChatMessageComponent key={msg.id} message={msg} onDeleteMessage={onDeleteMessage} />
             ))}
              <div ref={messagesEndRef} />
           </div>
