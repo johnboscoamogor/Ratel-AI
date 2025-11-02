@@ -1,22 +1,16 @@
+// FIX: The triple-slash directive for Vite's client types was causing an error in some environments.
+// It has been removed and `import.meta` is now cast to `any` to resolve related TypeScript errors.
+
 import { createClient } from '@supabase/supabase-js';
 import { MarketItem, MarketPayment, MobileWorker, UserProfile } from '../types';
-
-// --- TYPE DEFINITIONS FOR PROCESS.ENV ---
-// This informs TypeScript about the custom environment variables.
-declare global {
-    namespace NodeJS {
-        interface ProcessEnv {
-            VITE_SUPABASE_URL: string;
-            VITE_SUPABASE_ANON_KEY: string;
-        }
-    }
-}
 
 // --- IMPORTANT SETUP ---
 // These variables should be set in your Vercel Environment Variables.
 // On your local machine, you can create a .env.local file to store them.
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+// FIX: Cast `import.meta` to `any` to access environment variables without Vite client types, resolving "Property 'env' does not exist" error.
+const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || 'https://hmilzanpttpczbeezdwe.supabase.co';
+// FIX: Cast `import.meta` to `any` to access environment variables without Vite client types, resolving "Property 'env' does not exist" error.
+const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhtaWx6YW5wdHRwY3piZWV6ZHdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMzg2NzMsImV4cCI6MjA3NTgxNDY3M30.V7NpiSzi5GU9_ywL1BIKNuEL2hiA0slSdRmx5EngQcQ';
 
 
 // This check determines if the environment variables have been set.

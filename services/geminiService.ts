@@ -1,11 +1,16 @@
 // This file is now a client for our own backend API routes,
 // which securely handle the Gemini API key on the server.
 // FIX: Import GoogleGenAI and export an `ai` instance for direct client-side usage.
-import { GoogleGenAI, GenerateContentResponse } from '@google/genai';
+import { GoogleGenAI, GenerateContentResponse, Modality } from '@google/genai';
+import { taskTools } from '../constants';
+
+// The API key is injected by the environment and is assumed to be available.
+const API_KEY = process.env.API_KEY;
+
 
 // This instance is for direct client-side calls as used in ChatView.tsx
 // The API key is expected to be available in the client environment.
-export const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+export const ai = new GoogleGenAI({ apiKey: API_KEY! });
 
 /**
  * Sends a chat message to the backend for processing.
@@ -89,17 +94,11 @@ export async function editImage(image: { data: string; mimeType: string }, promp
  * Uses AI to find skilled workers via a backend function call.
  */
 export async function findWorkersWithAi(searchTerm: string): Promise<{ skill: string; location: string } | null> {
-    const response = await fetch('/api/ratelai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'find_workers', searchTerm }),
-    });
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to search for workers.");
-    }
-    const data = await response.json();
-    return data.args || null;
+    const chat = ai.chats.create({ model: 'gemini-flash-lite-latest', config: { tools: taskTools }});
+    const result = await chat.sendMessage({ message: searchTerm });
+    const fc = result.functionCalls?.[0];
+    
+    return (fc && fc.name === 'findWorkers') ? fc.args as any : null;
 }
 
 // FIX: Added missing generateArEffect function for the Video AR Studio.
@@ -107,15 +106,23 @@ export async function findWorkersWithAi(searchTerm: string): Promise<{ skill: st
  * Applies an AR effect to an image frame by calling the backend.
  */
 export async function generateArEffect(frame: { data: string; mimeType: string }, prompt: string): Promise<{ data: string; mimeType: string }> {
-    const response = await fetch('/api/ratelai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'ar_effect', frame, prompt }),
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash-image',
+        contents: { parts: [ { inlineData: { data: frame.data, mimeType: frame.mimeType } }, { text: prompt } ] },
+        config: { responseModalities: [Modality.IMAGE] },
     });
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to apply AR effect");
+    
+    if (response.promptFeedback?.blockReason) {
+        throw new Error(`Request blocked due to ${response.promptFeedback.blockReason}. Please modify your prompt.`);
     }
-    return await response.json();
+
+    const imagePart = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
+
+    if (imagePart?.inlineData) {
+        return { data: imagePart.inlineData.data, mimeType: imagePart.inlineData.mimeType as string };
+    } else {
+         const textPart = response.candidates?.[0]?.content?.parts.find(p => p.text);
+         if (textPart?.text) throw new Error(`AI response: ${textPart.text}`);
+        throw new Error("The AI did not return an image. Please try rephrasing your prompt.");
+    }
 }

@@ -53,30 +53,54 @@ const App: React.FC = () => {
         return;
     }
 
+    // Set up the authentication state change listener.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-        setLoadingSession(true);
-        if (session?.user) {
-            const { data: profile, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', session.user.id)
-                .single();
+        try {
+            // If a session exists, it means the user is logged in.
+            if (session?.user) {
+                // Fetch the user's profile from the 'profiles' table.
+                const { data: profile, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
 
-            if (error) {
-                console.error('Error fetching profile:', error);
+                // If a profile is found and there's no error, update the app state.
+                if (profile && !error) {
+                    const completeProfile: UserProfile = {
+                        ...profile,
+                        email: session.user.email!,
+                        communityPoints: profile.communityPoints || 0,
+                        totalRedeemed: profile.totalRedeemed || 0,
+                    };
+                    setUserProfile(completeProfile);
+                    setPage('chat'); // Navigate to the chat view.
+                } else {
+                    // If no profile is found or there's an error, treat as logged out.
+                    if (error) {
+                        console.error('Error fetching profile:', error.message);
+                    }
+                    setUserProfile(null);
+                    setPage('landing');
+                }
+            } else {
+                // If there is no session, the user is logged out.
                 setUserProfile(null);
                 setPage('landing');
-            } else if (profile) {
-                setUserProfile({ ...profile, email: session.user.email! });
-                setPage('chat');
             }
-        } else {
+        } catch (e) {
+            // Catch any unexpected errors during the process.
+            console.error("An unexpected error occurred during auth state change:", e);
             setUserProfile(null);
             setPage('landing');
+        } finally {
+            // IMPORTANT: Always set loading to false after the initial check is complete.
+            // This ensures the app doesn't get stuck on the loading screen.
+            setLoadingSession(false);
         }
-        setLoadingSession(false);
     });
 
+    // Clean up the subscription when the component unmounts.
     return () => subscription.unsubscribe();
   }, []);
 

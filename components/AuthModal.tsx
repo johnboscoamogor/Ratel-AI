@@ -48,30 +48,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
 
         setLoading(true);
         playSound('click');
-
-        // Check if user exists by trying to fetch their profile
-        const { data, error: fetchError } = await supabase
-            .from('profiles')
-            .select('name')
-            .eq('id', (await supabase.auth.getUser()).data.user?.id || '') // This won't work before login, so we check for user existence differently.
-            // A common way is a serverless function, but for client-side, we'll just check if login fails.
-            // For now, let's assume we can't know if a user exists by email alone for security reasons.
-            // We'll proceed to the details step and let them either log in or sign up.
-
-        // Simplified flow: always ask for password. If signup fails because user exists, handle that error.
-        // Or better: Let's just have two clear paths from the start.
-        // For this implementation, we will keep the 'magic link' style flow.
         
-        // This is a simplification. A production app might use a server-side check.
-        // We'll try to sign in silently. If it fails, they are likely a new user.
-        // This is not a great pattern. Instead, we'll just ask them to login or signup.
-        
-        // Let's refine the flow:
-        // 1. Enter email.
-        // 2. We can't securely know if they exist.
-        // 3. Present both "Login" and "Sign Up" options in the 'details' step.
-        // Let's keep the original logic for now, as it's simpler, and just swap the backend.
-        // Let's assume we will just TRY to log in. If it fails, we show the sign up form.
         setStep('details');
         setLoading(false);
     };
@@ -81,47 +58,57 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
         setError('');
         setLoading(true);
 
-        if (!nickname.trim()) return setError(t('authModal.error.nicknameRequired'));
-        if (password.length < 6) return setError(t('authModal.error.passwordRequired'));
-        if (password !== confirmPassword) return setError(t('authModal.error.passwordsDoNotMatch'));
+        if (!nickname.trim()) {
+            setError(t('authModal.error.nicknameRequired'));
+            setLoading(false);
+            return;
+        }
+        if (password.length < 6) {
+            setError(t('authModal.error.passwordRequired'));
+            setLoading(false);
+            return;
+        }
+        if (password !== confirmPassword) {
+            setError(t('authModal.error.passwordsDoNotMatch'));
+            setLoading(false);
+            return;
+        }
         
         const { data, error: signUpError } = await supabase.auth.signUp({
             email: email,
             password: password,
             options: {
                 data: {
-                    name: nickname, // This can be used to trigger profile creation
-                }
+                    name: nickname, // This will be used by the trigger
+                },
+                emailRedirectTo: window.location.origin,
             }
         });
 
+        setLoading(false);
+
         if (signUpError) {
             setError(signUpError.message);
-            setLoading(false);
             return;
         }
-
-        if (data.user) {
-             // Now, create the corresponding public profile.
-            const { error: profileError } = await supabase.from('profiles').insert({
-                id: data.user.id,
-                name: nickname,
-                level: 1,
-                xp: 0,
-                communityPoints: 0,
-                interests: {},
-                joinedDate: new Date().toISOString()
-            });
-
-            if (profileError) {
-                setError(`Account created, but failed to create profile: ${profileError.message}`);
-                setLoading(false);
-                return;
-            }
-            alert("Account created! Please check your email to verify your account and log in.");
+        
+        // If Supabase is configured to NOT require email confirmation,
+        // the 'data' object will contain a full session, logging the user in immediately.
+        if (data.session && data.user) {
+            // The user is now logged in. The main App component's auth listener
+            // will detect this change, fetch the user's profile, and navigate to the chat view.
             onLoginSuccess();
+        } else if (data.user) {
+            // This block handles the case where email confirmation is still enabled.
+            // It provides a fallback message to guide the user.
+            alert("Account created! Please check your email for a verification link to log in.");
+            onClose();
+        } else {
+            // Handle an unexpected response from Supabase.
+            setError("An unexpected error occurred during signup. Please try again.");
         }
     };
+
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -160,8 +147,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
         setNickname('');
     };
     
-    // In this new flow, we can't know the user's name yet, and we don't know if they exist.
-    // So we'll have to present both login and signup forms.
     const renderDetailsStep = () => {
          return (
                 <>

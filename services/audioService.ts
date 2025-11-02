@@ -1,3 +1,5 @@
+import { ai } from './geminiService';
+import { Modality } from '@google/genai';
 
 
 let audioContext: AudioContext | null = null;
@@ -107,19 +109,25 @@ export const getAvailableVoices = (): VoiceOption[] => {
  */
 export const generateAudioBlob = async (text: string, voiceId: string): Promise<Blob> => {
     try {
-        const response = await fetch('/api/ratelai', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'tts_generate', text, voiceId }),
+        const voiceName = ({
+            'en-NG-Standard-A': 'Kore', 'en-NG-Standard-B': 'Charon', 'en-US-Wavenet-A': 'Puck',
+            'en-US-Wavenet-F': 'Kore', 'en-GB-Wavenet-C': 'Kore', 'en-KE-Standard-A': 'Kore',
+            'sw-KE-Standard-B': 'Kore'
+        })[voiceId || 'en-NG-Standard-A'] || 'Kore';
+
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash-preview-tts",
+            contents: [{ parts: [{ text }] }],
+            config: { 
+                responseModalities: [Modality.AUDIO], 
+                speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName } } } 
+            },
         });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to generate audio from the server.');
+        const audioBase64 = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        if (!audioBase64) {
+            throw new Error("TTS response did not contain audio data.");
         }
-
-        const data = await response.json();
-        const audioBase64 = data.audioBase64;
         
         // Decode the Base64 string into a byte array
         const byteCharacters = atob(audioBase64);

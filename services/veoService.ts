@@ -1,18 +1,57 @@
-import { GeneratedVideo } from '@google/genai';
+import { GeneratedVideo, Video } from '@google/genai';
 import { GenerateVideoParams } from '../veoTypes';
+import { ai } from './geminiService';
 
 // FIX: Implemented the video generation service to call the backend API.
 export const generateVideo = async (params: GenerateVideoParams): Promise<{ objectUrl: string; generatedVideo: GeneratedVideo; }> => {
-    const response = await fetch('/api/ratelai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'veo_generate', ...params }),
-    });
+    const {
+        model,
+        prompt,
+        resolution,
+        aspectRatio,
+        startFrame,
+        endFrame,
+        inputVideoObject,
+    } = params;
 
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || errorData.error || "Failed to generate video from the server.");
+    const config: any = {
+        numberOfVideos: 1,
+        resolution,
+        aspectRatio,
+    };
+    
+    const payload: any = { model, prompt, config };
+
+    if (startFrame) {
+        payload.image = { imageBytes: startFrame.base64, mimeType: startFrame.file.type };
+    }
+    if (endFrame) {
+        config.lastFrame = { imageBytes: endFrame.base64, mimeType: endFrame.file.type };
+    }
+    if (inputVideoObject) {
+        payload.video = inputVideoObject;
     }
     
-    return await response.json();
+    let operation = await ai.models.generateVideos(payload);
+
+    // Poll for the result
+    while (!operation.done) {
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        operation = await ai.operations.getVideosOperation({ operation });
+    }
+
+    const generatedVideo = operation.response?.generatedVideos?.[0];
+    if (!generatedVideo?.video?.uri) {
+        if (operation.error) {
+            console.error("Veo generation error:", operation.error);
+            throw new Error(operation.error.message || "Video generation failed in operation.");
+        }
+        throw new Error("Video generation did not return a valid video URI.");
+    }
+    
+    const downloadLink = generatedVideo.video.uri;
+    // The API key is injected by the environment and is appended for accessing the video URL.
+    const objectUrl = `${downloadLink}&key=${process.env.API_KEY}`;
+    
+    return { objectUrl, generatedVideo };
 };
