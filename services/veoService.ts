@@ -2,7 +2,10 @@ import { GeneratedVideo, Video } from '@google/genai';
 import { GenerateVideoParams } from '../veoTypes';
 import { ai } from './geminiService';
 
-// FIX: Implemented the video generation service to call the backend API.
+// This robust check works for both Vercel (import.meta.env) and local AI Studio (process.env).
+const API_KEY = (import.meta as any).env?.VITE_API_KEY || process.env.API_KEY;
+
+
 export const generateVideo = async (params: GenerateVideoParams): Promise<{ objectUrl: string; generatedVideo: GeneratedVideo; }> => {
     const {
         model,
@@ -50,8 +53,8 @@ export const generateVideo = async (params: GenerateVideoParams): Promise<{ obje
     }
     
     const downloadLink = generatedVideo.video.uri;
-    // The API key is injected by the platform's environment and is appended for accessing the video URL.
-    const objectUrl = `${downloadLink}&key=${process.env.API_KEY}`;
+    // The API key is appended for accessing the video URL.
+    const objectUrl = `${downloadLink}&key=${API_KEY}`;
     
     return { objectUrl, generatedVideo };
 };

@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { GoogleGenAI, Type, Modality, VideoGenerationReferenceImage, VideoGenerationReferenceType } from '@google/genai';
-// FIX: Corrected import path for veoTypes.
 import { taskTools } from '../constants';
 
 // --- UNIVERSAL CONFIGURATION ---
+// These names must match the names in your Vercel Project Environment Variables.
 const API_KEY = process.env.API_KEY;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const SUPABASE_URL = process.env.SUPABASE_URL;
