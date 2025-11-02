@@ -98,7 +98,6 @@ const resources = {
         "feedback": "Feedback",
         "imageStudio": "Image",
         "audioStudio": "Audio",
-        "videoStudio": "Veo Studio",
         "settings": "Settings",
         "contactUs": "Contact Us",
         "logout": "Logout",
@@ -157,31 +156,14 @@ const resources = {
         "download": "Download",
         "delete": "Delete"
       },
-       "videoStudio": {
-        "generating": {
-          "video": "Generating video scenes...",
-          "audio": "Creating audio tracks...",
-          "final": "Finalizing your video..."
-        }
-      },
-      "videoArStudio": {
-        "title": "Video AR Studio",
-        "promptPlaceholder": "e.g., add sunglasses, turn my hair blue, make it snow",
-        "generateButton": "Apply Effect",
-        "clearButton": "Clear",
-        "pauseFeed": "Pause",
-        "resumeFeed": "Resume",
-        "recenterEffect": "Recenter",
-        "snapshotButton": "Snapshot",
-        "errorCamera": "Could not access camera. Please check your browser permissions."
-      },
       "examplesStudio": {
           "title": "Prompt Examples",
           "description": "Not sure what to ask? Get inspired by these examples. Click 'Try it' to start a chat with that prompt.",
           "tabs": {
               "hustle": "Hustle",
               "learn": "Learn",
-              "image": "Image"
+              "image": "Image",
+              "story": "Story"
           },
           "hustlePrompts": [
               "Give me 5 side hustle ideas I can start with ₦20,000 in Nigeria.",
@@ -200,6 +182,12 @@ const resources = {
               "A photorealistic image of a futuristic matatu flying over Nairobi.",
               "A logo for a coffee shop called 'Addis Sunrise', with Ethiopian cultural elements.",
               "A beautiful woman wearing traditional Yoruba Aso-Oke, standing in a field of sunflowers."
+          ],
+          "storyPrompts": [
+              "Tell a short story about Anansi the Spider tricking a lion.",
+              "Create a bedtime story about a magical baobab tree in the Serengeti.",
+              "Write a modern fable set in Lagos about the importance of kindness.",
+              "A story about a young girl in rural Ethiopia who discovers a hidden waterfall."
           ]
       },
        // ... other translations

@@ -25,16 +25,16 @@ const App: React.FC = () => {
   if (!isSupabaseConfigured) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: 'white', backgroundColor: '#111827', height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', fontFamily: 'Inter, sans-serif' }}>
-        <h1 style={{ fontSize: '2rem', marginBottom: '1rem', color: '#f87171' }}>⚙️ Configuration Needed</h1>
-        <p style={{ color: '#d1d5db' }}>Authentication is not configured. To fix this:</p>
-        <div style={{ backgroundColor: '#1f2937', padding: '1.5rem', borderRadius: '0.5rem', marginTop: '1.5rem', border: '1px solid #374151' }}>
-            <ol style={{ textAlign: 'left', margin: '0', paddingLeft: '1.5rem', display: 'inline-block', listStyle: 'decimal' }}>
-                <li style={{ marginBottom: '0.75rem' }}>Open the file: <code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>services/supabase.ts</code></li>
-                <li style={{ marginBottom: '0.75rem' }}>Replace <code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>'YOUR_SUPABASE_URL_HERE'</code> with your actual Supabase URL.</li>
-                <li>Replace <code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>'YOUR_SUPABASE_ANON_KEY_HERE'</code> with your actual Supabase 'anon' key.</li>
-            </ol>
+        <h1 style={{ fontSize: '2rem', marginBottom: '1rem', color: '#f87171' }}>⚙️ Configuration Error</h1>
+        <p style={{ color: '#d1d5db' }}>The application is missing its database credentials.</p>
+        <div style={{ backgroundColor: '#1f2937', padding: '1.5rem', borderRadius: '0.5rem', marginTop: '1.5rem', border: '1px solid #374151', textAlign: 'left' }}>
+            <p className="font-semibold text-white">To fix this, please set the following environment variables in your deployment platform (e.g., Vercel, AI Studio):</p>
+            <ul style={{ listStyle: 'disc', paddingLeft: '1.5rem', marginTop: '1rem' }}>
+                <li style={{ marginBottom: '0.75rem' }}><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>SUPABASE_URL</code> or <code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>VITE_SUPABASE_URL</code></li>
+                <li><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>SUPABASE_ANON_KEY</code> or <code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>VITE_SUPABASE_ANON_KEY</code></li>
+            </ul>
         </div>
-        <p style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: '1.5rem' }}>You can find these keys in your Supabase project dashboard under 'Settings' > 'API'.</p>
+        <p style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: '1.5rem' }}>You can find these in your Supabase project dashboard under 'Settings' > 'API'.</p>
       </div>
     );
   }

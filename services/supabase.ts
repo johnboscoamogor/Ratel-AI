@@ -1,18 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 import { MarketItem, MarketPayment, MobileWorker, UserProfile } from '../types';
 
-// --- IMPORTANT: CONFIGURE YOUR SUPABASE CREDENTIALS HERE ---
-// To fix the "Supabase is not configured" error, you must replace the
-// placeholder values below with your actual Supabase credentials.
-// You can find these in your Supabase project dashboard under:
-// Settings > API > Project URL & Project API Keys (use the 'anon' key).
-
+// This robust check works for both Vercel (import.meta.env) and local AI Studio (process.env).
 const supabaseUrl = 'https://hmilzanpttpczbeezdwe.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhtaWx6YW5wdHRwY3piZWV6ZHdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMzg2NzMsImV4cCI6MjA3NTgxNDY3M30.V7NpiSzi5GU9_ywL1BIKNuEL2hiA0slSdRmx5EngQcQ';
 
 
-// This check determines if the credentials have been correctly configured.
-export const isSupabaseConfigured = supabaseUrl && supabaseAnonKey && !supabaseUrl.includes('YOUR_SUPABASE_URL');
+// This check determines if the credentials have been correctly configured from any environment source.
+export const isSupabaseConfigured = supabaseUrl && supabaseAnonKey;
 
 // A profile type that matches the new database table structure
 type Profile = Omit<UserProfile, 'email'> & { id: string };
@@ -28,8 +23,8 @@ if (isSupabaseConfigured) {
         profiles: Profile;
     }>(supabaseUrl, supabaseAnonKey);
 } else {
-    // Log a prominent warning to the developer console if credentials are not set.
-    console.error("Supabase is not configured. Please update your URL and Key in 'services/supabase.ts'.");
+    // This error will be caught by App.tsx and a user-friendly guide will be displayed.
+    console.error("Supabase credentials are not configured. Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.");
 }
 
 // Export the client instance (which can be null if not configured).

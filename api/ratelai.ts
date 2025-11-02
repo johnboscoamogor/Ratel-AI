@@ -43,153 +43,6 @@ async function handleGeminiChat(req: VercelRequest, res: VercelResponse) {
     res.end();
 }
 
-// --- AR EFFECT HANDLER ---
-async function handleArEffect(req: VercelRequest, res: VercelResponse) {
-    const { frame, prompt } = req.body;
-    if (!frame || !prompt) {
-        return res.status(400).json({ error: "Frame and prompt are required." });
-    }
-
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: { parts: [ { inlineData: { data: frame.data, mimeType: frame.mimeType } }, { text: prompt } ] },
-        config: { responseModalities: [Modality.IMAGE] },
-    });
-    
-    if (response.promptFeedback?.blockReason) {
-        throw new Error(`Request blocked due to ${response.promptFeedback.blockReason}. Please modify your prompt.`);
-    }
-
-    const imagePart = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
-
-    if (imagePart?.inlineData) {
-        res.status(200).json({ data: imagePart.inlineData.data, mimeType: imagePart.inlineData.mimeType });
-    } else {
-         const textPart = response.candidates?.[0]?.content?.parts.find(p => p.text);
-         if (textPart?.text) throw new Error(`AI response: ${textPart.text}`);
-        throw new Error("The AI did not return an image. Please try rephrasing your prompt.");
-    }
-}
-
-// --- STORYTELLER HANDLER ---
-async function handleStoryGenerate(req: VercelRequest, res: VercelResponse) {
-    const { prompt, language = 'en' } = req.body;
-    if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
-
-    const script = await ai.models.generateContent({
-        model: 'gemini-flash-lite-latest',
-        contents: `
-            You are a master African storyteller. Create a short, engaging children's story based on the following prompt. The story should have a clear moral or lesson.
-            The story MUST be structured as a JSON object with "title", "scenes" (an array of 3 objects with "scene_index", "narration_text", "visual_prompt"), and "lesson".
-            The language of the entire JSON output MUST be in ${language}.
-            User Prompt: "${prompt}"`,
-        config: {
-            responseMimeType: 'application/json',
-            responseSchema: {
-                type: Type.OBJECT,
-                properties: {
-                    title: { type: Type.STRING },
-                    scenes: {
-                        type: Type.ARRAY,
-                        items: {
-                            type: Type.OBJECT,
-                            properties: {
-                                scene_index: { type: Type.NUMBER },
-                                narration_text: { type: Type.STRING },
-                                visual_prompt: { type: Type.STRING },
-                            },
-                        }
-                    },
-                    lesson: { type: Type.STRING },
-                },
-            }
-        },
-    });
-    const scriptData = JSON.parse(script.text);
-
-    const fullNarration = scriptData.scenes.map((s: any) => s.narration_text).join(' ');
-    const audioResponse = await ai.models.generateContent({
-        model: "gemini-2.5-flash-preview-tts",
-        contents: [{ parts: [{ text: fullNarration }] }],
-        config: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } } },
-    });
-    const audioBase64 = audioResponse.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-
-    const placeholderVideos = [
-        'https://videos.pexels.com/video-files/3209828/3209828-hd_1280_720_25fps.mp4',
-        'https://videos.pexels.com/video-files/853878/853878-hd_1280_720_30fps.mp4',
-        'https://videos.pexels.com/video-files/2099395/2099395-hd_1280_720_25fps.mp4'
-    ];
-    const sceneVideoUrls = await Promise.all(
-        scriptData.scenes.map(async (_: any) => {
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
-            return placeholderVideos[Math.floor(Math.random() * placeholderVideos.length)];
-        })
-    );
-
-    res.status(200).json({
-        id: crypto.randomUUID(),
-        ...scriptData,
-        sceneVideoUrls,
-        audioBase64,
-    });
-}
-
-// --- VEO VIDEO GENERATION HANDLER ---
-async function handleVeoGenerate(req: VercelRequest, res: VercelResponse) {
-    const {
-        model,
-        prompt,
-        resolution,
-        aspectRatio,
-        startFrame, // Expects { base64: string, mimeType: string }
-        endFrame,
-        inputVideoObject,
-    } = req.body;
-
-    const config: any = {
-        numberOfVideos: 1,
-        resolution,
-        aspectRatio,
-    };
-    
-    const payload: any = { model, prompt, config };
-
-    if (startFrame) {
-        payload.image = { imageBytes: startFrame.base64, mimeType: startFrame.mimeType };
-    }
-    if (endFrame) {
-        config.lastFrame = { imageBytes: endFrame.base64, mimeType: endFrame.mimeType };
-    }
-    if (inputVideoObject) {
-        payload.video = inputVideoObject;
-    }
-    
-    let operation = await ai.models.generateVideos(payload);
-
-    while (!operation.done) {
-        // Poll every 10 seconds. Note: Vercel functions have timeouts.
-        await new Promise(resolve => setTimeout(resolve, 10000));
-        operation = await ai.operations.getVideosOperation({ operation });
-    }
-
-    const generatedVideo = operation.response?.generatedVideos?.[0];
-    if (!generatedVideo?.video?.uri) {
-        if (operation.error) {
-            console.error("Veo generation error:", operation.error);
-            throw new Error(operation.error.message || "Video generation failed in operation.");
-        }
-        throw new Error("Video generation did not return a valid video URI.");
-    }
-    
-    const downloadLink = generatedVideo.video.uri;
-    // The key is appended on the client-side for security, but we'll prepare the URL here.
-    const objectUrl = `${downloadLink}&key=${API_KEY}`;
-    
-    res.status(200).json({ objectUrl, generatedVideo });
-}
-
-
 // --- TTS HANDLER ---
 async function handleTtsGenerate(req: VercelRequest, res: VercelResponse) {
     const { text, voiceId } = req.body;
@@ -210,36 +63,6 @@ async function handleTtsGenerate(req: VercelRequest, res: VercelResponse) {
     const audioBase64 = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
     if (!audioBase64) throw new Error("TTS response did not contain audio data.");
     res.status(200).json({ audioBase64 });
-}
-
-// --- AVATAR HANDLER ---
-async function handleAvatarGenerate(req: VercelRequest, res: VercelResponse) {
-    const { imageBase64, mimeType, stylePrompt, script, voiceId, audioBase64: importedAudioBase64 } = req.body;
-    if (!imageBase64 || !stylePrompt || (!script && !importedAudioBase64)) {
-        return res.status(400).json({ error: 'Missing required parameters.' });
-    }
-
-    const videoGenPrompt = `Create a short, 4-second video animating the character in the provided image. Style: '${stylePrompt}'. The character should appear to be speaking, with natural, subtle head movements and expressions.`;
-    const videoPromise = ai.models.generateVideos({
-        model: 'veo-3.1-fast-generate-preview',
-        prompt: videoGenPrompt,
-        image: { imageBytes: imageBase64, mimeType },
-        config: { numberOfVideos: 1, aspectRatio: '1:1', resolution: '720p' }
-    });
-    
-    const audioPromise = script ? handleTtsGenerate({ body: { text: script, voiceId } } as any, res) : Promise.resolve(importedAudioBase64);
-    
-    let [videoOperation, finalAudioBase64] = await Promise.all([videoPromise, audioPromise]);
-
-    while (!videoOperation.done) {
-        await new Promise(resolve => setTimeout(resolve, 10000));
-        videoOperation = await ai.operations.getVideosOperation({ operation: videoOperation });
-    }
-    
-    const downloadLink = videoOperation.response?.generatedVideos?.[0]?.video?.uri;
-    if (!downloadLink) throw new Error("Video generation succeeded but no download link was returned.");
-    
-    res.status(200).json({ videoUrl: `${downloadLink}&key=${API_KEY}`, audioBase64: finalAudioBase64 });
 }
 
 // --- TELEGRAM WEBHOOK HANDLER ---
@@ -329,14 +152,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 const result = await chat.sendMessage({ message: searchTerm });
                 const fc = result.functionCalls?.[0];
                 return res.status(200).json({ args: (fc && fc.name === 'findWorkers') ? fc.args : null });
-            case 'ar_effect': return await handleArEffect(req, res);
-            case 'story_generate': return await handleStoryGenerate(req, res);
             case 'tts_generate': return await handleTtsGenerate(req, res);
-            case 'avatar_generate': return await handleAvatarGenerate(req, res);
-            case 'veo_generate': return await handleVeoGenerate(req, res);
-            case 'generate_video_placeholder':
-                await new Promise(resolve => setTimeout(resolve, 3000));
-                return res.status(200).json({ videoUrl: 'https://videos.pexels.com/video-files/3209828/3209828-hd_1280_720_25fps.mp4' });
             default:
                 return res.status(400).json({ error: `Invalid action specified: ${action}` });
         }

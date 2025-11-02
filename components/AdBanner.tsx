@@ -4,7 +4,10 @@ const AdBanner: React.FC = () => {
     const adRef = useRef<HTMLModElement>(null);
     const [adInitialized, setAdInitialized] = useState(false);
     
-    // IMPORTANT: Replace these with your actual AdSense client and slot IDs.
+    // =================================================================================
+    // IMPORTANT: Replace these placeholder values with your actual Google AdSense IDs.
+    // You can get these from your AdSense account dashboard.
+    // =================================================================================
     const AD_CLIENT = 'ca-pub-XXXXXXXXXXXXXXXX';
     const AD_SLOT = 'YYYYYYYYYY';
 
