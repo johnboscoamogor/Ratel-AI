@@ -50,7 +50,7 @@ export const generateVideo = async (params: GenerateVideoParams): Promise<{ obje
     }
     
     const downloadLink = generatedVideo.video.uri;
-    // The API key is injected by the environment and is appended for accessing the video URL.
+    // The API key is injected by the platform's environment and is appended for accessing the video URL.
     const objectUrl = `${downloadLink}&key=${process.env.API_KEY}`;
     
     return { objectUrl, generatedVideo };

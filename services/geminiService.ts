@@ -1,61 +1,18 @@
-// This file is now a client for our own backend API routes,
-// which securely handle the Gemini API key on the server.
-// FIX: Import GoogleGenAI and export an `ai` instance for direct client-side usage.
 import { GoogleGenAI, GenerateContentResponse, Modality } from '@google/genai';
 import { taskTools } from '../constants';
 
-// The API key is injected by the environment and is assumed to be available.
+// The API key is injected by the platform's environment and is assumed to be available.
 const API_KEY = process.env.API_KEY;
 
+if (!API_KEY) {
+    console.error("API_KEY is not set. Please contact the administrator for AI features to work.");
+    // We throw an error to make it clear during development/deployment that the key is missing.
+    throw new Error("An API Key must be set when running in a browser.");
+}
 
 // This instance is for direct client-side calls as used in ChatView.tsx
-// The API key is expected to be available in the client environment.
-export const ai = new GoogleGenAI({ apiKey: API_KEY! });
+export const ai = new GoogleGenAI({ apiKey: API_KEY });
 
-/**
- * Sends a chat message to the backend for processing.
- * Handles streaming responses by returning the reader of the response body.
- */
-export async function streamChat(
-    history: any[],
-    message: string,
-    image: { data: string, mimeType: string } | undefined,
-    systemInstruction: string,
-): Promise<ReadableStreamDefaultReader<Uint8Array>> {
-    const response = await fetch('/api/ratelai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'chat', history, message, image, systemInstruction }),
-    });
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to start chat stream.");
-    }
-
-    if (!response.body) {
-        throw new Error("Response has no body");
-    }
-
-    return response.body.getReader();
-}
-
-/**
- * Generates a title for a chat by calling the backend.
- */
-export async function generateTitle(prompt: string): Promise<string> {
-     const response = await fetch('/api/ratelai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'generate_text', prompt }),
-    });
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to generate title");
-    }
-    const data = await response.json();
-    return data.text;
-}
 
 /**
  * Generates an image by calling the backend.
