@@ -13,6 +13,7 @@ import { playSound } from './services/audioService';
 import { supabase, isSupabaseConfigured } from './services/supabase';
 // FIX: Import the RatelLogo component to resolve the 'Cannot find name' error.
 import { RatelLogo } from './constants';
+import { Session } from '@supabase/supabase-js';
 
 const App: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -33,7 +34,7 @@ const App: React.FC = () => {
                 <li>Replace <code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>'YOUR_SUPABASE_ANON_KEY_HERE'</code> with your actual Supabase 'anon' key.</li>
             </ol>
         </div>
-        <p style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: '1.5rem' }}>You can find these keys in your Supabase project dashboard under 'Settings' &gt; 'API'.</p>
+        <p style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: '1.5rem' }}>You can find these keys in your Supabase project dashboard under 'Settings' > 'API'.</p>
       </div>
     );
   }
@@ -70,55 +71,62 @@ const App: React.FC = () => {
         return;
     }
 
-    // Set up the authentication state change listener.
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-        try {
-            // If a session exists, it means the user is logged in.
-            if (session?.user) {
-                // Fetch the user's profile from the 'profiles' table.
-                const { data: profile, error } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
+    let isMounted = true;
 
-                // If a profile is found and there's no error, update the app state.
-                if (profile && !error) {
-                    const completeProfile: UserProfile = {
-                        ...profile,
-                        email: session.user.email!,
-                        communityPoints: profile.communityPoints || 0,
-                        totalRedeemed: profile.totalRedeemed || 0,
-                    };
-                    setUserProfile(completeProfile);
-                    setPage('chat'); // Navigate to the chat view.
-                } else {
-                    // If no profile is found or there's an error, treat as logged out.
-                    if (error) {
-                        console.error('Error fetching profile:', error.message);
-                    }
-                    setUserProfile(null);
-                    setPage('landing');
-                }
+    const updateUserSession = async (session: Session | null) => {
+        if (!isMounted) return;
+
+        if (session?.user) {
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+            
+            if (profile && !error) {
+                const completeProfile: UserProfile = {
+                    ...profile,
+                    email: session.user.email!,
+                    communityPoints: profile.communityPoints || 0,
+                    totalRedeemed: profile.totalRedeemed || 0,
+                };
+                setUserProfile(completeProfile);
+                setPage('chat');
             } else {
-                // If there is no session, the user is logged out.
                 setUserProfile(null);
                 setPage('landing');
+                if (error) console.error('Error fetching profile:', error.message);
             }
-        } catch (e) {
-            // Catch any unexpected errors during the process.
-            console.error("An unexpected error occurred during auth state change:", e);
+        } else {
             setUserProfile(null);
             setPage('landing');
-        } finally {
-            // IMPORTANT: Always set loading to false after the initial check is complete.
-            // This ensures the app doesn't get stuck on the loading screen.
+        }
+    };
+    
+    // First, check the current session to unblock the UI quickly.
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+        await updateUserSession(session);
+        if (isMounted) {
+            setLoadingSession(false);
+        }
+    }).catch(err => {
+        console.error("Error getting initial session:", err);
+        if (isMounted) {
             setLoadingSession(false);
         }
     });
 
+
+    // Then, listen for subsequent authentication state changes.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        await updateUserSession(session);
+    });
+
     // Clean up the subscription when the component unmounts.
-    return () => subscription.unsubscribe();
+    return () => {
+        isMounted = false;
+        subscription.unsubscribe();
+    };
   }, []);
 
 
