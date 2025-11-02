@@ -1,13 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 import { MarketItem, MarketPayment, MobileWorker, UserProfile } from '../types';
 
-// This robust check works for both Vercel (import.meta.env) and local AI Studio (process.env).
-const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+// --- IMPORTANT: CONFIGURE YOUR SUPABASE CREDENTIALS HERE ---
+// To fix the "Supabase is not configured" error, you must replace the
+// placeholder values below with your actual Supabase credentials.
+// You can find these in your Supabase project dashboard under:
+// Settings > API > Project URL & Project API Keys (use the 'anon' key).
+
+const supabaseUrl = 'https://hmilzanpttpczbeezdwe.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhtaWx6YW5wdHRwY3piZWV6ZHdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMzg2NzMsImV4cCI6MjA3NTgxNDY3M30.V7NpiSzi5GU9_ywL1BIKNuEL2hiA0slSdRmx5EngQcQ';
 
 
-// This check determines if the credentials are valid.
-export const isSupabaseConfigured = supabaseUrl && supabaseAnonKey;
+// This check determines if the credentials have been correctly configured.
+export const isSupabaseConfigured = supabaseUrl && supabaseAnonKey && !supabaseUrl.includes('YOUR_SUPABASE_URL');
 
 // A profile type that matches the new database table structure
 type Profile = Omit<UserProfile, 'email'> & { id: string };
@@ -24,7 +29,7 @@ if (isSupabaseConfigured) {
     }>(supabaseUrl, supabaseAnonKey);
 } else {
     // Log a prominent warning to the developer console if credentials are not set.
-    console.error("Supabase is not configured. Authentication will not work.");
+    console.error("Supabase is not configured. Please update your URL and Key in 'services/supabase.ts'.");
 }
 
 // Export the client instance (which can be null if not configured).

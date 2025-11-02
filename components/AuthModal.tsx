@@ -29,10 +29,17 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
     if (!isSupabaseConfigured || !supabase) {
         return (
              <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-                <div className="bg-gray-800 rounded-xl p-8 text-center text-white border border-red-500">
-                    <h2 className="text-xl font-bold mb-4">Configuration Error</h2>
-                    <p>Authentication is not configured. Please contact the administrator.</p>
-                     <button onClick={onClose} className="mt-6 btn-primary">Close</button>
+                <div className="bg-gray-800 rounded-xl p-8 text-center text-white border border-red-500 max-w-lg">
+                    <h2 className="text-xl font-bold mb-4">⚙️ Configuration Needed</h2>
+                    <p>Authentication is not configured. To fix this:</p>
+                    <div className="bg-gray-900/50 p-4 rounded-md my-4 border border-gray-700">
+                        <ol className="text-left inline-block list-decimal list-inside text-sm">
+                            <li className="mb-2">Open the file: <code className="bg-gray-600 px-1 py-0.5 rounded">services/supabase.ts</code></li>
+                            <li className="mb-2">Replace <code className="bg-gray-600 px-1 py-0.5 rounded">'YOUR_SUPABASE_URL_HERE'</code> with your URL.</li>
+                            <li>Replace <code className="bg-gray-600 px-1 py-0.5 rounded">'YOUR_SUPABASE_ANON_KEY_HERE'</code> with your anon key.</li>
+                        </ol>
+                    </div>
+                     <button onClick={onClose} className="mt-4 btn-primary">Close</button>
                 </div>
             </div>
         )

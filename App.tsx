@@ -20,6 +20,24 @@ const App: React.FC = () => {
   const [page, setPage] = useState<'landing' | 'chat' | 'settings' | 'contact' | 'community' | 'admin' | 'examples'>('landing');
   const [loadingSession, setLoadingSession] = useState(true);
 
+  // If Supabase is not configured, display a clear error message and stop.
+  if (!isSupabaseConfigured) {
+    return (
+      <div style={{ padding: '2rem', textAlign: 'center', color: 'white', backgroundColor: '#111827', height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', fontFamily: 'Inter, sans-serif' }}>
+        <h1 style={{ fontSize: '2rem', marginBottom: '1rem', color: '#f87171' }}>⚙️ Configuration Needed</h1>
+        <p style={{ color: '#d1d5db' }}>Authentication is not configured. To fix this:</p>
+        <div style={{ backgroundColor: '#1f2937', padding: '1.5rem', borderRadius: '0.5rem', marginTop: '1.5rem', border: '1px solid #374151' }}>
+            <ol style={{ textAlign: 'left', margin: '0', paddingLeft: '1.5rem', display: 'inline-block', listStyle: 'decimal' }}>
+                <li style={{ marginBottom: '0.75rem' }}>Open the file: <code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>services/supabase.ts</code></li>
+                <li style={{ marginBottom: '0.75rem' }}>Replace <code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>'YOUR_SUPABASE_URL_HERE'</code> with your actual Supabase URL.</li>
+                <li>Replace <code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>'YOUR_SUPABASE_ANON_KEY_HERE'</code> with your actual Supabase 'anon' key.</li>
+            </ol>
+        </div>
+        <p style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: '1.5rem' }}>You can find these keys in your Supabase project dashboard under 'Settings' &gt; 'API'.</p>
+      </div>
+    );
+  }
+
   const defaultSettings: AppSettings = {
     language: 'en',
     chatTone: 'normal',
@@ -46,8 +64,7 @@ const App: React.FC = () => {
 
   // Manage user session with Supabase
   useEffect(() => {
-    if (!isSupabaseConfigured || !supabase) {
-        console.error("Supabase is not configured. Authentication will not work.");
+    if (!supabase) {
         setLoadingSession(false);
         setPage('landing');
         return;
