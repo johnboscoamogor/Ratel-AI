@@ -560,7 +560,7 @@ i18n
   .init({
     resources,
     fallbackLng: 'en',
-    debug: process.env.NODE_ENV === 'development',
+    debug: (import.meta as any).env?.DEV || (typeof process !== 'undefined' && process.env.NODE_ENV === 'development'),
     interpolation: {
       escapeValue: false, // React already does escaping
     },

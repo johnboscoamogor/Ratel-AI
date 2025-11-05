@@ -397,6 +397,7 @@ const ChatView: React.FC<ChatViewProps> = ({
       setter(true);
   }
 
+
   return (
     <div className="relative h-screen w-screen bg-gray-800">
         {settings.appearance.backgroundImage && (

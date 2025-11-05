@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import { MarketItem, MarketPayment, MobileWorker, UserProfile } from '../types';
 
-// FIX: Hardcoded credentials were missing quotes, causing a syntax error.
-// They are now correctly formatted as strings.
-const supabaseUrl = 'https://hmilzanpttpczbeezdwe.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhtaWx6YW5wdHRwY3piZWV6ZHdlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAyMzg2NzMsImV4cCI6MjA3NTgxNDY3M30.V7NpiSzi5GU9_ywL1BIKNuEL2hiA0slSdRmx5EngQcQ';
+// This check is now simplified to ONLY use the Vite/Vercel standard method.
+// If this fails, the issue is 100% in the Vercel project's configuration or deployment status.
+const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL;
+const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
 
 
 // This check determines if the credentials have been correctly configured from any environment source.
@@ -22,10 +22,11 @@ if (isSupabaseConfigured) {
         market_payments: MarketPayment;
         mobile_workers: MobileWorker;
         profiles: Profile;
-    }>(supabaseUrl, supabaseAnonKey);
+    }>(supabaseUrl!, supabaseAnonKey!);
 } else {
-    // This error will be caught by App.tsx and a user-friendly guide will be displayed.
-    console.error("Supabase credentials are not configured. Please set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.");
+    // This console error will be shown in the browser's dev tools.
+    // The user-facing guide is displayed in App.tsx.
+    console.error("Supabase credentials are not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.");
 }
 
 // Export the client instance (which can be null if not configured).

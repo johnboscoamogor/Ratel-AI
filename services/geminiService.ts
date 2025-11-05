@@ -2,7 +2,7 @@ import { GoogleGenAI, GenerateContentResponse, Modality } from '@google/genai';
 import { taskTools } from '../constants';
 
 // This robust check works for both Vercel (import.meta.env) and local AI Studio (process.env).
-const API_KEY = (import.meta as any).env?.VITE_API_KEY || process.env.API_KEY;
+const API_KEY = (import.meta as any).env?.VITE_API_KEY || (typeof process !== 'undefined' && process.env.API_KEY);
 
 if (!API_KEY) {
     // This error will be thrown if the environment variable is not set by the platform.

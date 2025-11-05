@@ -100,9 +100,9 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, isTrans
     }
   }, [imagePreview]);
 
-  const handleSendMessage = useCallback(async () => {
-    const trimmedInput = input.trim();
-    if ((!trimmedInput && !imageFile)) return;
+  const handleSendMessage = useCallback(async (message: string) => {
+    const trimmedInput = message.trim();
+    if (!trimmedInput && !imageFile) return;
 
     playSound('click');
 
@@ -120,7 +120,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, isTrans
 
     setInput('');
     handleRemoveImage();
-  }, [input, imageFile, onSendMessage, handleRemoveImage]);
+  }, [imageFile, onSendMessage, handleRemoveImage]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -165,7 +165,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, isTrans
         .join('');
       setInput(transcript);
       if (event.results[event.results.length - 1].isFinal) {
-        handleSendMessage();
+        handleSendMessage(transcript);
       }
     };
     recognitionRef.current = recognition;
@@ -185,7 +185,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, isTrans
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      handleSendMessage(input);
     }
   };
 
@@ -256,7 +256,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSendMessage, isLoading, isTrans
                 <MicrophoneIcon className="w-6 h-6" />
             </button>
             <button
-                onClick={handleSendMessage}
+                onClick={() => handleSendMessage(input)}
                 disabled={(!input.trim() && !imageFile) || isLoading}
                 className="p-3 bg-green-600 text-white rounded-full disabled:bg-green-800 disabled:cursor-not-allowed hover:bg-green-700 transition-colors focus:outline-none"
                 aria-label={t('chatInput.sendMessage')}
