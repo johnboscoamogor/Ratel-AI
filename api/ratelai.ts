@@ -3,11 +3,11 @@ import { GoogleGenAI, Type, Modality, VideoGenerationReferenceImage, VideoGenera
 import { taskTools } from '../constants';
 
 // --- UNIVERSAL CONFIGURATION ---
-// These names must match the names in your Vercel Project Environment Variables.
-const API_KEY = process.env.API_KEY; // Gemini API Key
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN; // For Telegram bot integration
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+// Standard server-side environment variables for AI Studio and Vercel backends.
+const API_KEY = process.env.API_KEY;
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
 
 if (!API_KEY) {

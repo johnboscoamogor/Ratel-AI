@@ -108,6 +108,7 @@ export const getAvailableVoices = (): VoiceOption[] => {
  * @returns A Promise that resolves to an audio Blob.
  */
 export const generateAudioBlob = async (text: string, voiceId: string): Promise<Blob> => {
+    if (!ai) throw new Error("Gemini API is not configured. Please set API_KEY or VITE_API_KEY in your environment variables.");
     try {
         const voiceName = ({
             'en-NG-Standard-A': 'Kore', 'en-NG-Standard-B': 'Charon', 'en-US-Wavenet-A': 'Puck',

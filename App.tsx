@@ -11,7 +11,7 @@ import AdminDashboard from './components/AdminDashboard';
 import { UserProfile, AppSettings, RatelMode, Task } from './types';
 import { playSound } from './services/audioService';
 import { supabase, isSupabaseConfigured } from './services/supabase';
-// FIX: Import the RatelLogo component to resolve the 'Cannot find name' error.
+import { isGeminiConfigured } from './services/geminiService';
 import { RatelLogo } from './constants';
 import { Session } from '@supabase/supabase-js';
 
@@ -156,45 +156,59 @@ const App: React.FC = () => {
   }, []);
 
   // Now that hooks are defined, we can handle the configuration error.
-  if (!isSupabaseConfigured) {
-    // Get debug values from the Vercel environment source.
-    const debugUrlVite = (import.meta as any).env?.VITE_SUPABASE_URL;
-    const debugKeyVite = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
+  if (!isSupabaseConfigured || !isGeminiConfigured) {
+    // --- Vercel / Vite Values ---
+    const urlVite = (import.meta as any).env?.VITE_SUPABASE_URL;
+    const keyVite = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
+    const geminiVite = (import.meta as any).env?.VITE_API_KEY;
+
+    // --- AI Studio / Node Values ---
+    const urlNode = typeof process !== 'undefined' ? process.env.SUPABASE_URL : undefined;
+    const keyNode = typeof process !== 'undefined' ? process.env.SUPABASE_ANON_KEY : undefined;
+    const geminiNode = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
     
+    const Status: React.FC<{found: boolean}> = ({ found }) => (
+      found 
+        ? <span style={{color: '#22c55e', fontWeight: 'bold'}}>✅ Found</span> 
+        : <span style={{color: '#f87171', fontWeight: 'bold'}}>❌ Not Found</span>
+    );
+
     return (
-      <div style={{ padding: '2rem', textAlign: 'center', color: 'white', backgroundColor: '#111827', height: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', fontFamily: 'Inter, sans-serif' }}>
+      <div style={{ padding: '2rem', textAlign: 'center', color: 'white', backgroundColor: '#111827', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', fontFamily: 'Inter, sans-serif' }}>
         <h1 style={{ fontSize: '2rem', marginBottom: '1rem', color: '#f87171' }}>⚙️ Configuration Error</h1>
-        <p style={{ color: '#d1d5db' }}>The application is missing its database credentials.</p>
+        <p style={{ color: '#d1d5db' }}>The application is missing one or more required credentials.</p>
         
          <div style={{ backgroundColor: '#1f2937', padding: '1.5rem', borderRadius: '0.5rem', marginTop: '1.5rem', border: '1px solid #374151', textAlign: 'left', maxWidth: '600px', width: '90%' }}>
-             <p className="font-semibold text-white">To fix this, please set the following environment variables in your Vercel project settings:</p>
-             <ul style={{ listStyle: 'disc', paddingLeft: '1.5rem', marginTop: '1rem' }}>
+             <p className="font-semibold text-white">To fix this, please set the following environment variables in your deployment platform (e.g., Vercel, AI Studio):</p>
+             <ul style={{ listStyle: 'disc', paddingLeft: '1.5rem', marginTop: '1rem', color: '#d1d5db' }}>
                  <li style={{ marginBottom: '0.75rem' }}><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>VITE_SUPABASE_URL</code></li>
-                 <li><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>VITE_SUPABASE_ANON_KEY</code></li>
+                 <li style={{ marginBottom: '0.75rem' }}><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>VITE_SUPABASE_ANON_KEY</code></li>
+                 <li><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>VITE_API_KEY</code> (for Gemini)</li>
              </ul>
+              <p className="text-xs text-gray-400 mt-4">Note: In some environments (like AI Studio), you might need to use non-prefixed names like <code style={{ backgroundColor: '#4b5563', padding: '0.1rem 0.3rem', borderRadius: '0.25rem' }}>SUPABASE_URL</code> and <code style={{ backgroundColor: '#4b5563', padding: '0.1rem 0.3rem', borderRadius: '0.25rem' }}>API_KEY</code>.</p>
          </div>
+
+        <div style={{ backgroundColor: '#1f2937', padding: '1rem 1.5rem', borderRadius: '0.5rem', marginTop: '1rem', border: '1px solid #f87171', textAlign: 'center', maxWidth: '600px', width: '90%' }}>
+            <p style={{ color: 'white', fontWeight: 'bold' }}>Important: After setting variables in Vercel, you MUST re-deploy your project for changes to take effect.</p>
+        </div>
 
         {/* ENHANCED DEBUG BOX */}
         <div style={{ backgroundColor: '#374151', padding: '1rem', borderRadius: '0.5rem', marginTop: '1.5rem', border: '1px solid #4b5563', textAlign: 'left', maxWidth: '600px', width: '90%', fontFamily: 'monospace', fontSize: '0.8rem' }}>
-            <p style={{ color: '#d1d5db', marginBottom: '1rem', fontWeight: 'bold' }}>Debugging Info:</p>
-            <div>
-                <p style={{ color: '#9ca3af', fontSize: '0.7rem' }}>Attempting to read from Vercel/Vite method (`import.meta.env`):</p>
-                <p style={{ color: 'white' }}>
-                  VITE_SUPABASE_URL: {debugUrlVite ? <span style={{color: '#22c55e'}}>"Found"</span> : <span style={{color: '#f87171'}}>"Not Found"</span>}
-                </p>
-                <p style={{ color: 'white' }}>
-                  VITE_SUPABASE_ANON_KEY: {debugKeyVite ? <span style={{color: '#22c55e'}}>"Found"</span> : <span style={{color: '#f87171'}}>"Not Found"</span>}
-                </p>
+            <p style={{ color: '#d1d5db', marginBottom: '1rem', fontWeight: 'bold' }}>Debugging Info (Values seen by the app):</p>
+            <div style={{ marginBottom: '1rem', borderBottom: '1px solid #4b5563', paddingBottom: '1rem' }}>
+                <p style={{ color: '#9ca3af', fontSize: '0.7rem', textDecoration: 'underline' }}>Vercel / Browser Method:</p>
+                <p style={{ color: 'white' }}>VITE_SUPABASE_URL: <Status found={!!urlVite} /></p>
+                <p style={{ color: 'white' }}>VITE_SUPABASE_ANON_KEY: <Status found={!!keyVite} /></p>
+                <p style={{ color: 'white' }}>VITE_API_KEY: <Status found={!!geminiVite} /></p>
             </div>
-            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #4b5563', backgroundColor: '#fefce8', color: '#a16207', padding: '0.75rem', borderRadius: '0.25rem', border: '1px solid #fde047'}}>
-                <p style={{ fontWeight: 'bold', fontSize: '0.85rem' }}>👉 IMPORTANT</p>
-                <p style={{ marginTop: '0.25rem', fontSize: '0.75rem' }}>
-                    After adding or changing environment variables in Vercel, you <strong style={{ textDecoration: 'underline' }}>MUST RE-DEPLOY</strong> your project for the changes to take effect.
-                </p>
+             <div>
+                <p style={{ color: '#9ca3af', fontSize: '0.7rem', textDecoration: 'underline' }}>AI Studio / Server Method:</p>
+                <p style={{ color: 'white' }}>SUPABASE_URL: <Status found={!!urlNode} /></p>
+                <p style={{ color: 'white' }}>SUPABASE_ANON_KEY: <Status found={!!keyNode} /></p>
+                <p style={{ color: 'white' }}>API_KEY: <Status found={!!geminiNode} /></p>
             </div>
         </div>
-
-        <p style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: '1.5rem' }}>You can find these in your Supabase project dashboard under 'Settings' &gt; 'API'.</p>
+        <p style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: '1.5rem' }}>You can find your Supabase keys in your project dashboard under 'Settings' &gt; 'API'.</p>
       </div>
     );
   }
