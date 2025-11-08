@@ -6,7 +6,7 @@ import { ChatSession, UserProfile, AppSettings, ChatMessage, MessagePart, RatelM
 import { playSound } from '../services/audioService';
 import { ai, editImage as editImageService } from '../services/geminiService';
 import { createSystemInstruction } from '../constants';
-import { GenerateContentResponse } from '@google/genai';
+import { GenerateContentResponse, Modality } from '@google/genai';
 
 // Dynamically import all studios and modals for code splitting
 const ImageStudio = lazy(() => import('./ImageStudio'));
@@ -267,11 +267,29 @@ const ChatView: React.FC<ChatViewProps> = ({
 
     } catch (e) {
       console.error("Failed to send message:", e);
+      let displayError = "An unknown error occurred.";
+      if (e instanceof Error) {
+        const errorMessage = e.message.toLowerCase();
+        const isBillingError = (errorMessage.includes('imagen api') && errorMessage.includes('billed users')) || 
+                               errorMessage.includes('resource_exhausted') || 
+                               errorMessage.includes('429');
+
+        if (errorMessage.includes('permission_denied') || errorMessage.includes('api_key_service_blocked')) {
+          displayError = "API Key Error: Your request was blocked by Google. This is usually because the 'Generative Language API' or 'Vertex AI API' is not enabled in your Google Cloud project. Please enable it, re-deploy, and try again.";
+        } else if (isBillingError) {
+            displayError = "Billing Required: This feature requires a Google Cloud project with billing enabled, even for free-tier usage. Please visit ai.google.dev/gemini-api/docs/billing to enable billing. This is a Google requirement to prevent abuse and does not mean you will be charged for free tier usage.";
+            setProModalMessage(displayError);
+            setShowProModal(true);
+        } else {
+          displayError = e.message;
+        }
+      }
+
       updateCurrentChat(chat => ({
           ...chat,
           messages: chat.messages.map(msg => 
               msg.id === modelMessageId 
-              ? { ...msg, parts: [{ type: 'error', content: e instanceof Error ? e.message : "An unknown error occurred." }], timestamp: Date.now() } 
+              ? { ...msg, parts: [{ type: 'error', content: displayError }], timestamp: Date.now() } 
               : msg
           )
       }));
@@ -323,24 +341,50 @@ const ChatView: React.FC<ChatViewProps> = ({
     setIsLoading(true);
 
     try {
-        const response = await ai.models.generateImages({
-            model: 'imagen-4.0-generate-001',
-            prompt,
-            config: { numberOfImages: 1, outputMimeType: 'image/png', aspectRatio: aspectRatio as any }
+        const fullPrompt = `${prompt}, aspect ratio ${aspectRatio}`;
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image',
+            contents: { parts: [{ text: fullPrompt }] },
+            config: {
+                responseModalities: [Modality.IMAGE],
+            },
         });
-        const base64ImageBytes = response.generatedImages[0].image.imageBytes;
-        addMessageToChat({
-            id: crypto.randomUUID(),
-            role: 'model',
-            parts: [{ type: 'image', content: base64ImageBytes, mimeType: 'image/png' }],
-            timestamp: Date.now()
-        });
+
+        const imagePart = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
+
+        if (imagePart?.inlineData) {
+            addMessageToChat({
+                id: crypto.randomUUID(),
+                role: 'model',
+                parts: [{ type: 'image', content: imagePart.inlineData.data, mimeType: imagePart.inlineData.mimeType as string || 'image/png' }],
+                timestamp: Date.now()
+            });
+        } else {
+            const textPart = response.candidates?.[0]?.content?.parts.find(p => p.text);
+            if (textPart?.text) throw new Error(`AI response: ${textPart.text}`);
+            throw new Error("Image generation failed: The AI did not return an image.");
+        }
     } catch(e) {
         console.error(e);
+        let displayError = "Image generation failed.";
+        if (e instanceof Error) {
+            const errorMessage = e.message.toLowerCase();
+            const isBillingError = (errorMessage.includes('imagen api') && errorMessage.includes('billed users')) || 
+                                   errorMessage.includes('resource_exhausted') || 
+                                   errorMessage.includes('429');
+            
+            if (isBillingError) {
+                displayError = "Billing Required: This feature requires a Google Cloud project with billing enabled, even for free-tier usage. Please visit ai.google.dev/gemini-api/docs/billing to enable billing. This is a Google requirement to prevent abuse and does not mean you will be charged for free tier usage.";
+                setProModalMessage(displayError);
+                setShowProModal(true);
+            } else {
+                displayError = e.message;
+            }
+        }
         addMessageToChat({
             id: crypto.randomUUID(),
             role: 'model',
-            parts: [{ type: 'error', content: e instanceof Error ? e.message : "Image generation failed." }],
+            parts: [{ type: 'error', content: displayError }],
             timestamp: Date.now()
         });
     } finally {
@@ -371,11 +415,26 @@ const ChatView: React.FC<ChatViewProps> = ({
                 timestamp: Date.now()
             });
         } catch(e) {
-            console.error(e);
+            console.error("Image editing error:", e);
+            let displayError = "Image editing failed.";
+            if (e instanceof Error) {
+                const errorMessage = e.message.toLowerCase();
+                const isBillingError = (errorMessage.includes('imagen api') && errorMessage.includes('billed users')) || 
+                                       errorMessage.includes('resource_exhausted') || 
+                                       errorMessage.includes('429');
+
+                if (isBillingError) {
+                    displayError = "Billing Required: This feature requires a Google Cloud project with billing enabled, even for free-tier usage. Please visit ai.google.dev/gemini-api/docs/billing to enable billing. This is a Google requirement to prevent abuse and does not mean you will be charged for free tier usage.";
+                    setProModalMessage(displayError);
+                    setShowProModal(true);
+                } else {
+                    displayError = e.message;
+                }
+            }
             addMessageToChat({
                 id: crypto.randomUUID(),
                 role: 'model',
-                parts: [{ type: 'error', content: e instanceof Error ? e.message : "Image editing failed." }],
+                parts: [{ type: 'error', content: displayError }],
                 timestamp: Date.now()
             });
         } finally {

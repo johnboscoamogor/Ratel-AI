@@ -6,8 +6,6 @@ import { taskTools } from '../constants';
 // Standard server-side environment variables for AI Studio and Vercel backends.
 const API_KEY = process.env.API_KEY;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
 
 if (!API_KEY) {
@@ -96,25 +94,6 @@ async function handleTelegramWebhook(req: VercelRequest, res: VercelResponse) {
     res.status(200).send("OK");
 }
 
-// --- HEARTBEAT HANDLER ---
-async function handleHeartbeat(req: VercelRequest, res: VercelResponse) {
-    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-        return res.status(500).json({ status: "error", message: "Supabase environment variables are not set." });
-    }
-    try {
-        const ping = await fetch(`${SUPABASE_URL}/rest/v1/`, { 
-            method: "HEAD", headers: { apikey: SUPABASE_ANON_KEY }
-        });
-        res.status(ping.ok ? 200 : 500).json({
-            status: ping.ok ? "ok" : "error",
-            message: ping.ok ? "💓 Supabase active" : `❌ Supabase connection failed: ${ping.status}`
-        });
-    } catch (error: any) {
-        res.status(500).json({ status: "error", message: error.message });
-    }
-}
-
-
 // --- MAIN ROUTER ---
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
@@ -122,36 +101,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (req.body && (req.body.message || req.body.update_id)) {
             return await handleTelegramWebhook(req, res);
         }
-        
-        // Handle Heartbeat (can be a GET request)
-        if (req.query.action === 'heartbeat') {
-            return await handleHeartbeat(req, res);
-        }
 
         // Handle all other POST requests with an 'action' field
         const { action } = req.body;
         switch (action) {
             case 'chat': return await handleGeminiChat(req, res);
-            case 'generate_text':
+            case 'generate_text': {
                 const { prompt: textPrompt } = req.body;
                 const textResponse = await ai.models.generateContent({ model: 'gemini-flash-lite-latest', contents: textPrompt });
                 return res.status(200).json({ text: textResponse.text });
-            case 'generate_image':
+            }
+            case 'generate_image': {
                 const { prompt: imagePrompt, aspectRatio } = req.body;
-                const imageResponse = await ai.models.generateImages({ model: 'imagen-4.0-generate-001', prompt: imagePrompt, config: { numberOfImages: 1, outputMimeType: 'image/png', aspectRatio: aspectRatio as any } });
-                return res.status(200).json({ base64Image: imageResponse.generatedImages[0].image.imageBytes });
-            case 'edit_image':
+                const fullPrompt = `${imagePrompt}, aspect ratio ${aspectRatio}`;
+                const imageResponse = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash-image',
+                    contents: { parts: [{ text: fullPrompt }] },
+                    config: {
+                        responseModalities: [Modality.IMAGE],
+                    },
+                });
+                const imagePart = imageResponse.candidates?.[0]?.content?.parts.find(p => p.inlineData);
+                if (!imagePart?.inlineData) throw new Error("The AI did not return an image from the backend.");
+                return res.status(200).json({ base64Image: imagePart.inlineData.data });
+            }
+            case 'edit_image': {
                 const { image, prompt: editPrompt } = req.body;
                 const editResponse = await ai.models.generateContent({ model: 'gemini-2.5-flash-image', contents: { parts: [ { inlineData: { data: image.data, mimeType: image.mimeType } }, { text: editPrompt } ] }, config: { responseModalities: [Modality.IMAGE] } });
                 const imagePart = editResponse.candidates?.[0]?.content?.parts.find(p => p.inlineData);
                 if (!imagePart?.inlineData) throw new Error("The AI did not return an edited image.");
                 return res.status(200).json({ data: imagePart.inlineData.data, mimeType: imagePart.inlineData.mimeType });
-            case 'find_workers':
+            }
+            case 'find_workers': {
                 const { searchTerm } = req.body;
                 const chat = ai.chats.create({ model: 'gemini-flash-lite-latest', config: { tools: taskTools }});
                 const result = await chat.sendMessage({ message: searchTerm });
                 const fc = result.functionCalls?.[0];
                 return res.status(200).json({ args: (fc && fc.name === 'findWorkers') ? fc.args : null });
+            }
             case 'tts_generate': return await handleTtsGenerate(req, res);
             default:
                 return res.status(400).json({ error: `Invalid action specified: ${action}` });
@@ -159,7 +146,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch (error: any) {
         console.error(`Error in RatelAI API proxy:`, error);
         if (!res.writableEnded) {
-            res.status(500).json({ error: 'An internal server error occurred.', details: error.message });
+            let statusCode = 500;
+            let errorMessage = 'An internal server error occurred.';
+            let errorDetails = error.message;
+
+            if (error.message && (error.message.includes('RESOURCE_EXHAUSTED') || error.message.includes('429'))) {
+                statusCode = 429;
+                errorMessage = "Quota Exceeded: You've hit the free usage limit.";
+                errorDetails = "This often happens if a billing account is not enabled on your Google Cloud project. Please enable billing and try again. For details, see ai.google.dev/gemini-api/docs/billing.";
+            }
+            
+            res.status(statusCode).json({ error: errorMessage, details: errorDetails });
         }
     }
 }

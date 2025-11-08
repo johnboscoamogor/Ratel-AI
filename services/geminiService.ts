@@ -27,12 +27,30 @@ export const ai = aiClient;
  */
 export async function generateImage(prompt: string, aspectRatio: string): Promise<string> {
     if (!ai) throw new Error("Gemini API is not configured. Please set VITE_API_KEY or API_KEY in your environment variables.");
-    const response = await ai.models.generateImages({
-        model: 'imagen-4.0-generate-001',
-        prompt,
-        config: { numberOfImages: 1, outputMimeType: 'image/png', aspectRatio: aspectRatio as any }
+    
+    // gemini-2.5-flash-image does not support aspectRatio config directly.
+    // We can add it to the prompt as a hint.
+    const fullPrompt = `${prompt}, aspect ratio ${aspectRatio}`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: {
+        parts: [{ text: fullPrompt }],
+      },
+      config: {
+          responseModalities: [Modality.IMAGE],
+      },
     });
-    return response.generatedImages[0].image.imageBytes;
+
+    const imagePart = response.candidates?.[0]?.content?.parts.find(p => p.inlineData);
+
+    if (imagePart?.inlineData) {
+        return imagePart.inlineData.data;
+    } else {
+        const textPart = response.candidates?.[0]?.content?.parts.find(p => p.text);
+        if (textPart?.text) throw new Error(`AI response: ${textPart.text}`);
+        throw new Error("The AI did not return an image. Please try rephrasing your prompt.");
+    }
 }
 
 /**

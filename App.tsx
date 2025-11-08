@@ -167,6 +167,9 @@ const App: React.FC = () => {
     const keyNode = typeof process !== 'undefined' ? process.env.SUPABASE_ANON_KEY : undefined;
     const geminiNode = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
     
+    // --- Common Mistake Check ---
+    const geminiVertex = (import.meta as any).env?.Vertex_API_KEY || (typeof process !== 'undefined' ? process.env.Vertex_API_KEY : undefined);
+    
     const Status: React.FC<{found: boolean}> = ({ found }) => (
       found 
         ? <span style={{color: '#22c55e', fontWeight: 'bold'}}>✅ Found</span> 
@@ -188,6 +191,14 @@ const App: React.FC = () => {
               <p className="text-xs text-gray-400 mt-4">Note: In some environments (like AI Studio), you might need to use non-prefixed names like <code style={{ backgroundColor: '#4b5563', padding: '0.1rem 0.3rem', borderRadius: '0.25rem' }}>SUPABASE_URL</code> and <code style={{ backgroundColor: '#4b5563', padding: '0.1rem 0.3rem', borderRadius: '0.25rem' }}>API_KEY</code>.</p>
          </div>
 
+         {geminiVertex && (
+            <div style={{ backgroundColor: '#1f2937', padding: '1rem 1.5rem', borderRadius: '0.5rem', marginTop: '1rem', border: '1px solid #facc15', textAlign: 'left', maxWidth: '600px', width: '90%' }}>
+                <p style={{ color: '#fde047', fontWeight: 'bold' }}>⚠️ We noticed you have a variable named <code style={{ backgroundColor: '#4b5563', padding: '0.1rem 0.3rem', borderRadius: '0.25rem' }}>Vertex_API_KEY</code>.</p>
+                <p style={{ color: '#d1d5db', marginTop: '0.5rem' }}>Please rename it to <code style={{ backgroundColor: '#4b5563', padding: '0.1rem 0.3rem', borderRadius: '0.25rem' }}>VITE_API_KEY</code> for the app to work correctly.</p>
+            </div>
+         )}
+
+
         <div style={{ backgroundColor: '#1f2937', padding: '1rem 1.5rem', borderRadius: '0.5rem', marginTop: '1rem', border: '1px solid #f87171', textAlign: 'center', maxWidth: '600px', width: '90%' }}>
             <p style={{ color: 'white', fontWeight: 'bold' }}>Important: After setting variables in Vercel, you MUST re-deploy your project for changes to take effect.</p>
         </div>
@@ -206,6 +217,10 @@ const App: React.FC = () => {
                 <p style={{ color: 'white' }}>SUPABASE_URL: <Status found={!!urlNode} /></p>
                 <p style={{ color: 'white' }}>SUPABASE_ANON_KEY: <Status found={!!keyNode} /></p>
                 <p style={{ color: 'white' }}>API_KEY: <Status found={!!geminiNode} /></p>
+            </div>
+            <div style={{ marginTop: '1rem', borderTop: '1px solid #4b5563', paddingTop: '1rem' }}>
+                 <p style={{ color: '#9ca3af', fontSize: '0.7rem', textDecoration: 'underline' }}>Common Mistake Check:</p>
+                 <p style={{ color: 'white' }}>Vertex_API_KEY: <Status found={!!geminiVertex} /></p>
             </div>
         </div>
         <p style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: '1.5rem' }}>You can find your Supabase keys in your project dashboard under 'Settings' &gt; 'API'.</p>

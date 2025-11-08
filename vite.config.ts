@@ -4,10 +4,43 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // This 'define' block makes server-side environment variables available
+  // to the client-side code. This is crucial for environments like AI Studio
+  // that use non-prefixed variables (e.g., API_KEY instead of VITE_API_KEY).
+  // Vite replaces these strings with the actual values at build time.
+  define: {
+    'process.env.SUPABASE_URL': JSON.stringify(process.env.SUPABASE_URL),
+    'process.env.SUPABASE_ANON_KEY': JSON.stringify(process.env.SUPABASE_ANON_KEY),
+    'process.env.API_KEY': JSON.stringify(process.env.API_KEY)
+  },
   build: {
     // Output to a 'dist' folder at the project root.
     outDir: 'dist',
     emptyOutDir: true,
+    chunkSizeWarningLimit: 1000, // Increase the limit to 1000kb to avoid warnings for large but necessary chunks.
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // Creates separate chunks for large vendor libraries.
+          // This prevents them from being bundled into a single large file,
+          // which helps with performance and resolves the chunk size warning.
+          if (id.includes('node_modules')) {
+            if (id.includes('react-syntax-highlighter')) {
+              return 'vendor-syntax-highlighter';
+            }
+            if (id.includes('@supabase')) {
+              return 'vendor-supabase';
+            }
+            if (id.includes('@google/genai')) {
+              return 'vendor-genai';
+            }
+            if (id.includes('react-dom') || id.includes('react')) {
+               return 'vendor-react';
+            }
+          }
+        },
+      },
+    },
   },
   plugins: [
     react(),
@@ -15,7 +48,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       // Explicitly include icons and favicon in the service worker precache.
       // This ensures they are available offline for the install prompt and splash screen.
-      includeAssets: ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png', 'icon-192x192.png', 'icon-512x512.png'],
+      includeAssets: ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png', 'favicon-96x96.png'],
       manifest: {
         name: "Ratel AI",
         short_name: "Ratel",
@@ -30,14 +63,14 @@ export default defineConfig({
         categories: ["productivity", "communication", "artificial intelligence"],
         icons: [
           {
-            "src": "/icon-192x192.png",
-            "sizes": "192x192",
+            "src": "/apple-touch-icon.png",
+            "sizes": "180x180",
             "type": "image/png",
             "purpose": "any maskable"
           },
           {
-            "src": "/icon-512x512.png",
-            "sizes": "512x512",
+            "src": "/favicon-96x96.png",
+            "sizes": "96x96",
             "type": "image/png",
             "purpose": "any maskable"
           }
