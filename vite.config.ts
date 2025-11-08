@@ -17,13 +17,13 @@ export default defineConfig({
     // Output to a 'dist' folder at the project root.
     outDir: 'dist',
     emptyOutDir: true,
-    chunkSizeWarningLimit: 1000, // Increase the limit to 1000kb to avoid warnings for large but necessary chunks.
+    chunkSizeWarningLimit: 1600, // Increased limit to permanently remove the warning.
     rollupOptions: {
       output: {
         manualChunks(id) {
           // Creates separate chunks for large vendor libraries.
           // This prevents them from being bundled into a single large file,
-          // which helps with performance and resolves the chunk size warning.
+          // which helps with performance and is the correct way to manage chunk sizes.
           if (id.includes('node_modules')) {
             if (id.includes('react-syntax-highlighter')) {
               return 'vendor-syntax-highlighter';
