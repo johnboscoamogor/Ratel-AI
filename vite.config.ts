@@ -55,7 +55,7 @@ export default defineConfig({
         description: "Ratel AI — your smart companion for work, creativity, and daily life.",
         start_url: "/",
         display: "standalone",
-        background_color: "#ffffff",
+        background_color: "#000000",
         theme_color: "#000000",
         orientation: "portrait",
         scope: "/",
@@ -63,26 +63,20 @@ export default defineConfig({
         categories: ["productivity", "communication", "artificial intelligence"],
         icons: [
           {
-            "src": "/apple-touch-icon.png",
-            "sizes": "180x180",
-            "type": "image/png",
-            "purpose": "any maskable"
-          },
-          {
-            "src": "/apple-touch-icon.png",
+            "src": "/icon-192x192.png",
             "sizes": "192x192",
             "type": "image/png",
             "purpose": "any maskable"
           },
           {
-            "src": "/apple-touch-icon.png",
+            "src": "/icon-512x512.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"
           },
           {
-            "src": "/favicon-96x96.png",
-            "sizes": "96x96",
+            "src": "/apple-touch-icon.png",
+            "sizes": "180x180",
             "type": "image/png",
             "purpose": "any maskable"
           }
