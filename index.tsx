@@ -2,6 +2,7 @@ import React, { ErrorInfo, ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './i18n'; // Import the i18n configuration
+import './index.css'; // Import Tailwind CSS styles
 
 // Error Boundary Component to catch crashes and display a fallback UI
 interface ErrorBoundaryProps {
@@ -11,8 +12,11 @@ interface ErrorBoundaryState {
   hasError: boolean;
 }
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  // FIX: Initialized state using a class property instead of a constructor. This is a more modern and concise approach in React that avoids potential 'this' context issues within the constructor and resolves errors where `this.state` and `this.props` were not being recognized.
-  state = { hasError: false };
+  // FIX: Reverted to a standard constructor for state initialization. The previous class property syntax, while modern, might have caused issues with the build setup, leading to TypeScript not recognizing the 'props' property inherited from React.Component. The constructor explicitly calls super(props), ensuring `this.props` is correctly initialized.
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
 
   static getDerivedStateFromError(_: Error): ErrorBoundaryState {
     return { hasError: true };
