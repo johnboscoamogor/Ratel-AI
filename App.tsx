@@ -179,49 +179,70 @@ const App: React.FC = () => {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: 'white', backgroundColor: '#111827', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', fontFamily: 'Inter, sans-serif' }}>
         <h1 style={{ fontSize: '2rem', marginBottom: '1rem', color: '#34d399' }}>🚀 Almost There! Just a Quick Setup</h1>
-        <p style={{ color: '#d1d5db', maxWidth: '600px' }}>To get started, your app needs to connect to its backend services. This requires setting up a few secret keys (called environment variables) in your deployment platform.</p>
+        <p style={{ color: '#d1d5db', maxWidth: '600px', marginBottom: '1.5rem' }}>Your app needs a few secret keys to connect to its backend services. Follow these steps to get running.</p>
         
-         <div style={{ backgroundColor: '#1f2937', padding: '1.5rem', borderRadius: '0.5rem', marginTop: '1.5rem', border: '1px solid #374151', textAlign: 'left', maxWidth: '600px', width: '90%' }}>
-             <p className="font-semibold text-white">Please add the following variables in your platform's settings (e.g., Vercel, AI Studio):</p>
-             <ul style={{ listStyle: 'disc', paddingLeft: '1.5rem', marginTop: '1rem', color: '#d1d5db' }}>
-                 <li style={{ marginBottom: '0.75rem' }}><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>VITE_SUPABASE_URL</code></li>
-                 <li style={{ marginBottom: '0.75rem' }}><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>VITE_SUPABASE_ANON_KEY</code></li>
-                 <li><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>VITE_API_KEY</code> (for Gemini)</li>
-             </ul>
-              <p className="text-xs text-gray-400 mt-4">Note: In some environments (like AI Studio), you might need to use non-prefixed names like <code style={{ backgroundColor: '#4b5563', padding: '0.1rem 0.3rem', borderRadius: '0.25rem' }}>SUPABASE_URL</code> and <code style={{ backgroundColor: '#4b5563', padding: '0.1rem 0.3rem', borderRadius: '0.25rem' }}>API_KEY</code>.</p>
+        {/* Step 1: Add Variables */}
+         <div style={{ backgroundColor: '#1f2937', padding: '1.5rem', borderRadius: '0.5rem', border: '1px solid #374151', textAlign: 'left', maxWidth: '600px', width: '90%' }}>
+            <h2 className="font-bold text-lg text-white mb-3">Step 1: Add Environment Variables</h2>
+            <p className="text-sm text-gray-400 mb-4">In your Vercel project settings, go to "Environment Variables" and add the following keys. You need **both sets** for the app to work correctly.</p>
+            
+            <div className="mb-4">
+                <h3 className="font-bold text-green-400">For the Frontend (Client-Side)</h3>
+                <p className="text-xs text-gray-400 mb-2">These MUST start with <code className="bg-gray-700 p-1 rounded-sm">VITE_</code>.</p>
+                <ul className="list-disc pl-5 text-sm space-y-2">
+                    <li><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>VITE_SUPABASE_URL</code></li>
+                    <li><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>VITE_SUPABASE_ANON_KEY</code></li>
+                    <li><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>VITE_API_KEY</code> (for Gemini)</li>
+                </ul>
+            </div>
+
+            <div className="pt-4 border-t border-gray-600">
+                <h3 className="font-bold text-green-400">For the Backend (Server-Side)</h3>
+                <p className="text-xs text-gray-400 mb-2">These are the same keys but WITHOUT the prefix.</p>
+                 <ul className="list-disc pl-5 text-sm space-y-2">
+                    <li><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>SUPABASE_URL</code></li>
+                    <li><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>SUPABASE_ANON_KEY</code></li>
+                    <li><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>API_KEY</code> (for Gemini)</li>
+                </ul>
+            </div>
          </div>
 
-         {geminiVertex && (
-            <div style={{ backgroundColor: '#1f2937', padding: '1rem 1.5rem', borderRadius: '0.5rem', marginTop: '1rem', border: '1px solid #facc15', textAlign: 'left', maxWidth: '600px', width: '90%' }}>
-                <p style={{ color: '#fde047', fontWeight: 'bold' }}>⚠️ We noticed you have a variable named <code style={{ backgroundColor: '#4b5563', padding: '0.1rem 0.3rem', borderRadius: '0.25rem' }}>Vertex_API_KEY</code>.</p>
-                <p style={{ color: '#d1d5db', marginTop: '0.5rem' }}>Please rename it to <code style={{ backgroundColor: '#4b5563', padding: '0.1rem 0.3rem', borderRadius: '0.25rem' }}>VITE_API_KEY</code> for the app to work correctly.</p>
-            </div>
-         )}
-
-
-        <div style={{ backgroundColor: '#1f2937', padding: '1rem 1.5rem', borderRadius: '0.5rem', marginTop: '1rem', border: '1px solid #f87171', textAlign: 'center', maxWidth: '600px', width: '90%' }}>
-            <p style={{ color: 'white', fontWeight: 'bold' }}>Important: After setting variables in Vercel, you MUST re-deploy your project for changes to take effect.</p>
+        {/* Step 2: Check Environments */}
+        <div style={{ backgroundColor: '#1f2937', padding: '1.5rem', borderRadius: '0.5rem', marginTop: '1rem', border: '1px solid #374151', textAlign: 'left', maxWidth: '600px', width: '90%' }}>
+            <h2 className="font-bold text-lg text-white mb-3">Step 2: Check Vercel Environments</h2>
+            <p className="text-sm text-gray-400">When you add a variable in Vercel, make sure it's available for the environment you're deploying to. For simplicity, apply them to **all environments** (Production, Preview, and Development) unless you have a specific reason not to.</p>
         </div>
+
+        {/* Step 3: Re-deploy */}
+        <div style={{ backgroundColor: '#2f2b1d', padding: '1.5rem', borderRadius: '0.5rem', marginTop: '1rem', border: '1px solid #facc15', textAlign: 'left', maxWidth: '600px', width: '90%' }}>
+            <h2 className="font-bold text-lg text-amber-300 mb-2">Step 3: Re-deploy! (Crucial Step)</h2>
+            <p className="text-sm text-amber-200">After saving your variables, you **MUST** trigger a new deployment in Vercel. Your existing deployments won't have the new keys.</p>
+        </div>
+
 
         {/* ENHANCED DEBUG BOX */}
         <div style={{ backgroundColor: '#374151', padding: '1rem', borderRadius: '0.5rem', marginTop: '1.5rem', border: '1px solid #4b5563', textAlign: 'left', maxWidth: '600px', width: '90%', fontFamily: 'monospace', fontSize: '0.8rem' }}>
-            <p style={{ color: '#d1d5db', marginBottom: '1rem', fontWeight: 'bold' }}>Debugging Info (Values seen by the app):</p>
+            <p style={{ color: '#d1d5db', marginBottom: '0.25rem', fontWeight: 'bold' }}>Debugging Info (What your app currently sees)</p>
+            <p style={{ color: '#9ca3af', fontSize: '0.7rem', marginBottom: '1rem' }}>If '❌ Not Found' is shown, the variable was missing for the environment Vercel used during the last build.</p>
+
             <div style={{ marginBottom: '1rem', borderBottom: '1px solid #4b5563', paddingBottom: '1rem' }}>
-                <p style={{ color: '#9ca3af', fontSize: '0.7rem', textDecoration: 'underline' }}>Vercel / Browser Method:</p>
+                <p style={{ color: '#9ca3af', fontSize: '0.7rem', textDecoration: 'underline' }}>Frontend Build (Vite):</p>
                 <p style={{ color: 'white' }}>VITE_SUPABASE_URL: <Status found={!!urlVite} /></p>
                 <p style={{ color: 'white' }}>VITE_SUPABASE_ANON_KEY: <Status found={!!keyVite} /></p>
                 <p style={{ color: 'white' }}>VITE_API_KEY: <Status found={!!geminiVite} /></p>
             </div>
              <div>
-                <p style={{ color: '#9ca3af', fontSize: '0.7rem', textDecoration: 'underline' }}>AI Studio / Server Method:</p>
+                <p style={{ color: '#9ca3af', fontSize: '0.7rem', textDecoration: 'underline' }}>Backend Functions (Vercel/Node.js):</p>
                 <p style={{ color: 'white' }}>SUPABASE_URL: <Status found={!!urlNode} /></p>
                 <p style={{ color: 'white' }}>SUPABASE_ANON_KEY: <Status found={!!keyNode} /></p>
                 <p style={{ color: 'white' }}>API_KEY: <Status found={!!geminiNode} /></p>
             </div>
-            <div style={{ marginTop: '1rem', borderTop: '1px solid #4b5563', paddingTop: '1rem' }}>
-                 <p style={{ color: '#9ca3af', fontSize: '0.7rem', textDecoration: 'underline' }}>Common Mistake Check:</p>
-                 <p style={{ color: 'white' }}>Vertex_API_KEY: <Status found={!!geminiVertex} /></p>
-            </div>
+            {geminiVertex && (
+                <div style={{ marginTop: '1rem', borderTop: '1px solid #4b5563', paddingTop: '1rem' }}>
+                    <p style={{ color: '#fde047', fontSize: '0.7rem', textDecoration: 'underline' }}>Common Mistake Check:</p>
+                    <p style={{ color: 'white' }}>Vertex_API_KEY: <Status found={!!geminiVertex} /> (Should be API_KEY)</p>
+                </div>
+            )}
         </div>
         <p style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: '1.5rem' }}>You can find your Supabase keys in your project dashboard under 'Settings' &gt; 'API'.</p>
       </div>

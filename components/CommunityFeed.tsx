@@ -32,11 +32,6 @@ const CommunityFeed: React.FC<CommunityFeedProps> = ({ userProfile, setUserProfi
     useEffect(() => {
         setPosts(communityService.fetchPosts());
     }, []);
-    
-    const updateUserPoints = (points: number) => {
-        const newTotalPoints = communityService.updatePoints(userProfile, points);
-        setUserProfile(prev => prev ? { ...prev, communityPoints: newTotalPoints } : null);
-    };
 
     const handleAddPost = async () => {
         if (!newPostContent.trim() && !imageFile) return;
