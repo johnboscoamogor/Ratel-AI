@@ -178,11 +178,11 @@ const App: React.FC = () => {
 
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: 'white', backgroundColor: '#111827', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', fontFamily: 'Inter, sans-serif' }}>
-        <h1 style={{ fontSize: '2rem', marginBottom: '1rem', color: '#f87171' }}>⚙️ Configuration Error</h1>
-        <p style={{ color: '#d1d5db' }}>The application is missing one or more required credentials.</p>
+        <h1 style={{ fontSize: '2rem', marginBottom: '1rem', color: '#34d399' }}>🚀 Almost There! Just a Quick Setup</h1>
+        <p style={{ color: '#d1d5db', maxWidth: '600px' }}>To get started, your app needs to connect to its backend services. This requires setting up a few secret keys (called environment variables) in your deployment platform.</p>
         
          <div style={{ backgroundColor: '#1f2937', padding: '1.5rem', borderRadius: '0.5rem', marginTop: '1.5rem', border: '1px solid #374151', textAlign: 'left', maxWidth: '600px', width: '90%' }}>
-             <p className="font-semibold text-white">To fix this, please set the following environment variables in your deployment platform (e.g., Vercel, AI Studio):</p>
+             <p className="font-semibold text-white">Please add the following variables in your platform's settings (e.g., Vercel, AI Studio):</p>
              <ul style={{ listStyle: 'disc', paddingLeft: '1.5rem', marginTop: '1rem', color: '#d1d5db' }}>
                  <li style={{ marginBottom: '0.75rem' }}><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>VITE_SUPABASE_URL</code></li>
                  <li style={{ marginBottom: '0.75rem' }}><code style={{ backgroundColor: '#4b5563', padding: '0.2rem 0.4rem', borderRadius: '0.25rem' }}>VITE_SUPABASE_ANON_KEY</code></li>
