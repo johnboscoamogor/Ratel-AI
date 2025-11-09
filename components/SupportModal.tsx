@@ -8,6 +8,21 @@ interface SupportModalProps {
 }
 
 const FLUTTERWAVE_PUBLIC_KEY = 'FLWPUBK-7a298ea26aa8e1b9d39f5a72b2425b97-X';
+const FLUTTERWAVE_SCRIPT_URL = 'https://checkout.flutterwave.com/v3.js';
+
+const loadFlutterwaveScript = () => {
+  return new Promise<void>((resolve, reject) => {
+    if (document.querySelector(`script[src="${FLUTTERWAVE_SCRIPT_URL}"]`)) {
+      return resolve();
+    }
+    const script = document.createElement('script');
+    script.src = FLUTTERWAVE_SCRIPT_URL;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Flutterwave script failed to load.'));
+    document.body.appendChild(script);
+  });
+};
+
 
 const SupportModal: React.FC<SupportModalProps> = ({ onClose }) => {
     const { t } = useTranslation();
@@ -20,9 +35,9 @@ const SupportModal: React.FC<SupportModalProps> = ({ onClose }) => {
         onClose();
     };
 
-    const handleFlutterwavePayment = () => {
+    const handleFlutterwavePayment = async () => {
         playSound('click');
-        setError(''); // Clear previous errors
+        setError('');
         
         if (!FLUTTERWAVE_PUBLIC_KEY) {
             setError(t('supportModal.configureKeyError'));
@@ -32,6 +47,13 @@ const SupportModal: React.FC<SupportModalProps> = ({ onClose }) => {
         const parsedAmount = parseFloat(amount);
         if (isNaN(parsedAmount) || parsedAmount <= 0) {
             alert('Please enter a valid amount.');
+            return;
+        }
+
+        try {
+            await loadFlutterwaveScript();
+        } catch (scriptError: any) {
+            setError(scriptError.message);
             return;
         }
 

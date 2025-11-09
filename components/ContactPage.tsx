@@ -1,14 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeftIcon, RatelLogo } from '../constants';
 import { playSound } from '../services/audioService';
+import emailjs from '@emailjs/browser';
 
 interface ContactPageProps {
   onBack: () => void;
 }
-
-// Declare the emailjs library which is loaded from a script in index.html
-declare var emailjs: any;
 
 const ContactPage: React.FC<ContactPageProps> = ({ onBack }) => {
   const { t } = useTranslation();
@@ -19,14 +17,6 @@ const ContactPage: React.FC<ContactPageProps> = ({ onBack }) => {
   const SERVICE_ID = 'service_0od2hgd';
   const TEMPLATE_ID = 'template_eok41ps';
   const PUBLIC_KEY = 'LVQXGJ3F_GjNEfrCh';
-
-  useEffect(() => {
-    // This is not strictly necessary if you use the send method with the public key,
-    // but it's good practice.
-    if (typeof emailjs !== 'undefined') {
-        emailjs.init({ publicKey: PUBLIC_KEY });
-    }
-  }, []);
   
   const handleBackClick = () => {
     playSound('click');
@@ -55,7 +45,7 @@ const ContactPage: React.FC<ContactPageProps> = ({ onBack }) => {
         message: formState.message,
     };
 
-    emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY)
+    emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, { publicKey: PUBLIC_KEY })
       .then((response: any) => {
         console.log('SUCCESS!', response.status, response.text);
         setSubmitStatus('success');

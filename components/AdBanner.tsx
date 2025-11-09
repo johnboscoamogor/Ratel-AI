@@ -3,89 +3,81 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 const AdBanner: React.FC = () => {
     const adRef = useRef<HTMLModElement>(null);
     const [adInitialized, setAdInitialized] = useState(false);
-    
-    // =================================================================================
-    // IMPORTANT: Replace these placeholder values with your actual Google AdSense IDs.
-    // You can get these from your AdSense account dashboard.
-    // =================================================================================
-    const AD_CLIENT = 'ca-pub-XXXXXXXXXXXXXXXX';
-    const AD_SLOT = 'YYYYYYYYYY';
 
+    // Read AdSense configuration from environment variables
+    const AD_CLIENT = (import.meta as any).env?.VITE_ADSENSE_CLIENT_ID;
+    const AD_SLOT = (import.meta as any).env?.VITE_ADSENSE_SLOT_ID;
+
+    // If AdSense is not configured, render nothing in production.
+    if (!AD_CLIENT || !AD_SLOT) {
+        if ((import.meta as any).env?.DEV) { // Show a placeholder in development
+            return (
+                <div className="px-4 pb-2 text-center">
+                    <div className="w-full max-w-[728px] min-h-[50px] bg-gray-700/50 text-gray-500 text-xs sm:text-sm flex items-center justify-center rounded-md">
+                        Ad Banner Placeholder (VITE_ADSENSE_CLIENT_ID not set)
+                    </div>
+                </div>
+            );
+        }
+        return null; // Render nothing in production
+    }
+    
+    // This function injects the script and pushes the ad
     const initAndPushAd = useCallback(() => {
         if (adInitialized || !adRef.current) return;
 
-        const adContainer = adRef.current;
-        let attempts = 0;
-        const maxAttempts = 10; // Poll for up to 1 second
+        // Dynamically inject the AdSense script
+        if (!document.querySelector(`script[src*="adsbygoogle.js"]`)) {
+            const script = document.createElement('script');
+            script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${AD_CLIENT}`;
+            script.async = true;
+            script.crossOrigin = 'anonymous';
+            document.head.appendChild(script);
+        }
 
+        // The original logic to wait for the container to be ready
+        let attempts = 0;
+        const maxAttempts = 10;
         const tryPush = () => {
-            // Ensure the container is still in the DOM and has a valid width
-            if (adContainer.clientWidth > 0) {
+            if (adRef.current && adRef.current.clientWidth > 0) {
                 try {
-                    // AdSense sometimes adds an iframe; check for it to prevent re-pushing.
-                    if (adContainer.querySelector('iframe')) {
-                        setAdInitialized(true);
-                        return;
-                    }
-                    
-                    adContainer.setAttribute('data-ad-client', AD_CLIENT);
-                    adContainer.setAttribute('data-ad-slot', AD_SLOT);
-                    
-                    if (typeof (window as any).adsbygoogle !== 'undefined') {
-                        // Push an ad into the slot.
-                        ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
-                        setAdInitialized(true); // Mark as initialized to prevent re-pushes.
-                    }
+                    ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+                    setAdInitialized(true);
                 } catch (e) {
                     console.error('AdSense push error:', e);
                 }
             } else {
-                // If width is still 0, wait and try again.
                 attempts++;
                 if (attempts < maxAttempts) {
                     setTimeout(tryPush, 100);
-                } else {
-                    console.warn(`Ad container width is still 0 after ${maxAttempts} attempts. Aborting ad push.`);
                 }
             }
         };
-
         tryPush();
-
-    }, [adInitialized, AD_CLIENT, AD_SLOT]);
+    }, [adInitialized, AD_CLIENT]);
 
     useEffect(() => {
         const adContainer = adRef.current;
-        if (!adContainer || adInitialized) {
-            return;
-        }
+        if (!adContainer || adInitialized) return;
 
-        // Stage 1: Use IntersectionObserver to detect when the ad container becomes visible.
+        // Use IntersectionObserver to load the ad only when it's visible
         const observer = new IntersectionObserver(
             (entries) => {
-                const entry = entries[0];
-                if (entry.isIntersecting) {
-                    // Stage 2: Once visible, start polling for a valid width before pushing the ad.
+                if (entries[0].isIntersecting) {
                     initAndPushAd();
-                    observer.disconnect(); // We only need to trigger this once.
+                    observer.disconnect();
                 }
             },
-            {
-                threshold: 0.01, // Trigger when 1% of the element is visible
-            }
+            { threshold: 0.01 }
         );
-
         observer.observe(adContainer);
-
-        return () => {
-            observer.disconnect();
-        };
+        return () => observer.disconnect();
     }, [adInitialized, initAndPushAd]);
 
     const adStyle: React.CSSProperties = {
         display: 'block',
         width: '100%',
-        minHeight: '50px', // Prevents layout shift
+        minHeight: '50px',
         backgroundColor: 'transparent',
     };
 
@@ -95,11 +87,13 @@ const AdBanner: React.FC = () => {
                 ref={adRef}
                 className="adsbygoogle"
                 style={adStyle}
+                data-ad-client={AD_CLIENT}
+                data-ad-slot={AD_SLOT}
                 data-ad-format="auto"
                 data-full-width-responsive="true"
             ></ins>
         </div>
     );
-}
+};
 
 export default AdBanner;
