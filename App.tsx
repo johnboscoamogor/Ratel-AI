@@ -60,14 +60,14 @@ const App: React.FC = () => {
     // Add a timeout to prevent the app from hanging on a failed connection
     const sessionTimeout = setTimeout(() => {
         if (isMounted && loadingSession) {
-            const errorMsg = "Supabase getSession timed out after 10 seconds. " +
-                "This is likely due to an incorrect VITE_SUPABASE_URL environment variable or a network issue. " +
-                "Please verify your Supabase project URL in your Vercel settings and re-deploy.";
+            const errorMsg = "Connection timed out. This is the most common Vercel deployment issue. " +
+                "Please double-check your `VITE_SUPABASE_URL` is correct. " +
+                "IMPORTANT: After updating your variables in Vercel, you MUST re-deploy the project for the changes to take effect.";
             console.error(errorMsg);
             setConnectionError(errorMsg);
             setLoadingSession(false); // Force the loader to stop
         }
-    }, 10000); // 10-second timeout
+    }, 15000); // 15-second timeout
 
     const updateUserSession = async (session: Session | null) => {
         if (!isMounted) return;
@@ -109,7 +109,7 @@ const App: React.FC = () => {
     }).catch(err => {
         clearTimeout(sessionTimeout); // Failure, clear the timeout
         console.error("Error getting initial session:", err);
-        const errorMsg = `Failed to get Supabase session. Error: ${err.message}. Check your network and Supabase URL.`;
+        const errorMsg = `Failed to connect to Supabase. Error: ${err.message}. Please verify your network, check that your Supabase URL and Key are correct, and re-deploy your project.`;
         setConnectionError(errorMsg);
         if (isMounted) {
             setLoadingSession(false);
