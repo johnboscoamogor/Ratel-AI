@@ -55,7 +55,8 @@ async function handleTtsGenerate(req: VercelRequest, res: VercelResponse) {
     const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-preview-tts",
         contents: [{ parts: [{ text }] }],
-        config: { responseModalities: ['AUDIO'], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName } } } },
+        // FIX: Replaced the string literal `['AUDIO']` with the `Modality.AUDIO` enum to align with SDK guidelines.
+        config: { responseModalities: [Modality.AUDIO], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName } } } },
     });
 
     const audioBase64 = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
