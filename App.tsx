@@ -20,6 +20,7 @@ const App: React.FC = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [page, setPage] = useState<'landing' | 'chat' | 'settings' | 'contact' | 'community' | 'admin' | 'examples'>('landing');
   const [loadingSession, setLoadingSession] = useState(true);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   // All hooks must be called at the top level, before any conditional returns.
   const defaultSettings: AppSettings = {
@@ -59,11 +60,11 @@ const App: React.FC = () => {
     // Add a timeout to prevent the app from hanging on a failed connection
     const sessionTimeout = setTimeout(() => {
         if (isMounted && loadingSession) {
-            console.error(
-                "Supabase getSession timed out after 10 seconds. " +
+            const errorMsg = "Supabase getSession timed out after 10 seconds. " +
                 "This is likely due to an incorrect VITE_SUPABASE_URL environment variable or a network issue. " +
-                "Please verify your Supabase project URL in your Vercel settings and re-deploy."
-            );
+                "Please verify your Supabase project URL in your Vercel settings and re-deploy.";
+            console.error(errorMsg);
+            setConnectionError(errorMsg);
             setLoadingSession(false); // Force the loader to stop
         }
     }, 10000); // 10-second timeout
@@ -108,6 +109,8 @@ const App: React.FC = () => {
     }).catch(err => {
         clearTimeout(sessionTimeout); // Failure, clear the timeout
         console.error("Error getting initial session:", err);
+        const errorMsg = `Failed to get Supabase session. Error: ${err.message}. Check your network and Supabase URL.`;
+        setConnectionError(errorMsg);
         if (isMounted) {
             setLoadingSession(false);
         }
@@ -333,7 +336,7 @@ const App: React.FC = () => {
 
   const renderPage = () => {
     if (!userProfile) {
-        return <LandingPage onStartChatting={handleStartChatting} settings={settings} setSettings={setSettings} />;
+        return <LandingPage onStartChatting={handleStartChatting} settings={settings} setSettings={setSettings} connectionError={connectionError} />;
     }
 
     switch (page) {
@@ -351,7 +354,7 @@ const App: React.FC = () => {
         }
         return <ChatView userProfile={userProfile} setUserProfile={setUserProfile} settings={settings} setSettings={setSettings} setPage={setPage} onLogout={handleLogout} addXp={addXp} trackInterest={trackInterest} onLevelUp={handleLevelUp} />;
       default:
-        return <LandingPage onStartChatting={handleStartChatting} settings={settings} setSettings={setSettings} />;
+        return <LandingPage onStartChatting={handleStartChatting} settings={settings} setSettings={setSettings} connectionError={connectionError} />;
     }
   };
 

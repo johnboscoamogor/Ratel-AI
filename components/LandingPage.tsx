@@ -9,9 +9,10 @@ interface LandingPageProps {
   onStartChatting: () => void;
   settings: AppSettings;
   setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
+  connectionError?: string | null;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onStartChatting, settings, setSettings }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onStartChatting, settings, setSettings, connectionError }) => {
   const { t } = useTranslation();
 
   const handleClick = () => {
@@ -21,6 +22,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartChatting, settings, se
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen text-white p-4" style={{ backgroundColor: '#0d1117' }}>
+      {connectionError && (
+        <div className="absolute top-0 left-0 right-0 bg-red-800/90 border-b border-red-600 p-3 text-center text-white text-sm shadow-lg z-10">
+          <p className="font-bold">Connection Error</p>
+          <p className="max-w-xl mx-auto">{connectionError}</p>
+        </div>
+      )}
       <div className="absolute top-6 right-6">
         <LanguageSwitcher
           currentLang={settings.language}
