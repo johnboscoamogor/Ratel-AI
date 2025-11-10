@@ -2,6 +2,10 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// Define the self-contained SVG icon as a data URI.
+// This prevents 404 errors for missing icon files.
+const iconDataUri = "data:image/svg+xml,%3csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3e%3ctitle%3eRatel AI Logo%3c/title%3e%3cdefs%3e%3cmask id='ratel-logo-mask'%3e%3crect x='0' y='0' width='100' height='100' fill='white'/%3e%3ccircle cx='42' cy='50' r='45' fill='black'/%3e%3ccircle cx='42' cy='50' r='38' fill='white'/%3e%3ccircle cx='42' cy='50' r='31' fill='black'/%3e%3c/mask%3e%3c/defs%3e%3ccircle cx='50' cy='50' r='50' fill='%2322c55e' mask='url(%23ratel-logo-mask)'/%3e%3ccircle cx='50' cy='50' r='24' fill='%2322c55e'/%3e%3c/svg%3e";
+
 // https://vitejs.dev/config/
 export default defineConfig({
   // This 'define' block makes server-side environment variables available
@@ -46,9 +50,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      // Explicitly include icons and favicon in the service worker precache.
-      // This ensures they are available offline for the install prompt and splash screen.
-      includeAssets: ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png', 'favicon-96x96.png'],
+      // The includeAssets array is cleared because the icon is now inlined,
+      // so no separate files need to be precached.
+      includeAssets: [],
       manifest: {
         name: "Ratel AI",
         short_name: "Ratel",
@@ -63,21 +67,9 @@ export default defineConfig({
         categories: ["productivity", "communication", "artificial intelligence"],
         icons: [
           {
-            "src": "/icon-192x192.png",
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any maskable"
-          },
-          {
-            "src": "/icon-512x512.png",
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "any maskable"
-          },
-          {
-            "src": "/apple-touch-icon.png",
-            "sizes": "180x180",
-            "type": "image/png",
+            "src": iconDataUri,
+            "sizes": "any",
+            "type": "image/svg+xml",
             "purpose": "any maskable"
           }
         ]
