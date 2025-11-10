@@ -55,6 +55,18 @@ const App: React.FC = () => {
     }
 
     let isMounted = true;
+    
+    // Add a timeout to prevent the app from hanging on a failed connection
+    const sessionTimeout = setTimeout(() => {
+        if (isMounted && loadingSession) {
+            console.error(
+                "Supabase getSession timed out after 10 seconds. " +
+                "This is likely due to an incorrect VITE_SUPABASE_URL environment variable or a network issue. " +
+                "Please verify your Supabase project URL in your Vercel settings and re-deploy."
+            );
+            setLoadingSession(false); // Force the loader to stop
+        }
+    }, 10000); // 10-second timeout
 
     const updateUserSession = async (session: Session | null) => {
         if (!isMounted) return;
@@ -88,11 +100,13 @@ const App: React.FC = () => {
     
     // First, check the current session to unblock the UI quickly.
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+        clearTimeout(sessionTimeout); // Success, clear the timeout
         await updateUserSession(session);
         if (isMounted) {
             setLoadingSession(false);
         }
     }).catch(err => {
+        clearTimeout(sessionTimeout); // Failure, clear the timeout
         console.error("Error getting initial session:", err);
         if (isMounted) {
             setLoadingSession(false);
@@ -105,11 +119,13 @@ const App: React.FC = () => {
         await updateUserSession(session);
     });
 
-    // Clean up the subscription when the component unmounts.
+    // Clean up the subscription and timeout when the component unmounts.
     return () => {
         isMounted = false;
         subscription.unsubscribe();
+        clearTimeout(sessionTimeout);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 

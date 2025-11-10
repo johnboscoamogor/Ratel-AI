@@ -1,3 +1,4 @@
+
 import React, { ErrorInfo, ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -12,10 +13,12 @@ interface ErrorBoundaryState {
   hasError: boolean;
 }
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  // FIX: Replaced constructor with a class property for state initialization.
-  // This is a more modern syntax and correctly declares the state property for TypeScript,
-  // resolving errors where 'this.state' and 'this.props' were not being recognized on the ErrorBoundary component.
-  state: ErrorBoundaryState = { hasError: false };
+  // FIX: Reverted to using a constructor for state initialization. The class property
+  // syntax was causing TypeScript to not recognize `this.props`, leading to a build error.
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
 
   static getDerivedStateFromError(_: Error): ErrorBoundaryState {
     return { hasError: true };
