@@ -56,56 +56,60 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        setLoading(true);
 
         if (!nickname.trim()) {
             setError(t('authModal.error.nicknameRequired'));
-            setLoading(false);
             return;
         }
         if (password.length < 6) {
             setError(t('authModal.error.passwordRequired'));
-            setLoading(false);
             return;
         }
         if (password !== confirmPassword) {
             setError(t('authModal.error.passwordsDoNotMatch'));
-            setLoading(false);
             return;
         }
-        
-        const { data, error: signUpError } = await supabase.auth.signUp({
-            email: email,
-            password: password,
-            options: {
-                data: {
-                    name: nickname, // This will be used by the trigger
-                },
-                emailRedirectTo: window.location.origin,
+
+        setLoading(true);
+
+        try {
+            const { data, error: signUpError } = await supabase.auth.signUp({
+                email: email,
+                password: password,
+                options: {
+                    data: {
+                        name: nickname,
+                    },
+                    emailRedirectTo: window.location.origin,
+                }
+            });
+
+            if (signUpError) {
+                throw signUpError;
             }
-        });
 
-        setLoading(false);
+            if (data.session && data.user) {
+                onLoginSuccess();
+            } else if (data.user) {
+                alert("Account created! Please check your email for a verification link to log in.");
+                onClose();
+            } else {
+                throw new Error("An unexpected response was received during signup.");
+            }
 
-        if (signUpError) {
-            setError(signUpError.message);
-            return;
-        }
-        
-        // If Supabase is configured to NOT require email confirmation,
-        // the 'data' object will contain a full session, logging the user in immediately.
-        if (data.session && data.user) {
-            // The user is now logged in. The main App component's auth listener
-            // will detect this change, fetch the user's profile, and navigate to the chat view.
-            onLoginSuccess();
-        } else if (data.user) {
-            // This block handles the case where email confirmation is still enabled.
-            // It provides a fallback message to guide the user.
-            alert("Account created! Please check your email for a verification link to log in.");
-            onClose();
-        } else {
-            // Handle an unexpected response from Supabase.
-            setError("An unexpected error occurred during signup. Please try again.");
+        } catch (error: any) {
+            console.error("Detailed Signup Error:", error);
+            let displayError = "An unknown error occurred. Please try again.";
+
+            if (error.message && error.message.toLowerCase().includes('failed to fetch')) {
+                displayError = "Network Error: Could not connect to the authentication server. This might be due to an ad-blocker, a browser extension, or a network issue. Please check your connection and try again.";
+            } else if (error.message) {
+                displayError = error.message;
+            }
+            
+            setError(displayError);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -113,28 +117,42 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        setLoading(true);
 
         if (!password) {
-             setLoading(false);
-             return setError("Password is required.");
+            return setError("Password is required.");
         }
         
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password,
-        });
+        setLoading(true);
 
-        if (signInError) {
-            // A common failure is an unverified email after signup.
-            if (signInError.message.includes("Email not confirmed")) {
-                 setError("Please check your email and click the verification link to log in.");
-            } else {
-                 setError(signInError.message);
+        try {
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+
+            if (signInError) {
+                throw signInError;
             }
+
+            onLoginSuccess();
+
+        } catch (error: any) {
+            console.error("Detailed Login Error:", error);
+            let displayError = "An unknown error occurred. Please try again.";
+
+            if (error.message && error.message.toLowerCase().includes('failed to fetch')) {
+                displayError = "Network Error: Could not connect to the authentication server. This might be due to an ad-blocker, a browser extension, or a network issue. Please check your connection and try again.";
+            } else if (error.message) {
+                if (error.message.includes("Email not confirmed")) {
+                     displayError = "Please check your email and click the verification link to log in.";
+                } else {
+                     displayError = error.message;
+                }
+            }
+            
+            setError(displayError);
+        } finally {
             setLoading(false);
-        } else {
-            onLoginSuccess(); // Auth listener in App.tsx will handle the rest
         }
     };
 
