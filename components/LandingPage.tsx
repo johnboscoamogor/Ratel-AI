@@ -22,12 +22,31 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartChatting, settings, se
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen text-white p-4" style={{ backgroundColor: '#0d1117' }}>
-      {connectionError && (
-        <div className="absolute top-0 left-0 right-0 bg-red-800/90 border-b border-red-600 p-3 text-center text-white text-sm shadow-lg z-10">
-          <p className="font-bold">Connection Error</p>
-          <p className="max-w-xl mx-auto whitespace-pre-wrap text-left px-2">{connectionError}</p>
-        </div>
-      )}
+      {connectionError && (() => {
+          const parts = connectionError.split('---COMPARE---');
+          if (parts.length === 3) {
+              return (
+                  <div className="absolute top-0 left-0 right-0 bg-red-800/90 border-b border-red-600 p-3 text-center text-white text-sm shadow-lg z-10">
+                      <p className="font-bold text-base">Connection Error</p>
+                      <div className="max-w-2xl mx-auto text-left px-2 py-2">
+                          <p className="whitespace-pre-wrap">{parts[0]}</p>
+                          <div className="my-2 p-3 bg-red-900/50 rounded-md border border-red-500">
+                              <p className="text-xs text-red-200 font-semibold">URL YOUR APP IS USING (FROM VERCEL):</p>
+                              <p className="font-mono text-base break-all mt-1">{parts[1].trim()}</p>
+                          </div>
+                          <p className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: parts[2].replace(/\*\*(.*?)\*\*/g, '<strong class="text-yellow-300">$1</strong>') }} />
+                      </div>
+                  </div>
+              );
+          }
+          // Fallback for other errors that don't use the special format
+          return (
+              <div className="absolute top-0 left-0 right-0 bg-red-800/90 border-b border-red-600 p-3 text-center text-white text-sm shadow-lg z-10">
+                  <p className="font-bold">Connection Error</p>
+                  <p className="max-w-xl mx-auto whitespace-pre-wrap text-left px-2">{connectionError}</p>
+              </div>
+          );
+      })()}
       <div className="absolute top-6 right-6">
         <LanguageSwitcher
           currentLang={settings.language}

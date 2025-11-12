@@ -61,10 +61,14 @@ const App: React.FC = () => {
     const sessionTimeout = setTimeout(() => {
         if (isMounted && loadingSession) {
             const urlVite = (import.meta as any).env?.VITE_SUPABASE_URL;
-            const errorMsg = `Connection timed out. This is a common Vercel deployment issue.
-1.  Check the URL: The app is trying to connect to \`${urlVite || 'Not Found'}\`. Please verify this is your exact Supabase Project URL.
-2.  Check Variables: Ensure \`VITE_SUPABASE_URL\` and \`VITE_SUPABASE_ANON_KEY\` are set correctly in your Vercel project settings.
-3.  Re-deploy: After changing variables in Vercel, you MUST create a new deployment for the changes to apply.`;
+            // FIX: Updated the error message to use special markers. This allows the LandingPage component
+            // to parse the message and render a more visually distinct and easy-to-read comparison,
+            // which will help the user spot the typo in their environment variable.
+            const errorMsg = `Connection timed out. This strongly suggests the Supabase URL in your Vercel settings has a typo.
+---COMPARE---
+${urlVite || 'Not Found'}
+---COMPARE---
+Please check your Supabase Dashboard (Settings > API) and ensure the URL there **exactly matches** the one from Vercel shown above. They must be identical. After correcting it, create a new deployment.`;
             console.error(errorMsg);
             setConnectionError(errorMsg);
             setLoadingSession(false); // Force the loader to stop
