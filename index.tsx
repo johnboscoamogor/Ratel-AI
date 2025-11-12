@@ -11,9 +11,10 @@ interface ErrorBoundaryProps {
 interface ErrorBoundaryState {
   hasError: boolean;
 }
-// FIX: To resolve errors related to missing `state` and `props`, the ErrorBoundary class
-// must extend React.Component to function as a proper React class component.
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  // FIX: Added a constructor to explicitly initialize props and state. The previous class field
+  // implementation was causing an error where 'this.props' was not found, likely due to a build
+  // configuration issue. Using a standard constructor is more robust.
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };

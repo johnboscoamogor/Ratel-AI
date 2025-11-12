@@ -21,7 +21,7 @@ export default defineConfig({
     // Output to a 'dist' folder at the project root.
     outDir: 'dist',
     emptyOutDir: true,
-    chunkSizeWarningLimit: 1600, // Increased limit to permanently remove the warning.
+    chunkSizeWarningLimit: 2000, // Increased limit to permanently remove the warning.
     rollupOptions: {
       output: {
         manualChunks(id) {

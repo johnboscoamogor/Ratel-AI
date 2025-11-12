@@ -25,7 +25,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartChatting, settings, se
       {connectionError && (
         <div className="absolute top-0 left-0 right-0 bg-red-800/90 border-b border-red-600 p-3 text-center text-white text-sm shadow-lg z-10">
           <p className="font-bold">Connection Error</p>
-          <p className="max-w-xl mx-auto">{connectionError}</p>
+          <p className="max-w-xl mx-auto whitespace-pre-wrap text-left px-2">{connectionError}</p>
         </div>
       )}
       <div className="absolute top-6 right-6">
