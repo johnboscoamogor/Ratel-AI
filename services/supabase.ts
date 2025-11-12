@@ -1,15 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import { MarketItem, MarketPayment, MobileWorker, UserProfile } from '../types';
 
-// This robust check works for Vercel (import.meta.env) and local
-// environments like AI Studio (process.env) as requested by the user.
-const supabaseUrl =
-  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_SUPABASE_URL) ||
-  (typeof process !== 'undefined' && process.env.SUPABASE_URL);
-
-const supabaseAnonKey =
-  (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_SUPABASE_ANON_KEY) ||
-  (typeof process !== 'undefined' && process.env.SUPABASE_ANON_KEY);
+// For Vercel deployments, Vite automatically handles `import.meta.env`.
+// This is the standard and most reliable way to access frontend variables.
+const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL;
+const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
 
 
 // This check determines if the credentials have been correctly configured from any environment source.
@@ -31,7 +26,7 @@ if (isSupabaseConfigured) {
 } else {
     // This console warning will be shown in the browser's dev tools.
     // The user-facing guide is displayed in App.tsx.
-    console.warn("Supabase credentials are not configured. Please set VITE_SUPABASE_URL/SUPABASE_URL and VITE_SUPABASE_ANON_KEY/SUPABASE_ANON_KEY environment variables.");
+    console.warn("Supabase credentials are not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.");
 }
 
 // Export the client instance (which can be null if not configured).

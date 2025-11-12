@@ -60,15 +60,20 @@ const App: React.FC = () => {
     // Add a timeout to prevent the app from hanging on a failed connection
     const sessionTimeout = setTimeout(() => {
         if (isMounted && loadingSession) {
-            const urlVite = (import.meta as any).env?.VITE_SUPABASE_URL;
 
-            // FIX: The error message is now updated to suggest the user's project may be paused,
-            // which is a very common cause for this exact error when the URL is correct.
-            const errorMsg = `Connection timed out. The app can't reach your Supabase database.
----URL IN USE---
-${urlVite || 'Not Found'}
+            // FIX: The error message is now updated to guide the user through the final, most likely fix: checking their Anon Key.
+            const errorMsg = `Connection Timed Out.
+---FINAL CHECK---
+We've ruled out the most common issues (wrong URL, paused project). The final step is to verify your **API Key**.
 ---END---
-**This is very common.** The most likely reason is that your Supabase project is **paused due to inactivity**. Please visit your Supabase project dashboard to see if it needs to be restored. After restoring, refresh this page.`;
+Please follow these steps **exactly**:
+1. Go to your **Supabase project → Settings → API**.
+2. Find the "Project API Keys" section.
+3. Copy the key labeled **anon** (it's the public key).
+4. Go to your **Vercel project → Settings → Environment Variables**.
+5. Make sure the value for \`VITE_SUPABASE_ANON_KEY\` **exactly matches** the key you copied.
+
+**IMPORTANT:** After updating the key, you **MUST** create a new deployment for the change to take effect.`;
             
             console.error(errorMsg);
             setConnectionError(errorMsg);
@@ -183,18 +188,10 @@ ${urlVite || 'Not Found'}
 
   // Now that hooks are defined, we can handle the configuration error.
   if (!isSupabaseConfigured || !isGeminiConfigured) {
-    // --- Vercel / Vite Values ---
+    // Read the VITE variables that the app's frontend relies on.
     const urlVite = (import.meta as any).env?.VITE_SUPABASE_URL;
     const keyVite = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
     const geminiVite = (import.meta as any).env?.VITE_API_KEY;
-
-    // --- AI Studio / Node Values ---
-    const urlNode = typeof process !== 'undefined' ? process.env.SUPABASE_URL : undefined;
-    const keyNode = typeof process !== 'undefined' ? process.env.SUPABASE_ANON_KEY : undefined;
-    const geminiNode = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
-    
-    // --- Common Mistake Check ---
-    const geminiVertex = (import.meta as any).env?.Vertex_API_KEY || (typeof process !== 'undefined' ? process.env.Vertex_API_KEY : undefined);
     
     const Status: React.FC<{found: boolean}> = ({ found }) => (
       found 
@@ -246,29 +243,16 @@ ${urlVite || 'Not Found'}
         </div>
 
 
-        {/* ENHANCED DEBUG BOX */}
+        {/* SIMPLIFIED DEBUG BOX */}
         <div style={{ backgroundColor: '#374151', padding: '1rem', borderRadius: '0.5rem', marginTop: '1.5rem', border: '1px solid #4b5563', textAlign: 'left', maxWidth: '600px', width: '90%', fontFamily: 'monospace', fontSize: '0.8rem' }}>
-            <p style={{ color: '#d1d5db', marginBottom: '0.25rem', fontWeight: 'bold' }}>Debugging Info (What your app currently sees)</p>
+            <p style={{ color: '#d1d5db', marginBottom: '0.25rem', fontWeight: 'bold' }}>Debugging Info (What your app's frontend currently sees)</p>
             <p style={{ color: '#9ca3af', fontSize: '0.7rem', marginBottom: '1rem' }}>If '❌ Not Found' is shown, the variable was missing for the environment Vercel used during the last build.</p>
 
-            <div style={{ marginBottom: '1rem', borderBottom: '1px solid #4b5563', paddingBottom: '1rem' }}>
-                <p style={{ color: '#9ca3af', fontSize: '0.7rem', textDecoration: 'underline' }}>Frontend Build (Vite):</p>
+            <div>
                 <p style={{ color: 'white' }}>VITE_SUPABASE_URL: <Status found={!!urlVite} /></p>
                 <p style={{ color: 'white' }}>VITE_SUPABASE_ANON_KEY: <Status found={!!keyVite} /></p>
                 <p style={{ color: 'white' }}>VITE_API_KEY: <Status found={!!geminiVite} /></p>
             </div>
-             <div>
-                <p style={{ color: '#9ca3af', fontSize: '0.7rem', textDecoration: 'underline' }}>Backend Functions (Vercel/Node.js):</p>
-                <p style={{ color: 'white' }}>SUPABASE_URL: <Status found={!!urlNode} /></p>
-                <p style={{ color: 'white' }}>SUPABASE_ANON_KEY: <Status found={!!keyNode} /></p>
-                <p style={{ color: 'white' }}>API_KEY: <Status found={!!geminiNode} /></p>
-            </div>
-            {geminiVertex && (
-                <div style={{ marginTop: '1rem', borderTop: '1px solid #4b5563', paddingTop: '1rem' }}>
-                    <p style={{ color: '#fde047', fontSize: '0.7rem', textDecoration: 'underline' }}>Common Mistake Check:</p>
-                    <p style={{ color: 'white' }}>Vertex_API_KEY: <Status found={!!geminiVertex} /> (Should be API_KEY)</p>
-                </div>
-            )}
         </div>
         <p style={{ fontSize: '0.8rem', color: '#9ca3af', marginTop: '1.5rem' }}>You can find your Supabase keys in your project dashboard under 'Settings' &gt; 'API'.</p>
       </div>

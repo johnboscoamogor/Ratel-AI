@@ -12,15 +12,6 @@ export default defineConfig({
   // This is a robust fix for asset loading issues (like 404s on CSS files)
   // on static deployment platforms like Vercel.
   base: './',
-  // This 'define' block makes server-side environment variables available
-  // to the client-side code. This is crucial for environments like AI Studio
-  // that use non-prefixed variables (e.g., API_KEY instead of VITE_API_KEY).
-  // Vite replaces these strings with the actual values at build time.
-  define: {
-    'process.env.SUPABASE_URL': JSON.stringify(process.env.SUPABASE_URL),
-    'process.env.SUPABASE_ANON_KEY': JSON.stringify(process.env.SUPABASE_ANON_KEY),
-    'process.env.API_KEY': JSON.stringify(process.env.API_KEY)
-  },
   build: {
     // Output to a 'dist' folder at the project root.
     outDir: 'dist',
