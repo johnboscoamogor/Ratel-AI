@@ -8,6 +8,10 @@ const iconDataUri = "data:image/svg+xml,%3csvg viewBox='0 0 100 100' xmlns='http
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // FIX: Set base to './' to use relative paths for assets.
+  // This is a robust fix for asset loading issues (like 404s on CSS files)
+  // on static deployment platforms like Vercel.
+  base: './',
   // This 'define' block makes server-side environment variables available
   // to the client-side code. This is crucial for environments like AI Studio
   // that use non-prefixed variables (e.g., API_KEY instead of VITE_API_KEY).
