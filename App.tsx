@@ -49,35 +49,66 @@ const App: React.FC = () => {
 
   // This logic must be defined outside or above the useEffect that uses it.
   const updateUserSession = async (session: Session | null, isMounted: boolean) => {
-        if (!isMounted) return;
+    if (!isMounted || !supabase) return;
 
-        if (session?.user) {
-            if (!supabase) return; // Guard against null supabase client
-            const { data: profile, error } = await supabase
+    if (session?.user) {
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+        
+        // The error `PGRST116` indicates that exactly one row was requested, but zero were found.
+        // This is the expected "error" when a profile doesn't exist yet for a new user.
+        if (error && error.code === 'PGRST116') {
+            console.log("Profile not found for new user, creating one...");
+            const { data: newProfile, error: insertError } = await supabase
                 .from('profiles')
-                .select('*')
-                .eq('id', session.user.id)
+                .insert({
+                    id: session.user.id,
+                    name: session.user.user_metadata.name || session.user.email?.split('@')[0] || 'New User',
+                    level: 1,
+                    xp: 0,
+                    interests: {},
+                    communityPoints: 0,
+                    totalRedeemed: 0,
+                    isAdmin: false,
+                })
+                .select()
                 .single();
-            
-            if (profile && !error) {
-                const completeProfile: UserProfile = {
-                    ...profile,
-                    email: session.user.email!,
-                    communityPoints: profile.communityPoints || 0,
-                    totalRedeemed: profile.totalRedeemed || 0,
-                };
-                setUserProfile(completeProfile);
-                setPage('chat');
-            } else {
+
+            if (insertError) {
+                console.error('Error creating profile:', insertError.message);
+                await supabase.auth.signOut();
                 setUserProfile(null);
                 setPage('landing');
-                if (error) console.error('Error fetching profile:', error.message);
+            } else if (newProfile && isMounted) {
+                const completeProfile: UserProfile = { ...newProfile, email: session.user.email! };
+                setUserProfile(completeProfile);
+                setPage('chat');
             }
+        } else if (profile && !error) {
+            // Profile found, proceed as normal
+            const completeProfile: UserProfile = {
+                ...profile,
+                email: session.user.email!,
+                communityPoints: profile.communityPoints || 0,
+                totalRedeemed: profile.totalRedeemed || 0,
+            };
+            setUserProfile(completeProfile);
+            setPage('chat');
         } else {
+            // An unexpected error occurred
             setUserProfile(null);
             setPage('landing');
+            if (error) console.error('Unexpected error fetching profile:', error.message);
         }
-    };
+    } else {
+        // No session, go to landing
+        setUserProfile(null);
+        setPage('landing');
+    }
+};
 
 
   // Manage user session with Supabase
