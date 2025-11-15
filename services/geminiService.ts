@@ -1,9 +1,8 @@
 import { GoogleGenAI, GenerateContentResponse, Modality } from '@google/genai';
 import { taskTools } from '../constants';
 
-// For Vercel deployments, Vite automatically handles `import.meta.env`.
-// This is the standard and most reliable way to access frontend variables.
-const API_KEY = (import.meta as any).env?.VITE_API_KEY;
+// This robust check works for both Vercel (import.meta.env) and local AI Studio (process.env).
+const API_KEY = (import.meta as any).env?.VITE_API_KEY || process.env.API_KEY;
 
 
 // Export a flag to check configuration status.

@@ -1,10 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { MarketItem, MarketPayment, MobileWorker, UserProfile } from '../types';
 
-// For Vercel deployments, Vite automatically handles `import.meta.env`.
-// This is the standard and most reliable way to access frontend variables.
-const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL;
-const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
+// This robust check works for both Vercel (import.meta.env) and local AI Studio (process.env).
+const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
 
 // This check determines if the credentials have been correctly configured from any environment source.

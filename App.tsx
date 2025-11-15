@@ -60,20 +60,18 @@ const App: React.FC = () => {
     // Add a timeout to prevent the app from hanging on a failed connection
     const sessionTimeout = setTimeout(() => {
         if (isMounted && loadingSession) {
-            const urlVite = (import.meta as any).env?.VITE_SUPABASE_URL;
+            const urlVite = (import.meta as any).env?.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 
             // FIX: This new, more comprehensive error message guides the user to check both their project status and their Supabase URL,
             // which are the most common points of failure after the API key. It also shows the exact URL the app is trying to use for easy comparison.
-            const errorMsg = `Connection Timed Out. You've confirmed your project is not paused, so let's check the **URL**.
----URL IN USE---
-${urlVite || 'URL not found in environment variables.'}
+            const errorMsg = `Connection Timed Out. This usually means your Supabase URL or Anon Key is incorrect in Vercel.
+---FINAL CHECK---
+Please compare these **very carefully**:
+1.  **URL Check**: Does the URL below *exactly* match the "Project URL" in your Supabase dashboard?
+    \`${urlVite || 'URL not found in environment variables.'}\`
+2.  **Key Check**: The Anon Key is long and easy to miscopy. Go to your Supabase dashboard, copy the \`anon\` (public) key again, and paste it into the \`VITE_SUPABASE_ANON_KEY\` variable in Vercel.
 ---END---
-Please follow these steps **exactly**:
-1. Go to your **Supabase project → Settings → API**.
-2. Find the "Project URL" section.
-3. Compare it **character-by-character** with the URL shown above. They must be identical.
-
-If the URL is correct, the only remaining issue is likely the **Anon Key**. Refer to the setup screen instructions if your app shows that screen.`;
+**Crucial Step**: After saving any changes in Vercel, you **MUST** re-deploy your project.`;
             
             console.error(errorMsg);
             setConnectionError(errorMsg);
@@ -188,10 +186,10 @@ If the URL is correct, the only remaining issue is likely the **Anon Key**. Refe
 
   // Now that hooks are defined, we can handle the configuration error.
   if (!isSupabaseConfigured || !isGeminiConfigured) {
-    // Read the VITE variables that the app's frontend relies on.
-    const urlVite = (import.meta as any).env?.VITE_SUPABASE_URL;
-    const keyVite = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
-    const geminiVite = (import.meta as any).env?.VITE_API_KEY;
+    // Read the variables from both Vite and process.env to ensure compatibility.
+    const urlVite = (import.meta as any).env?.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+    const keyVite = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+    const geminiVite = (import.meta as any).env?.VITE_API_KEY || process.env.API_KEY;
     
     const Status: React.FC<{found: boolean}> = ({ found }) => (
       found 

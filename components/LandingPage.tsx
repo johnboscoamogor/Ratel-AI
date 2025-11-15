@@ -35,9 +35,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartChatting, settings, se
                       <div className="max-w-2xl mx-auto text-left px-2 py-2">
                           <p className="whitespace-pre-wrap">{introText}</p>
                           <div className="my-2 p-3 bg-yellow-900/50 rounded-md border border-yellow-500">
-                              <p className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: checkText.replace(/\*\*(.*?)\*\*/g, '<strong class="text-yellow-300">$1</strong>') }} />
+                              <p className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: checkText.replace(/\*\*(.*?)\*\*/g, '<strong class="text-yellow-300">$1</strong>').replace(/`([^`]+)`/g, '<code class="bg-gray-700 p-1 rounded-sm text-red-300">$1</code>') }} />
                           </div>
-                          <p className="whitespace-pre-wrap mt-2" dangerouslySetInnerHTML={{ __html: stepsText.replace(/\*\*(.*?)\*\*/g, '<strong class="text-yellow-300">$1</strong>').replace(/`([^`]+)`/g, '<code class="bg-gray-700 p-1 rounded-sm text-red-300">$1</code>') }} />
+                          <p className="whitespace-pre-wrap mt-2" dangerouslySetInnerHTML={{ __html: stepsText.replace(/\*\*(.*?)\*\*/g, '<strong class="text-yellow-300">$1</strong>') }} />
                       </div>
                   </div>
               );
