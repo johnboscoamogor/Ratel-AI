@@ -151,8 +151,8 @@ Could not reach the app's own backend health check (/api/heartbeat). This could 
         // Step 2: Server is OK. Now, try connecting from the client.
         sessionTimeout = window.setTimeout(() => {
             if (isMounted && loadingSession) {
-                // FIX: Access process.env safely to avoid ReferenceError in browser and type errors during build.
-                const urlVite = (import.meta as any).env?.VITE_SUPABASE_URL || (typeof process !== 'undefined' && process.env['SUPABASE_URL']);
+                // FIX: Removed process.env fallback. Client code should exclusively use import.meta.env.
+                const urlVite = (import.meta as any).env?.VITE_SUPABASE_URL;
                 const clientErrorMsg = `---CLIENT CONNECTION FAILED---
 Your browser is taking too long to connect to Supabase, even though the server can. This is often caused by an ad-blocker, network issue, or incorrect **client-side** variables.
 
@@ -176,8 +176,8 @@ Your browser is taking too long to connect to Supabase, even though the server c
             }
         } catch (err: any) {
              clearTimeout(sessionTimeout);
-             // FIX: Access process.env safely to avoid ReferenceError in browser and type errors during build.
-             const urlVite = (import.meta as any).env?.VITE_SUPABASE_URL || (typeof process !== 'undefined' && process.env['SUPABASE_URL']);
+             // FIX: Removed process.env fallback. Client code should exclusively use import.meta.env.
+             const urlVite = (import.meta as any).env?.VITE_SUPABASE_URL;
              const clientErrorMsg = `---CLIENT CONNECTION FAILED---
 Your browser cannot connect to Supabase. This is often caused by an ad-blocker, network issue, or incorrect **client-side** VITE_ variables.
 
@@ -255,13 +255,10 @@ Your browser cannot connect to Supabase. This is often caused by an ad-blocker, 
 
   // Now that hooks are defined, we can handle the configuration error.
   if (!isSupabaseConfigured || !isGeminiConfigured) {
-    // Read the variables from both Vite and process.env to ensure compatibility.
-    // FIX: Access process.env safely to avoid ReferenceError in browser and type errors during build.
-    const urlVite = (import.meta as any).env?.VITE_SUPABASE_URL || (typeof process !== 'undefined' && process.env['SUPABASE_URL']);
-    // FIX: Access process.env safely to avoid ReferenceError in browser and type errors during build.
-    const keyVite = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || (typeof process !== 'undefined' && process.env['SUPABASE_ANON_KEY']);
-    // FIX: Access process.env safely to avoid ReferenceError in browser and type errors during build.
-    const geminiVite = (import.meta as any).env?.VITE_API_KEY || (typeof process !== 'undefined' && process.env['API_KEY']);
+    // FIX: Removed process.env fallback. Client code should exclusively use import.meta.env.
+    const urlVite = (import.meta as any).env?.VITE_SUPABASE_URL;
+    const keyVite = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
+    const geminiVite = (import.meta as any).env?.VITE_API_KEY;
     
     const Status: React.FC<{found: boolean}> = ({ found }) => (
       found 

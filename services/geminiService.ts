@@ -1,8 +1,9 @@
 import { GoogleGenAI, GenerateContentResponse, Modality } from '@google/genai';
 import { taskTools } from '../constants';
 
-// This robust check works for both Vercel (import.meta.env) and local AI Studio (process.env).
-const API_KEY = (import.meta as any).env?.VITE_API_KEY || (typeof process !== 'undefined' && process.env['API_KEY']);
+// FIX: Removed the process.env fallback. Client-side code should exclusively use Vite's import.meta.env.
+// This simplifies the logic and makes it more robust by adhering to Vite standards.
+const API_KEY = (import.meta as any).env?.VITE_API_KEY;
 
 
 // Export a flag to check configuration status.

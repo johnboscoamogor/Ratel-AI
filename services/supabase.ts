@@ -1,9 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import { MarketItem, MarketPayment, MobileWorker, UserProfile } from '../types';
 
-// This robust check works for both Vercel (import.meta.env) and local AI Studio (process.env).
-const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || (typeof process !== 'undefined' && process.env['SUPABASE_URL']);
-const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || (typeof process !== 'undefined' && process.env['SUPABASE_ANON_KEY']);
+// FIX: Removed the process.env fallback. Client-side code should exclusively use Vite's import.meta.env.
+// This simplifies the logic and makes it more robust by adhering to Vite standards.
+const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL;
+const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
 
 
 // This check determines if the credentials have been correctly configured from any environment source.
