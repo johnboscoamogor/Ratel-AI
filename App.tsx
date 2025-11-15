@@ -172,7 +172,8 @@ Your browser cannot connect to Supabase. This is often caused by an ad-blocker, 
 
     return () => {
         isMounted = false;
-        subscription.unsubscribe();
+        // FIX: Added a null-conditional operator to prevent a crash if the subscription was never created (e.g., if Supabase is not configured).
+        subscription?.unsubscribe();
         clearTimeout(sessionTimeout);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
