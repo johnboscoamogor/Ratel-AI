@@ -60,20 +60,20 @@ const App: React.FC = () => {
     // Add a timeout to prevent the app from hanging on a failed connection
     const sessionTimeout = setTimeout(() => {
         if (isMounted && loadingSession) {
+            const urlVite = (import.meta as any).env?.VITE_SUPABASE_URL;
 
-            // FIX: The error message is now updated to guide the user through the final, most likely fix: checking their Anon Key.
-            const errorMsg = `Connection Timed Out.
----FINAL CHECK---
-We've ruled out the most common issues (wrong URL, paused project). The final step is to verify your **API Key**.
+            // FIX: This new, more comprehensive error message guides the user to check both their project status and their Supabase URL,
+            // which are the most common points of failure after the API key. It also shows the exact URL the app is trying to use for easy comparison.
+            const errorMsg = `Connection Timed Out. You've confirmed your project is not paused, so let's check the **URL**.
+---URL IN USE---
+${urlVite || 'URL not found in environment variables.'}
 ---END---
 Please follow these steps **exactly**:
 1. Go to your **Supabase project → Settings → API**.
-2. Find the "Project API Keys" section.
-3. Copy the key labeled **anon** (it's the public key).
-4. Go to your **Vercel project → Settings → Environment Variables**.
-5. Make sure the value for \`VITE_SUPABASE_ANON_KEY\` **exactly matches** the key you copied.
+2. Find the "Project URL" section.
+3. Compare it **character-by-character** with the URL shown above. They must be identical.
 
-**IMPORTANT:** After updating the key, you **MUST** create a new deployment for the change to take effect.`;
+If the URL is correct, the only remaining issue is likely the **Anon Key**. Refer to the setup screen instructions if your app shows that screen.`;
             
             console.error(errorMsg);
             setConnectionError(errorMsg);
