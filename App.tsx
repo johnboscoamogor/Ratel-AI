@@ -47,42 +47,12 @@ const App: React.FC = () => {
     return defaultSettings;
   });
 
-  // Manage user session with Supabase
-  useEffect(() => {
-    if (!supabase) {
-        setLoadingSession(false);
-        setPage('landing');
-        return;
-    }
-
-    let isMounted = true;
-    
-    // Add a timeout to prevent the app from hanging on a failed connection
-    const sessionTimeout = setTimeout(() => {
-        if (isMounted && loadingSession) {
-            const urlVite = (import.meta as any).env?.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-
-            // FIX: This new, more comprehensive error message guides the user to check both their project status and their Supabase URL,
-            // which are the most common points of failure after the API key. It also shows the exact URL the app is trying to use for easy comparison.
-            const errorMsg = `Connection Timed Out. This usually means your Supabase URL or Anon Key is incorrect in Vercel.
----FINAL CHECK---
-Please compare these **very carefully**:
-1.  **URL Check**: Does the URL below *exactly* match the "Project URL" in your Supabase dashboard?
-    \`${urlVite || 'URL not found in environment variables.'}\`
-2.  **Key Check**: The Anon Key is long and easy to miscopy. Go to your Supabase dashboard, copy the \`anon\` (public) key again, and paste it into the \`VITE_SUPABASE_ANON_KEY\` variable in Vercel.
----END---
-**Crucial Step**: After saving any changes in Vercel, you **MUST** re-deploy your project.`;
-            
-            console.error(errorMsg);
-            setConnectionError(errorMsg);
-            setLoadingSession(false); // Force the loader to stop
-        }
-    }, 15000); // 15-second timeout
-
-    const updateUserSession = async (session: Session | null) => {
+  // This logic must be defined outside or above the useEffect that uses it.
+  const updateUserSession = async (session: Session | null, isMounted: boolean) => {
         if (!isMounted) return;
 
         if (session?.user) {
+            if (!supabase) return; // Guard against null supabase client
             const { data: profile, error } = await supabase
                 .from('profiles')
                 .select('*')
@@ -108,31 +78,98 @@ Please compare these **very carefully**:
             setPage('landing');
         }
     };
+
+
+  // Manage user session with Supabase
+  useEffect(() => {
+    if (!supabase) {
+        setLoadingSession(false);
+        setPage('landing');
+        return;
+    }
+
+    let isMounted = true;
+    let sessionTimeout: number;
     
-    // First, check the current session to unblock the UI quickly.
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-        clearTimeout(sessionTimeout); // Success, clear the timeout
-        await updateUserSession(session);
-        if (isMounted) {
-            setLoadingSession(false);
-        }
-    }).catch(err => {
-        clearTimeout(sessionTimeout); // Failure, clear the timeout
-        console.error("Error getting initial session:", err);
-        const errorMsg = `Failed to connect to Supabase. Error: ${err.message}. Please verify your network, check that your Supabase URL and Key are correct, and re-deploy your project.`;
-        setConnectionError(errorMsg);
-        if (isMounted) {
-            setLoadingSession(false);
-        }
-    });
+    // This function runs all checks and initializes the user session.
+    const runChecksAndInit = async () => {
+        // Step 1: Check if the server can connect to Supabase.
+        try {
+            const response = await fetch('/api/heartbeat');
+            if (!response.ok) {
+                const errorData = await response.json();
+                // This is a definitive server-side error.
+                throw new Error(`---SERVER CONNECTION FAILED---
+Your app's backend cannot connect to Supabase. This is almost always due to incorrect **server-side** environment variables in Vercel.
 
+**Please re-verify \`SUPABASE_URL\` and \`SUPABASE_ANON_KEY\` (without the 'VITE_' prefix) and re-deploy your project.**
 
-    // Then, listen for subsequent authentication state changes.
+*Server error: ${errorData.message || 'Unknown'}*`);
+            }
+        } catch (e: any) {
+            // This catch handles both fetch failures and the thrown error from the check above.
+            const errorMessage = e.message.startsWith('---SERVER') ? e.message : `---API ROUTE FAILED---
+Could not reach the app's own backend health check (/api/heartbeat). This could be a deployment issue. **Please try re-deploying your project in Vercel.**`;
+            if (isMounted) {
+                setConnectionError(errorMessage);
+                setLoadingSession(false);
+            }
+            return; // Stop initialization if server check fails.
+        }
+
+        // Step 2: Server is OK. Now, try connecting from the client.
+        sessionTimeout = window.setTimeout(() => {
+            if (isMounted && loadingSession) {
+                // FIX: Access process.env safely to avoid ReferenceError in browser and type errors during build.
+                const urlVite = (import.meta as any).env?.VITE_SUPABASE_URL || (typeof process !== 'undefined' && process.env['SUPABASE_URL']);
+                const clientErrorMsg = `---CLIENT CONNECTION FAILED---
+Your browser is taking too long to connect to Supabase, even though the server can. This is often caused by an ad-blocker, network issue, or incorrect **client-side** variables.
+
+**1. Disable any ad-blockers and try again.**
+**2. Re-verify \`VITE_SUPABASE_URL\` and \`VITE_SUPABASE_ANON_KEY\` (with the 'VITE_' prefix) and re-deploy.**
+
+*URL in use: \`${urlVite || 'URL not found'}\`*`;
+                if (isMounted) {
+                    setConnectionError(clientErrorMsg);
+                    setLoadingSession(false);
+                }
+            }
+        }, 15000);
+
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            clearTimeout(sessionTimeout);
+            if (isMounted) {
+                await updateUserSession(session, isMounted);
+                setLoadingSession(false);
+            }
+        } catch (err: any) {
+             clearTimeout(sessionTimeout);
+             // FIX: Access process.env safely to avoid ReferenceError in browser and type errors during build.
+             const urlVite = (import.meta as any).env?.VITE_SUPABASE_URL || (typeof process !== 'undefined' && process.env['SUPABASE_URL']);
+             const clientErrorMsg = `---CLIENT CONNECTION FAILED---
+Your browser cannot connect to Supabase. This is often caused by an ad-blocker, network issue, or incorrect **client-side** VITE_ variables.
+
+**1. Disable any ad-blockers and try again.**
+**2. Re-verify \`VITE_SUPABASE_URL\` and \`VITE_SUPABASE_ANON_KEY\` (with the 'VITE_' prefix) and re-deploy.**
+
+*URL in use: \`${urlVite || 'URL not found'}\`*
+*Error: ${err.message}*`;
+            if (isMounted) {
+                setConnectionError(clientErrorMsg);
+                setLoadingSession(false);
+            }
+        }
+    };
+
+    runChecksAndInit();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-        await updateUserSession(session);
+        if(isMounted) {
+          await updateUserSession(session, isMounted);
+        }
     });
 
-    // Clean up the subscription and timeout when the component unmounts.
     return () => {
         isMounted = false;
         subscription.unsubscribe();
@@ -187,9 +224,12 @@ Please compare these **very carefully**:
   // Now that hooks are defined, we can handle the configuration error.
   if (!isSupabaseConfigured || !isGeminiConfigured) {
     // Read the variables from both Vite and process.env to ensure compatibility.
-    const urlVite = (import.meta as any).env?.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-    const keyVite = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
-    const geminiVite = (import.meta as any).env?.VITE_API_KEY || process.env.API_KEY;
+    // FIX: Access process.env safely to avoid ReferenceError in browser and type errors during build.
+    const urlVite = (import.meta as any).env?.VITE_SUPABASE_URL || (typeof process !== 'undefined' && process.env['SUPABASE_URL']);
+    // FIX: Access process.env safely to avoid ReferenceError in browser and type errors during build.
+    const keyVite = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || (typeof process !== 'undefined' && process.env['SUPABASE_ANON_KEY']);
+    // FIX: Access process.env safely to avoid ReferenceError in browser and type errors during build.
+    const geminiVite = (import.meta as any).env?.VITE_API_KEY || (typeof process !== 'undefined' && process.env['API_KEY']);
     
     const Status: React.FC<{found: boolean}> = ({ found }) => (
       found 

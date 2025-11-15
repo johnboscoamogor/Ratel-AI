@@ -20,58 +20,53 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStartChatting, settings, se
     onStartChatting();
   };
 
+  const renderConnectionError = () => {
+    if (!connectionError) return null;
+
+    const renderErrorContent = (title: string, content: string) => {
+        return (
+            <div className="absolute top-0 left-0 right-0 bg-red-800/90 border-b border-red-600 p-3 text-center text-white text-sm shadow-lg z-10">
+                <p className="font-bold text-base">{title}</p>
+                <div className="max-w-3xl mx-auto text-left px-2 py-2">
+                     <p 
+                        className="whitespace-pre-wrap" 
+                        dangerouslySetInnerHTML={{ 
+                            __html: content
+                                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-yellow-300">$1</strong>')
+                                .replace(/`([^`]+)`/g, '<code class="bg-gray-700 p-1 rounded-sm text-red-300">$1</code>')
+                                .replace(/\*(.*?)\*/g, '<em class="text-gray-300 not-italic">$1</em>')
+                        }} 
+                     />
+                </div>
+            </div>
+        );
+    }
+    
+    if (connectionError.includes('---SERVER CONNECTION FAILED---')) {
+        return renderErrorContent('Server Connection Failed', connectionError.replace('---SERVER CONNECTION FAILED---', ''));
+    }
+    
+    if (connectionError.includes('---CLIENT CONNECTION FAILED---')) {
+        return renderErrorContent('Client Connection Failed', connectionError.replace('---CLIENT CONNECTION FAILED---', ''));
+    }
+
+    if (connectionError.includes('---API ROUTE FAILED---')) {
+        return renderErrorContent('Deployment Error', connectionError.replace('---API ROUTE FAILED---', ''));
+    }
+
+    // Fallback for any other generic errors
+    return (
+        <div className="absolute top-0 left-0 right-0 bg-red-800/90 border-b border-red-600 p-3 text-center text-white text-sm shadow-lg z-10">
+            <p className="font-bold">Connection Error</p>
+            <p className="max-w-xl mx-auto whitespace-pre-wrap text-left px-2">{connectionError}</p>
+        </div>
+    );
+  }
+
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen text-white p-4" style={{ backgroundColor: '#0d1117' }}>
-      {connectionError && (() => {
-          // FIX: Updated parsing logic to handle the new "FINAL CHECK" error message for API keys.
-          const finalCheckMatch = connectionError.match(/---FINAL CHECK---(.*?)---END---/s);
-          if (finalCheckMatch) {
-              const introText = connectionError.split('---FINAL CHECK---')[0];
-              const checkText = finalCheckMatch[1].trim();
-              const stepsText = connectionError.split('---END---')[1];
-              return (
-                  <div className="absolute top-0 left-0 right-0 bg-red-800/90 border-b border-red-600 p-3 text-center text-white text-sm shadow-lg z-10">
-                      <p className="font-bold text-base">Connection Error</p>
-                      <div className="max-w-2xl mx-auto text-left px-2 py-2">
-                          <p className="whitespace-pre-wrap">{introText}</p>
-                          <div className="my-2 p-3 bg-yellow-900/50 rounded-md border border-yellow-500">
-                              <p className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: checkText.replace(/\*\*(.*?)\*\*/g, '<strong class="text-yellow-300">$1</strong>').replace(/`([^`]+)`/g, '<code class="bg-gray-700 p-1 rounded-sm text-red-300">$1</code>') }} />
-                          </div>
-                          <p className="whitespace-pre-wrap mt-2" dangerouslySetInnerHTML={{ __html: stepsText.replace(/\*\*(.*?)\*\*/g, '<strong class="text-yellow-300">$1</strong>') }} />
-                      </div>
-                  </div>
-              );
-          }
-
-          // Fallback for older "URL IN USE" error
-          const urlMatch = connectionError.match(/---URL IN USE---(.*?)---END---/s);
-          if (urlMatch) {
-              const introText = connectionError.split('---URL IN USE---')[0];
-              const outroText = connectionError.split('---END---')[1];
-              const urlInUse = urlMatch[1].trim();
-              return (
-                  <div className="absolute top-0 left-0 right-0 bg-red-800/90 border-b border-red-600 p-3 text-center text-white text-sm shadow-lg z-10">
-                      <p className="font-bold text-base">Connection Error</p>
-                      <div className="max-w-2xl mx-auto text-left px-2 py-2">
-                          <p className="whitespace-pre-wrap">{introText}</p>
-                          <div className="my-2 p-3 bg-red-900/50 rounded-md border border-red-500">
-                              <p className="text-xs text-red-200 font-semibold">URL THE APP IS TRYING TO CONNECT TO:</p>
-                              <p className="font-mono text-base break-all mt-1">{urlInUse}</p>
-                          </div>
-                          {outroText && <p className="whitespace-pre-wrap mt-2" dangerouslySetInnerHTML={{ __html: outroText.replace(/\*\*(.*?)\*\*/g, '<strong class="text-yellow-300">$1</strong>') }} />}
-                      </div>
-                  </div>
-              );
-          }
-
-          // Fallback for any other generic errors
-          return (
-              <div className="absolute top-0 left-0 right-0 bg-red-800/90 border-b border-red-600 p-3 text-center text-white text-sm shadow-lg z-10">
-                  <p className="font-bold">Connection Error</p>
-                  <p className="max-w-xl mx-auto whitespace-pre-wrap text-left px-2">{connectionError}</p>
-              </div>
-          );
-      })()}
+      {renderConnectionError()}
       <div className="absolute top-6 right-6">
         <LanguageSwitcher
           currentLang={settings.language}
